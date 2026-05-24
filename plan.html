@@ -86,13 +86,13 @@ body {
   font-family: "Montserrat", sans-serif;
 }
 
-.card-head { display:flex; justify-content:space-between; align-items:flex-start; }
+.card-head { display:flex; justify-content:space-between; align-items:center; }
 .card-left { flex:1; }
 .card-name { font-size:15px; font-weight:700; margin-bottom:3px; }
 .card-sub { font-size:11px; color:var(--muted); }
 .plan-card.featured .card-sub { color:var(--muted); }
-.card-price { text-align:right; flex-shrink:0; margin-left:12px; }
-.price-num { font-family:"Montserrat",sans-serif; font-size:22px; font-weight:900; color:var(--primary); line-height:1; transition:color 0.5s; }
+.card-price { text-align:center; flex-shrink:0; margin-left:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; align-self:center; }
+.price-num { font-family:"Montserrat",sans-serif; font-size:22px; font-weight:900; color:var(--primary); line-height:1.2; transition:color 0.5s; text-align:center; }
 .plan-card.featured .price-num { color:var(--primary); }
 .price-unit { font-size:11px; color:var(--muted); }
 .plan-card.featured .price-unit { color:var(--muted); }
@@ -277,7 +277,7 @@ body {
         <div class="card-sub">登録不要・初回歓迎</div>
       </div>
       <div class="card-price">
-        <div class="price-num">¥500<span class="price-unit">〜/回</span></div>
+        <div class="price-num">¥500</div>
       </div>
     </div>
     <div class="card-toggle">詳細を見る <span class="arrow">▼</span></div>
@@ -297,8 +297,7 @@ body {
         <div class="card-sub">無料登録・入会金なし</div>
       </div>
       <div class="card-price">
-        <div class="price-num">¥0</div>
-        <div class="price-unit">入会金</div>
+        <div class="price-num" style="font-size:15px;">自由に参加</div>
       </div>
     </div>
     <div class="card-toggle">詳細を見る <span class="arrow">▼</span></div>
@@ -316,7 +315,7 @@ body {
         <div class="card-sub">入会金 ¥3,300</div>
       </div>
       <div class="card-price">
-        <div class="price-num">¥500<span class="price-unit">〜/回</span></div>
+        <div class="price-num" style="font-size:15px;">豊富な特典満載プラン</div>
       </div>
     </div>
     <div class="card-toggle">詳細を見る <span class="arrow">▼</span></div>
@@ -336,7 +335,7 @@ body {
         <div class="card-sub">2人以上で登録</div>
       </div>
       <div class="card-price">
-        <div class="price-num">¥500<span class="price-unit">〜/回</span></div>
+        <div class="price-num" style="font-size:16px;">家族でお得</div>
       </div>
     </div>
     <div class="card-toggle">詳細を見る <span class="arrow">▼</span></div>
@@ -931,8 +930,10 @@ const seasons = {
 };
 
 function setSeason(key, btn) {
-  document.querySelectorAll('.s-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) {
+    document.querySelectorAll('.s-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
   document.body.className = seasons[key].cls;
   document.getElementById('seasonTag').textContent = seasons[key].label;
   startAnimation(key);
@@ -941,7 +942,7 @@ function setSeason(key, btn) {
 // 現在の季節を検出
 const m = new Date().getMonth() + 1;
 const detectedSeason = m>=3&&m<=5?'spring': m>=6&&m<=8?'summer': m>=9&&m<=11?'autumn':'winter';
-setSeason(detectedSeason, document.querySelector(`[data-s="${detectedSeason}"]`));
+setSeason(detectedSeason, document.querySelector(`[data-s="${detectedSeason}"]`) || null);
 startAnimation(detectedSeason);
 
 
