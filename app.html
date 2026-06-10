@@ -14,292 +14,918 @@
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Helvetica Neue',sans-serif}
 body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
 .wrapper{width:100%;max-width:600px;margin:0 auto;background:#f0f4f8}
-
-/* ヘッダー */
 .header{background:linear-gradient(135deg,#2d4a7a 0%,#1a3a5c 50%,#0f2744 100%);color:#fff;padding:20px 16px 14px;text-align:center;position:relative;overflow:hidden}
 .header::before{content:'';position:absolute;top:-40px;right:-20px;width:130px;height:130px;border-radius:50%;background:rgba(74,197,80,0.12)}
+.header::after{content:'';position:absolute;bottom:-30px;left:10px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05)}
 .header h1{font-size:22px;font-weight:800;letter-spacing:1px;position:relative}
 .header p{font-size:12px;color:rgba(255,255,255,0.65);margin-top:5px;position:relative}
-
-/* カード */
-.card{background:#fff;border-radius:20px;padding:20px;margin:14px;box-shadow:0 4px 20px rgba(0,0,0,0.07)}
+.header-ver{text-align:right;font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;position:relative}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e8ecf0;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.tab{flex:1;padding:10px 2px;font-size:11px;text-align:center;cursor:pointer;color:#999;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:600;line-height:1.4;transition:color 0.2s}
+.tab.active{color:#1a3a5c;border-bottom-color:#4CAF50}
+.section{display:none;padding:14px}
+.section.active{display:block}
+.card{background:#fff;border-radius:20px;padding:20px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04)}
 .card-title{font-size:15px;font-weight:700;margin-bottom:16px;color:#1a1a2e;display:flex;align-items:center;gap:8px}
 .card-title-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4CAF50,#1a3a5c);flex-shrink:0}
-
-/* 会員カード */
-.member-card{background:linear-gradient(135deg,#1a3a5c 0%,#0f2744 100%);color:#fff;border-radius:20px;padding:20px;margin:14px;box-shadow:0 8px 32px rgba(26,58,92,0.3);position:relative;overflow:hidden}
+.member-card{background:linear-gradient(135deg,#1a3a5c 0%,#0f2744 100%);color:#fff;border-radius:20px;padding:20px;margin-bottom:12px;box-shadow:0 8px 32px rgba(26,58,92,0.3);position:relative;overflow:hidden}
 .member-card::before{content:'';position:absolute;top:-30px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(74,197,80,0.15)}
+.member-card-label{font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px}
 .member-card-name{font-size:22px;font-weight:800;margin-bottom:2px}
 .member-card-type{font-size:12px;color:rgba(255,255,255,0.6)}
 .member-badge{display:inline-block;background:rgba(74,197,80,0.2);color:#7dda80;border:1px solid rgba(74,197,80,0.35);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;letter-spacing:1px;margin-top:8px}
+.open-card-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
 .logout-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer}
-
-/* フォーム */
-.label{font-size:14px;color:#888;margin-bottom:8px;margin-top:16px;font-weight:500}
-.label:first-child{margin-top:0}
-input,select{width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;-webkit-appearance:none;appearance:none;color:#1a1a2e}
-input:focus{outline:none;border-color:#1a3a5c;background:#fff}
-
-/* ボタン */
-.btn{width:100%;padding:16px;font-size:16px;font-weight:700;border-radius:14px;cursor:pointer;border:none;margin-top:14px;display:block;text-align:center;transition:opacity 0.2s}
-.btn-primary{background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff}
-.btn:active{opacity:0.8}
-
-/* 統計 */
-.stats-row{display:flex;gap:10px;margin-bottom:16px}
-.stat-box{flex:1;background:linear-gradient(135deg,#f5f7ff,#eef2ff);border-radius:14px;padding:14px 10px;text-align:center;border:1px solid rgba(26,58,92,0.07)}
-.stat-box.ticket-box{background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-color:rgba(74,197,80,0.15);cursor:pointer}
-.stat-val{font-size:26px;font-weight:800;color:#1a1a2e}
-.stat-label{font-size:10px;color:#888;margin-top:3px}
-
-/* プログレス */
+.next-member-card{background:linear-gradient(135deg,#f8fffe,#f0f9ff);border:1px solid rgba(74,197,80,0.2);border-radius:20px;padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(74,197,80,0.08)}
+.member-chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #e0e8f0;border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600;margin:3px;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
 .progress-bar-bg{background:#f0f4f8;border-radius:999px;height:10px;overflow:hidden;margin:8px 0}
 .progress-bar-fill{height:100%;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:999px;transition:width 0.4s}
-
-/* エラー */
-.error-msg{color:#e53935;font-size:14px;margin-top:8px;text-align:center;display:none}
-
-/* ローディング */
-.loading{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
-
-/* スプラッシュ */
-#splash{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;transition:opacity 0.6s ease}
+.label{font-size:14px;color:#888;margin-bottom:8px;margin-top:16px;font-weight:500}
+.label:first-child{margin-top:0}
+input:not([type=checkbox]),select,textarea{width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;-webkit-appearance:none;appearance:none;color:#1a1a2e}
+input:not([type=checkbox]):focus{outline:none;border-color:#1a3a5c;background:#fff}
+input[type=checkbox]{width:26px;height:26px;padding:0;border:2px solid #ccc;background:#fff;-webkit-appearance:checkbox;appearance:checkbox;accent-color:#1a3a5c;cursor:pointer;flex-shrink:0;border-radius:4px}
+.btn{width:100%;padding:16px;font-size:16px;font-weight:700;border-radius:14px;cursor:pointer;border:none;margin-top:14px;display:block;text-align:center;transition:opacity 0.2s,transform 0.1s}
+.btn-primary{background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff}
+.btn-secondary{background:#f0f4f8;color:#555}
+.btn-danger{background:#e53935;color:#fff}
+.btn:active{opacity:0.8;transform:scale(0.98)}
+.consent-box{background:#f9fafb;border:1px solid #e0e8f0;border-radius:12px;padding:16px;margin-top:16px;font-size:12px;color:#555;line-height:2.0}
+.consent-check{display:flex;align-items:center;gap:14px;margin-top:16px;padding:14px;background:#fff;border-radius:12px;border:1.5px solid #e0e8f0;cursor:pointer}
+.consent-check label{font-size:15px;color:#333;line-height:1.5;cursor:pointer;flex:1}
+.empty{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
+.next-event-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f4f8}
+.next-event-row:last-child{border-bottom:none}
+.schedule-item{background:#f8fafc;border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;border-left:4px solid #1a3a5c;transition:background 0.15s}
+.schedule-item:active{background:#eef2ff}
+.reserve-member-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f4f8;font-size:14px}
+.reserve-member-item:last-child{border-bottom:none}
+.minor-consent{display:none;background:#fff3e0;border:1.5px solid #f57c00;border-radius:12px;padding:16px;margin-top:12px}
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;animation:fadeIn 0.3s ease forwards}
+.popup-card{background:#fff;border-radius:24px;padding:40px 32px;text-align:center;width:88%;max-width:340px;box-shadow:0 8px 40px rgba(0,0,0,0.2);transform:scale(0.85);animation:popIn 0.3s ease forwards}
+@keyframes fadeIn{to{opacity:1}}
+@keyframes popIn{to{transform:scale(1)}}
+.popup-thankyou{font-family:'Dancing Script',cursive;font-size:36px;color:#222;letter-spacing:2px}
+.ticket-overlay{position:fixed;inset:0;z-index:8000;display:flex;align-items:center;justify-content:center}
+.ticket-blur-bg{position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.ticket-modal{position:relative;z-index:1;width:88%;max-width:360px;background:#fff;border-radius:24px;padding:32px 28px;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,0.3);animation:popIn 0.3s ease forwards}
+.ticket-btn-row{display:flex;gap:10px}
+.ticket-btn-use{flex:1;padding:16px;background:#e53935;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer}
+.ticket-btn-close{flex:1;padding:16px;background:#f0f0f0;color:#222;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer}
+.status-select-row{display:flex;gap:8px;margin-bottom:12px}
+.status-sel-btn{flex:1;padding:12px 6px;border:2px solid #e0e8f0;border-radius:12px;background:#fff;font-size:20px;cursor:pointer;text-align:center;transition:all 0.15s}
+.status-sel-btn.sel-maru{border-color:#188038;background:#e6f4ea}
+.status-sel-btn.sel-sankaku{border-color:#f57c00;background:#fff3e0}
+.status-sel-btn.sel-batsu{border-color:#e53935;background:#fce8e6}
+.link-btn{color:#1a3a5c;font-size:14px;text-align:center;display:block;margin-top:16px;text-decoration:underline;cursor:pointer}
+.view-members-btn{width:100%;padding:12px;background:#f0f4f8;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;color:#555}
 @keyframes bar{from{width:0}to{width:40px}}
 @keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* 予約アイテム */
-.reserve-item{padding:12px 0;border-bottom:1px solid #f0f4f8}
-.reserve-item:last-child{border-bottom:none}
-.empty{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
+.member-card-modal{position:relative;z-index:1;width:88%;max-width:360px;background:linear-gradient(135deg,#1a3a5c,#0f2744);border-radius:24px;padding:32px 28px;box-shadow:0 12px 48px rgba(0,0,0,0.4);animation:popIn 0.3s ease forwards;color:#fff;overflow:hidden}
+.member-card-modal::before{content:'';position:absolute;top:-40px;right:-30px;width:150px;height:150px;border-radius:50%;background:rgba(74,197,80,0.12)}
+.member-card-modal::after{content:'';position:absolute;bottom:-40px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.rank-stars{position:absolute;inset:0;z-index:1;pointer-events:none}
+.star-gold{position:absolute;border-radius:50%;animation:twinkle-g 3s infinite}
+.star-plat{position:absolute;border-radius:50%;background:#fff;animation:twinkle-p 2s infinite}
+@keyframes twinkle-g{0%,100%{opacity:0;transform:scale(0.8)}50%{opacity:0.7;transform:scale(1.2)}}
+@keyframes twinkle-p{0%,100%{opacity:0.15;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+.member-card.type-ouendan,.member-card-modal.type-ouendan{background:linear-gradient(135deg,#b8860b 0%,#8b6508 100%)}
+.member-card.type-kashiwa,.member-card-modal.type-kashiwa{background:linear-gradient(135deg,#1a3a5c 0%,#0f2744 100%)}
+.member-card.type-minnb,.member-card-modal.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#4a7a20 30%,#33691e 100%)}
+.member-card.type-unei,.member-card-modal.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 30%,#8b1010 100%)}
+.member-card.type-special,.member-card-modal.type-special{background:linear-gradient(135deg,#4a148c 0%,#6a1fa2 50%,#7b1fa2 100%)}
+.rank-bronze.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1e4a72 30%,#1a3a5c 45%,#a0522d 100%)}
+.rank-silver.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1e4a72 30%,#1a3a5c 45%,#78909c 100%)}
+.rank-gold.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1e4a72 30%,#1a3a5c 45%,#c67c00 100%)}
+.rank-platinum.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 42%,#0d1b3e 55%,#1a0a4a 100%)}
+.rank-bronze.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#b8860b 30%,#8b6508 45%,#a0522d 100%)}
+.rank-silver.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#b8860b 30%,#8b6508 45%,#78909c 100%)}
+.rank-gold.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#b8860b 30%,#8b6508 45%,#e8a000 100%)}
+.rank-platinum.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#b8860b 42%,#0d1b3e 55%,#1a0a4a 100%)}
+.rank-bronze.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#4a7a20 30%,#33691e 45%,#a0522d 100%)}
+.rank-silver.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#4a7a20 30%,#33691e 45%,#78909c 100%)}
+.rank-gold.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#4a7a20 30%,#33691e 45%,#c67c00 100%)}
+.rank-platinum.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#4a7a20 42%,#0d1b3e 55%,#1a0a4a 100%)}
+.rank-bronze.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 30%,#8b1010 45%,#a0522d 100%)}
+.rank-silver.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 30%,#8b1010 45%,#78909c 100%)}
+.rank-gold.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 30%,#8b1010 45%,#c67c00 100%)}
+.rank-platinum.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 42%,#0d1b3e 55%,#1a0a4a 100%)}
+@media(min-width:600px){.wrapper{box-shadow:0 0 40px rgba(0,0,0,0.1)}}
 </style>
 </head>
 <body>
-
-<!-- スプラッシュ -->
-<div id="splash">
+<div id="splash" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;transition:opacity 0.6s ease;">
   <div style="font-size:13px;color:#888;letter-spacing:2px;margin-bottom:8px">Kashiwa no</div>
   <div style="font-size:36px;font-weight:900;letter-spacing:4px;color:#1a1a2e">BUKATSU</div>
-  <div style="margin-top:24px;width:40px;height:3px;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:2px;animation:bar 1.2s ease forwards"></div>
+  <div style="margin-top:24px;width:40px;height:3px;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:2px;animation:bar 1.5s ease forwards;"></div>
 </div>
-
 <div class="wrapper">
-  <div class="header">
-    <h1>カシワのBUKATSU</h1>
-    <p id="today-info">読み込み中...</p>
+<div class="header">
+  <h1>カシワのBUKATSU</h1>
+  <p id="today-info">読み込み中...</p>
+  <div id="app-version" class="header-ver"></div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('home')">🏠<br>HOME</button>
+  <button class="tab" onclick="showTab('mypage')">👤<br>マイページ</button>
+  <button class="tab" onclick="showTab('referral')">👫<br>お友達紹介</button>
+</div>
+<!-- HOME -->
+<div id="section-home" class="section active">
+  <div id="home-today-card" class="card" style="display:none">
+    <div class="card-title"><div class="card-title-dot"></div>本日の開催</div>
+    <div id="home-today-info"></div>
   </div>
-
-  <!-- ログインエリア -->
-  <div id="login-area" class="card" style="display:none">
-    <div class="card-title"><div class="card-title-dot"></div>マイページ ログイン</div>
+  <div id="home-countdown-card" class="card" style="display:none">
+    <div id="home-countdown-content" onclick="toggleCountdownDetail()" style="cursor:pointer;text-align:center;padding:8px 0"></div>
+    <div id="home-countdown-detail" style="display:none;margin-top:16px;border-top:1px solid #f0f4f8;padding-top:16px"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="card-title-dot"></div>次回開催予定</div>
+    <div id="home-next-events"><div class="empty">読み込み中...</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleAccordionHome('beginner-content','beginner-arrow')">
+      <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>初めての方へ</div>
+      <div id="beginner-arrow" style="font-size:18px;color:#aaa">›</div>
+    </div>
+    <div id="beginner-content" style="display:none;margin-top:14px">
+      <div style="font-size:14px;line-height:2;color:#444">
+        <b>💰 参加費</b><br>体験参加：バスケ・バレー ¥500 / バドミントン ¥700<br><br>
+        <b>👟 持ち物</b><br>室内シューズ・動きやすい服装・タオル・飲み物<br>
+        <span style="font-size:13px;color:#888">※バドミントンはラケット貸し出しあります</span><br><br>
+        <b>🙌 参加レベル</b><br>初心者・久しぶりの方も大歓迎！<br><br>
+        <b>⚠️ 注意事項</b><br>競技志向でのプレーをご希望の方はご遠慮をお願いする場合がございます。
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleAccordionHome('about-content','about-arrow')">
+      <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>カシワのBUKATSUとは？</div>
+      <div id="about-arrow" style="font-size:18px;color:#aaa">›</div>
+    </div>
+    <div id="about-content" style="display:none;margin-top:14px">
+      <div style="font-size:14px;line-height:2;color:#444">千葉県柏市を拠点に、バスケットボール・バレーボール・バドミントンを楽しむ地域スポーツコミュニティです。勝ち負けよりも「エンジョイ！」がコンセプト。初心者から経験者まで一緒にプレーできる環境を大切にしています。</div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center">
+    <a href="https://kashiwano-bukatsu.github.io/" target="_blank" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none">🌐 公式サイトを見る</a>
+  </div>
+</div>
+<!-- マイページ -->
+<div id="section-mypage" class="section">
+  <div id="mypage-login-area" class="card">
+    <div class="card-title"><div class="card-title-dot"></div>マイページ</div>
     <div class="label">フルネーム（カタカナ）</div>
-    <input type="text" id="login-fullname" placeholder="例：カシワタロウ" autocomplete="username">
+    <input type="text" id="mypage-fullname" placeholder="例：カシワタロウ" autocomplete="username">
     <div class="label">生年月日</div>
-    <input type="password" id="login-dob" placeholder="例：20100506（YYYYMMDD）" maxlength="8" autocomplete="current-password">
-    <button class="btn btn-primary" onclick="doLogin()">ログイン</button>
-    <div class="error-msg" id="login-error">フルネームまたは生年月日が正しくありません</div>
+    <input type="password" id="mypage-dob" placeholder="例：20100506（YYYYMMDD）" maxlength="8" autocomplete="current-password">
+    <button class="btn btn-primary" onclick="mypageLogin()">ログイン</button>
+    <div id="mypage-login-error" style="display:none;color:#e53935;font-size:14px;margin-top:8px;text-align:center">フルネームまたは生年月日が正しくありません</div>
+    <div style="text-align:center;margin-top:20px;color:#bbb;font-size:13px;">── または ──</div>
+    <span class="link-btn" onclick="toggleRegisterAccordion()">はじめての方はこちら</span>
+    <div id="accordion-register-area" style="display:none;margin-top:20px;border-top:1px dashed #e0e8f0;padding-top:20px;">
+      <div id="reg-step1">
+        <div class="card-title" style="font-size:16px;"><div class="card-title-dot"></div>新規メンバー登録</div>
+        <div class="label">フルネーム（カタカナ）で検索</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="reg-search-name" placeholder="例：ヤマダタロウ" style="flex:1">
+          <button onclick="searchTempMember()" style="padding:0 18px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">検索</button>
+        </div>
+        <div id="reg-search-result" style="margin-top:12px"></div>
+      </div>
+      <div id="reg-step2" style="display:none">
+        <div class="card-title" style="font-size:16px;"><div class="card-title-dot"></div>この方ですか？</div>
+        <div id="reg-confirm-box" style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:16px;border-left:4px solid #1a3a5c"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" style="margin-top:0;flex:1" onclick="confirmTempMember()">はい</button>
+          <button class="btn btn-secondary" style="margin-top:0;flex:1" onclick="resetRegFlow()">いいえ</button>
+        </div>
+      </div>
+      <div id="reg-step3" style="display:none">
+        <div class="card-title" style="font-size:16px;"><div class="card-title-dot"></div>情報を入力してください</div>
+        <input type="hidden" id="reg-confirmed-fullname">
+        <input type="hidden" id="reg-confirmed-referrer">
+        <input type="hidden" id="reg-confirmed-sport">
+        <input type="hidden" id="reg-dob">
+        <div class="label">フルネーム（カタカナ）確認</div>
+        <input type="text" id="reg-fullname-confirm" placeholder="例：カシワタロウ">
+        <div id="reg-fullname-error" style="display:none;color:#e53935;font-size:12px;margin-top:4px">カタカナでフルネーム（4文字以上）を入力してください</div>
+        <div class="label">呼ばれたい名前（ニックネーム）</div>
+        <input type="text" id="reg-nickname" placeholder="例：コンペイ">
+        <div class="label">生年月日</div>
+        <div style="display:flex;gap:8px">
+          <select id="reg-dob-y" style="flex:2" onchange="checkMinor()"><option value="">年</option></select>
+          <select id="reg-dob-m" style="flex:1" onchange="checkMinor()">
+            <option value="">月</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+          <select id="reg-dob-d" style="flex:1" onchange="checkMinor()"><option value="">日</option></select>
+        </div>
+        <div id="minor-consent-area" class="minor-consent">
+          <div style="font-size:14px;font-weight:700;color:#f57c00;margin-bottom:8px">⚠️ 18歳未満の方は保護者の同意が必要です</div>
+          <div class="label">緊急連絡先（続柄）</div>
+          <select id="reg-emergency-rel"><option value="">選択してください</option><option value="父">父</option><option value="母">母</option><option value="配偶者">配偶者</option><option value="兄弟姉妹">兄弟姉妹</option><option value="祖父母">祖父母</option><option value="その他">その他</option></select>
+          <div class="label">緊急連絡先（電話番号）</div>
+          <input type="tel" id="reg-emergency-tel" placeholder="例：09012345678">
+          <div class="consent-check"><input type="checkbox" id="reg-minor-consent"><label for="reg-minor-consent">保護者の同意を得ています</label></div>
+        </div>
+        <div class="label">性別</div>
+        <select id="reg-gender"><option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option></select>
+        <div class="label">在住エリア</div>
+        <select id="reg-area"><option value="">選択してください</option><option value="柏市">柏市</option><option value="流山市">流山市</option><option value="我孫子市">我孫子市</option><option value="松戸市">松戸市</option><option value="野田市">野田市</option><option value="八千代市">八千代市</option><option value="佐倉市">佐倉市</option><option value="船橋市">船橋市</option><option value="千葉市">千葉市</option><option value="その他">その他</option></select>
+        <div class="label">参加予定のスポーツ</div>
+        <select id="reg-sport"><option value="">選択してください</option><option value="バスケットボール">バスケ</option><option value="バレーボール">バレー</option><option value="バドミントン">バド</option><option value="バスケ＋バレー">バスケ＋バレー</option><option value="バスケ＋バド">バスケ＋バド</option><option value="バレー＋バド">バレー＋バド</option><option value="全て">全て</option></select>
+        <div class="consent-box" style="max-height:200px;overflow-y:scroll;">
+          <div style="font-weight:700;font-size:13px;color:#222;margin-bottom:8px">■ 個人情報の取り扱いについて</div>
+          収集した個人情報は出席確認・緊急連絡・参加履歴管理・スケジュール連絡・紹介制度運用の目的にのみ使用します。法令に基づく場合を除き第三者へ提供しません。Google スプレッドシートにて管理し、アクセス権限を運営者に限定しています。
+          <div style="font-weight:700;font-size:13px;color:#222;margin-top:16px;margin-bottom:8px">■ 免責事項</div>
+          活動中の怪我・事故について運営は応急処置に努めますが損害責任を負いかねます。施設内の盗難・紛失も同様です。他参加者へのMLM・宗教等の勧誘行為が確認された場合、即時退会となります。
+          <div style="text-align:right;margin-top:12px;font-size:11px;color:#aaa">カシワのBUKATSU 運営事務局</div>
+        </div>
+        <div class="consent-check"><input type="checkbox" id="reg-consent"><label for="reg-consent">個人情報の取り扱い・免責事項に同意します</label></div>
+        <button class="btn btn-primary" id="reg-submit-btn" onclick="registerAttendee()">登録する</button>
+        <button class="btn btn-secondary" style="margin-top:8px" onclick="resetRegFlow()">最初からやり直す</button>
+      </div>
+    </div>
   </div>
-
-  <!-- マイページ -->
-  <div id="mypage-area" style="display:none">
-    <!-- 会員カード -->
-    <div class="member-card" id="member-card-el">
+  <div id="mypage-main-area" style="display:none">
+    <div id="mypage-message-banner" style="display:none;background:linear-gradient(135deg,#e53935,#c62828);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px;cursor:pointer" onclick="openMessageList()">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px">✉️</div>
+        <div><div style="font-size:14px;font-weight:700">未読メッセージがあります</div><div style="font-size:12px;opacity:0.8;margin-top:2px" id="mypage-message-banner-count"></div></div>
+        <div style="margin-left:auto;font-size:18px">›</div>
+      </div>
+    </div>
+    <div class="member-card">
+      <div class="rank-stars" id="mc-card-stars"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
         <div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px">ログイン中</div>
-          <div class="member-card-name" id="mc-name"></div>
-          <div class="member-card-type" id="mc-type"></div>
-          <div class="member-badge" id="mc-number"></div>
+          <div class="member-card-label">ログイン中</div>
+          <div class="member-card-name" id="mypage-logged-name"></div>
+          <div class="member-card-type" id="mypage-logged-type"></div>
+          <div class="member-badge" id="mypage-member-number"></div>
         </div>
-        <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+          <button class="logout-btn" onclick="mypageLogout()">ログアウト</button>
+          <button class="open-card-btn" onclick="openMemberCard()">会員証を開く</button>
+        </div>
+      </div>
+      <div id="upgrade-banner" style="display:none;margin-top:12px;position:relative;z-index:1">
+        <button onclick="openUpgradeModal()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">⬆️ プランをアップグレードする</button>
       </div>
     </div>
-
-    <!-- スポログ -->
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>スポログ</div>
-      <div class="stats-row">
-        <div class="stat-box">
-          <div class="stat-val" id="total-count">-</div>
-          <div class="stat-label">累計参加</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-val" id="month-count">-</div>
-          <div class="stat-label">今月</div>
-        </div>
-        <div class="stat-box ticket-box" onclick="alert('チケット機能はまもなく対応！')">
-          <div class="stat-val" id="ticket-count">-</div>
-          <div class="stat-label">チケット 🎟</div>
-        </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-total-count">0</div><div style="font-size:10px;color:#888;margin-top:2px">累計参加</div></div>
+        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-month-count">0</div><div style="font-size:10px;color:#888;margin-top:2px">今月</div></div>
+        <div id="ticket-stat-box" onclick="openTicketModal()" style="flex:1;background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(74,197,80,0.15);cursor:pointer"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-ticket-count">0枚</div><div style="font-size:10px;color:#888;margin-top:2px">チケット 🎟</div></div>
       </div>
-      <div id="progress-area"></div>
+      <div id="mypage-progress-area"></div>
     </div>
-
-    <!-- 予約一覧 -->
+    <div id="next-member-card" class="next-member-card" style="display:none">
+      <div class="card-title"><div class="card-title-dot"></div>次回の参加予定メンバー</div>
+      <div id="next-member-info" style="font-size:12px;color:#888;margin-bottom:10px"></div>
+      <div id="next-member-list"></div>
+      <div id="next-member-count" style="font-size:11px;color:#aaa;margin-top:8px;text-align:right"></div>
+    </div>
     <div class="card">
-      <div class="card-title"><div class="card-title-dot"></div>予約一覧</div>
-      <div id="reservation-list"><div class="loading">読み込み中...</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReservationAccordion()">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>予約一覧</div>
+        <div id="reservation-accordion-arrow" style="font-size:18px;color:#aaa">›</div>
+      </div>
+      <div id="reservation-accordion-content" style="display:none;margin-top:14px">
+        <div id="mypage-reservation-list"><div class="empty">読み込み中...</div></div>
+        <div style="text-align:center;margin-top:12px"><span onclick="toggleReservationAccordion()" style="font-size:13px;color:#bbb;cursor:pointer">閉じる</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleScheduleAccordion()">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>参加予約する</div>
+        <div id="schedule-accordion-arrow" style="font-size:18px;color:#aaa">›</div>
+      </div>
+      <div id="schedule-accordion-content" style="display:none;margin-top:14px">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button onclick="showScheduleMode('single')" id="mode-single-btn" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">個別予約</button>
+          <button onclick="showScheduleMode('bulk')" id="mode-bulk-btn" style="flex:1;padding:10px;background:#f0f4f8;color:#555;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">一括予約</button>
+        </div>
+        <div id="mypage-schedule-list"><div class="empty">読み込み中...</div></div>
+        <div id="bulk-reserve-area" style="display:none;">
+          <div id="bulk-schedule-list"><div class="empty">読み込み中...</div></div>
+          <button onclick="submitBulkReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">✅ 選択した日程を予約する</button>
+        </div>
+        <div style="text-align:center;margin-top:12px"><span onclick="toggleScheduleAccordion()" style="font-size:13px;color:#bbb;cursor:pointer">閉じる</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>問い合わせはこちら</div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1;text-align:center;background:#f0fdf4;border:1px solid rgba(74,197,80,0.2);border-radius:14px;padding:16px;opacity:0.5"><div style="font-size:32px;margin-bottom:6px">💬</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">公式LINE</div><div style="font-size:11px;color:#888;margin-top:2px">準備中</div></div>
+        <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="flex:1;text-align:center;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:16px;text-decoration:none"><div style="font-size:32px;margin-bottom:6px">📢</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></a>
+      </div>
     </div>
   </div>
 </div>
-
+<!-- お友達紹介 -->
+<div id="section-referral" class="section">
+  <div id="referral-campaign-pop"></div>
+  <div id="referral-unauthed-area" class="card">
+    <div style="text-align:center;color:#e53935;font-weight:700;margin-bottom:14px;font-size:15px;">お友達紹介を利用するにはログインしてください</div>
+    <div class="label">フルネーム（カタカナ）</div>
+    <input type="text" id="ref-login-fullname" placeholder="例：カシワタロウ" autocomplete="username">
+    <div class="label">生年月日（YYYYMMDD）</div>
+    <input type="password" id="ref-login-dob" placeholder="例：20060401" maxlength="8" autocomplete="current-password">
+    <button class="btn btn-primary" onclick="referralLogin()">ログイン</button>
+    <div id="referral-login-error" style="display:none;color:#e53935;font-size:14px;margin-top:8px;text-align:center">フルネームまたは生年月日が正しくありません</div>
+  </div>
+  <div id="referral-authed-area" style="display:none;">
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>お友達を紹介する（体験仮登録）</div>
+      <div class="label">紹介するお友達のフルネーム（カタカナ）</div>
+      <input type="text" id="ref-friend-fullname" placeholder="例：ヤマダタロウ">
+      <div class="label">参加予定スポーツの経験</div>
+      <select id="ref-friend-exp"><option value="">選択してください</option><option value="初心者">初心者</option><option value="部活動経験あり（2年以上）">部活動経験あり（2年以上）</option><option value="社会人以降で経験あり（2年以上）">社会人以降で経験あり（2年以上）</option></select>
+      <div class="label">初参加予定のスケジュール</div>
+      <select id="ref-friend-schedule"><option value="">スケジュールを読み込み中...</option></select>
+      <button class="btn btn-primary" onclick="submitReferral()">紹介する</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- チケットモーダル -->
+<div id="ticket-modal-overlay" style="display:none" class="ticket-overlay">
+  <div class="ticket-blur-bg" onclick="closeTicketModal()"></div>
+  <div class="ticket-modal">
+    <div style="font-size:72px;margin-bottom:8px;line-height:1">🎟</div>
+    <div style="font-size:22px;font-weight:700;color:#222;margin-bottom:4px">無料チケット</div>
+    <div style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.8" id="ticket-modal-count">0枚 所持</div>
+    <div style="font-size:20px;font-weight:700;color:#222;background:#f8f8f8;border-radius:12px;padding:12px;margin-bottom:20px" id="ticket-modal-name"></div>
+    <div style="font-size:13px;color:#f57c00;background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:20px;line-height:1.8;font-weight:600">⚠️ このチケットを使うときは<br>運営スタッフに画面を見せて<br>「使う」ボタンを押してもらってください</div>
+    <div class="ticket-btn-row">
+      <button class="ticket-btn-use" onclick="useTicketModal()">使う</button>
+      <button class="ticket-btn-close" onclick="closeTicketModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+<!-- 会員証モーダル -->
+<div id="member-card-overlay" style="display:none" class="ticket-overlay">
+  <div class="ticket-blur-bg" onclick="closeMemberCard()"></div>
+  <div class="member-card-modal">
+    <div class="rank-stars" id="mc-modal-stars"></div>
+    <div style="position:relative;z-index:1">
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:16px">KASHIWA no BUKATSU</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:4px">会員名</div>
+      <div style="font-size:26px;font-weight:800;margin-bottom:12px" id="card-modal-name"></div>
+      <div style="display:flex;gap:12px;margin-bottom:12px">
+        <div style="flex:1;background:rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center"><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px">会員種別</div><div style="font-size:15px;font-weight:700" id="card-modal-type"></div></div>
+        <div onclick="openRankInfo()" style="flex:1;background:rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px">ランク ›</div><div style="font-size:15px;font-weight:700" id="card-modal-rank"></div></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:16px">
+        <div style="flex:1;background:rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center"><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px">登録スポーツ</div><div style="font-size:13px;font-weight:700" id="card-modal-sport"></div></div>
+        <div style="flex:1;background:rgba(255,255,255,0.1);border-radius:12px;padding:12px;text-align:center"><div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:4px">性別</div><div style="font-size:13px;font-weight:700" id="card-modal-gender"></div></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:12px;margin-bottom:20px;text-align:center">
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:6px;letter-spacing:1px">MEMBER NUMBER</div>
+        <div style="font-size:22px;font-weight:800;letter-spacing:3px;color:#fff" id="card-modal-number"></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="openEditProfile()" style="flex:1;padding:12px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">⚙️ 情報を編集</button>
+        <button onclick="closeMemberCard()" style="flex:1;padding:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- プロフィール編集モーダル -->
+<div id="edit-profile-overlay" style="display:none" class="ticket-overlay">
+  <div class="ticket-blur-bg" onclick="closeEditProfile()"></div>
+  <div class="ticket-modal" style="max-height:90vh;overflow-y:auto;text-align:left;">
+    <div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:20px;text-align:center">プロフィール編集</div>
+    <div class="label">ニックネーム</div><input type="text" id="edit-nickname" placeholder="例：コンペイ">
+    <div class="label">在住エリア</div>
+    <select id="edit-area"><option value="">選択してください</option><option value="柏市">柏市</option><option value="流山市">流山市</option><option value="我孫子市">我孫子市</option><option value="松戸市">松戸市</option><option value="野田市">野田市</option><option value="八千代市">八千代市</option><option value="佐倉市">佐倉市</option><option value="船橋市">船橋市</option><option value="千葉市">千葉市</option><option value="その他">その他</option></select>
+    <div class="label">参加スポーツ</div>
+    <select id="edit-sport"><option value="">選択してください</option><option value="バスケットボール">バスケ</option><option value="バレーボール">バレー</option><option value="バドミントン">バド</option><option value="バスケ＋バレー">バスケ＋バレー</option><option value="バスケ＋バド">バスケ＋バド</option><option value="バレー＋バド">バレー＋バド</option><option value="全て">全て</option></select>
+    <div class="label">性別</div>
+    <select id="edit-gender"><option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option></select>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveEditProfile()" style="flex:1;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">保存する</button>
+      <button onclick="closeEditProfile()" style="flex:1;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;">キャンセル</button>
+    </div>
+  </div>
+</div>
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
-const SPORT_ICON = {'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0;
 
-let currentUser = null;
-
-// GAS呼び出し共通関数
-async function callGAS(func, ...args) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ func, args }),
-  });
-  const json = await res.json();
-  if (json.status === 'error') throw new Error(json.message);
+async function callGAS(func,...args){
+  const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
+  const json=await res.json();
+  if(json.status==='error')throw new Error(json.message);
   return json.data;
 }
+function formatDate(d){return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
+function getDow(s){return['日','月','火','水','木','金','土'][new Date(s.replace(/\//g,'-')).getDay()];}
 
-function formatDate(d) {
-  return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');
-}
-function getDow(dateStr) {
-  const d = new Date(dateStr.replace(/\//g,'-'));
-  return ['日','月','火','水','木','金','土'][d.getDay()];
-}
-
-// 初期化
-window.addEventListener('load', () => {
-  // 今日の日付表示
-  document.getElementById('today-info').textContent = formatDate(new Date());
-
-  // スプラッシュ
-  const splash = document.getElementById('splash');
-  setTimeout(() => {
-    splash.style.opacity = '0';
-    setTimeout(() => {
-      splash.style.display = 'none';
-      // ログイン状態チェック
-      const saved = localStorage.getItem('bukatsu_user');
-      if (saved) {
-        try {
-          currentUser = JSON.parse(saved);
-          showMypage();
-        } catch(e) {
-          showLogin();
-        }
-      } else {
-        showLogin();
-      }
-    }, 600);
-  }, 1500);
+window.addEventListener('load',()=>{
+  initDobSelects();
+  document.getElementById('today-info').textContent=formatDate(new Date());
+  const splash=document.getElementById('splash');
+  setTimeout(()=>{splash.style.opacity='0';setTimeout(()=>{splash.style.display='none';const saved=localStorage.getItem('bukatsu_user');if(saved){try{mypageCurrentUser=JSON.parse(saved);}catch(e){}}loadHomeData();},600);},1800);
 });
 
-function showLogin() {
-  document.getElementById('login-area').style.display = 'block';
-  document.getElementById('mypage-area').style.display = 'none';
+function showTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['home','mypage','referral'][i]===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('section-'+t).classList.add('active');
+  if(t==='home')loadHomeData();
+  if(t==='mypage')initMypageTab();
+  if(t==='referral')initReferralTab();
 }
 
-function showMypage() {
-  document.getElementById('login-area').style.display = 'none';
-  document.getElementById('mypage-area').style.display = 'block';
-
-  // 会員カード表示
-  document.getElementById('mc-name').textContent = currentUser.nickname + ' さん';
-  document.getElementById('mc-type').textContent = currentUser.type || '一般';
-  document.getElementById('mc-number').textContent = currentUser.memberNumber || '';
-
-  loadMypageData();
-}
-
-async function doLogin() {
-  const fullname = document.getElementById('login-fullname').value.trim();
-  const dob = document.getElementById('login-dob').value.trim();
-  const errEl = document.getElementById('login-error');
-  errEl.style.display = 'none';
-
-  if (!fullname) return alert('フルネームを入力してください');
-  if (dob.length !== 8) return alert('生年月日は8桁で入力してください');
-
-  const btn = document.querySelector('#login-area .btn-primary');
-  btn.textContent = 'ログイン中...';
-  btn.disabled = true;
-
-  try {
-    const data = await callGAS('loginAttendee', fullname, dob);
-    if (!data) {
-      errEl.style.display = 'block';
-      return;
+async function loadHomeData(){
+  try{
+    const d=await callGAS('getReceptionHomeData');
+    const today=formatDate(new Date());
+    if(d.todaySchedule){
+      const s=d.todaySchedule;
+      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div></div></div>';
+      document.getElementById('home-today-card').style.display='block';
+      document.getElementById('home-countdown-card').style.display='none';
+    }else{
+      document.getElementById('home-today-card').style.display='none';
+      let earliest=null;
+      if(d.nextEvents)for(const[sp,ev]of Object.entries(d.nextEvents)){if(!earliest||ev.date<earliest.date)earliest={sport:sp,...ev};}
+      if(earliest){
+        window._countdownEvent=earliest;
+        const diff=Math.ceil((new Date(earliest.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/86400000);
+        document.getElementById('home-countdown-content').innerHTML='<div style="font-size:13px;color:#888;margin-bottom:12px">次の開催まで</div><div style="display:flex;align-items:baseline;justify-content:center;gap:4px;margin-bottom:12px"><div style="font-size:56px;font-weight:900;color:#1a1a2e;line-height:1">'+diff+'</div><div style="font-size:16px;color:#888">日後</div></div><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px">'+(SPORT_ICON[earliest.sport]||'')+' '+earliest.sport+'</div><div style="font-size:13px;color:#888">'+earliest.date+'（'+getDow(earliest.date)+'）'+earliest.time+' ／ '+earliest.place+'</div>';
+        document.getElementById('home-countdown-card').style.display='block';
+      }else document.getElementById('home-countdown-card').style.display='none';
     }
-    currentUser = {
-      fullname: data[1],
-      nickname: data[0],
-      memberSport: data[5] || '全て',
-      memberNumber: (data[9]||'') + (data[10]||''),
-      type: data[2] || '一般',
-      gender: data[14] || ''
-    };
-    localStorage.setItem('bukatsu_user', JSON.stringify(currentUser));
-    document.getElementById('login-fullname').value = '';
-    document.getElementById('login-dob').value = '';
-    showMypage();
-  } catch(e) {
-    alert('エラー：' + e.message);
-  } finally {
-    btn.textContent = 'ログイン';
-    btn.disabled = false;
+    const nextEl=document.getElementById('home-next-events');
+    const sorted=Object.entries(d.nextEvents||{}).filter(([,ev])=>ev&&ev.date).sort((a,b)=>a[1].date>b[1].date?1:-1);
+    nextEl.innerHTML=sorted.length?sorted.map(([sport,ev])=>'<div class="next-event-row"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:24px">'+(SPORT_ICON[sport]||'')+'</div><div><div style="font-size:14px;font-weight:700">'+sport+'</div><div style="font-size:13px;color:#888">'+ev.date+' '+ev.time+' ／ '+ev.place+'</div></div></div><div style="font-size:13px;font-weight:700;color:#555;white-space:nowrap">第'+ev.count+'回</div></div>').join(''):'<div class="empty">予定がありません</div>';
+  }catch(e){document.getElementById('home-next-events').innerHTML='<div class="empty">読み込みエラー</div>';}
+}
+
+function toggleCountdownDetail(){
+  const el=document.getElementById('home-countdown-detail');
+  el.style.display=el.style.display==='none'?'block':'none';
+  if(el.style.display==='block'&&window._countdownEvent){
+    const e=window._countdownEvent;
+    callGAS('getReservations',e.date,e.sport).then(r=>{
+      const count=r.filter(x=>(x[7]||'⭕')!=='❌').length;
+      el.innerHTML='<a href="https://maps.google.com/?q=沼南体育館+柏市" target="_blank" style="display:flex;align-items:center;gap:8px;background:#f0f4f8;border-radius:12px;padding:14px;text-decoration:none;color:#1a1a2e;margin-bottom:16px"><div style="font-size:24px">📍</div><div><div style="font-size:14px;font-weight:700">沼南体育館</div><div style="font-size:12px;color:#888">Googleマップで開く</div></div><div style="margin-left:auto;font-size:18px;color:#aaa">›</div></a><div style="background:#f0fdf4;border:1px solid rgba(74,197,80,0.2);border-radius:12px;padding:14px;text-align:center"><div style="font-size:12px;color:#888;margin-bottom:4px">参加予定人数</div><div style="font-size:28px;font-weight:800;color:#1a1a2e">'+count+'<span style="font-size:14px;font-weight:400;color:#888"> 人</span></div></div>';
+    }).catch(()=>{el.innerHTML='<div style="color:#bbb;font-size:14px">読み込みエラー</div>';});
   }
 }
 
-function doLogout() {
-  currentUser = null;
-  localStorage.removeItem('bukatsu_user');
-  showLogin();
+function toggleAccordionHome(id,arrowId){
+  const c=document.getElementById(id),a=document.getElementById(arrowId);
+  c.style.display=c.style.display==='none'?'block':'none';
+  a.textContent=c.style.display==='none'?'›':'∨';
 }
 
-async function loadMypageData() {
-  document.getElementById('reservation-list').innerHTML = '<div class="loading">読み込み中...</div>';
+function initMypageTab(){
+  if(mypageCurrentUser)showMypageMain();
+  else{document.getElementById('mypage-login-area').style.display='block';document.getElementById('mypage-main-area').style.display='none';}
+}
+function toggleRegisterAccordion(){const a=document.getElementById('accordion-register-area');a.style.display=a.style.display==='none'?'block':'none';}
 
-  try {
-    const d = await callGAS('getMyPageData', currentUser.fullname);
+async function mypageLogin(){
+  const fullname=document.getElementById('mypage-fullname').value.trim();
+  const dob=document.getElementById('mypage-dob').value.trim();
+  document.getElementById('mypage-login-error').style.display='none';
+  if(!fullname)return alert('フルネームを入力してください');
+  if(dob.length!==8)return alert('生年月日は8桁で入力してください');
+  const btn=document.querySelector('#mypage-login-area .btn-primary');
+  btn.textContent='ログイン中...';btn.disabled=true;
+  try{
+    const data=await callGAS('loginAttendee',fullname,dob);
+    if(!data){document.getElementById('mypage-login-error').style.display='block';return;}
+    mypageCurrentUser={fullname:data[1],nickname:data[0],memberSport:data[5]||'全て',memberNumber:(data[9]||'')+(data[10]||''),type:data[2]||'一般',gender:data[14]||''};
+    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    document.getElementById('mypage-fullname').value='';document.getElementById('mypage-dob').value='';
+    showMypageMain();
+  }catch(e){alert('エラー：'+e.message);}
+  finally{btn.textContent='ログイン';btn.disabled=false;}
+}
 
-    // スポログ
-    document.getElementById('total-count').textContent = d.totalCount;
-    document.getElementById('month-count').textContent = d.monthCount;
+function mypageLogout(){
+  mypageCurrentUser=null;localStorage.removeItem('bukatsu_user');
+  document.getElementById('mypage-login-area').style.display='block';
+  document.getElementById('mypage-main-area').style.display='none';
+}
 
-    let tickets = d.ticketCount || 0;
-    let progress = d.ticketProgress || 0;
-    document.getElementById('ticket-count').textContent = tickets + '枚';
+function showMypageMain(){
+  document.getElementById('mypage-login-area').style.display='none';
+  document.getElementById('mypage-main-area').style.display='block';
+  document.getElementById('mypage-logged-name').textContent=mypageCurrentUser.nickname+' さん';
+  const tl={'みんB':'みんなのBUKATSU会員','カシワ':'カシワ会員','応援団':'応援団会員'};
+  document.getElementById('mypage-logged-type').textContent=tl[mypageCurrentUser.type]||mypageCurrentUser.type||'一般';
+  document.getElementById('mypage-member-number').textContent=mypageCurrentUser.memberNumber||'';
+  const cardEl=document.querySelector('.member-card');
+  const tcm={'応援団':'type-ouendan','カシワ':'type-kashiwa','みんB':'type-minnb','運営':'type-unei','特別会員':'type-special'};
+  if(cardEl){cardEl.classList.remove('type-ouendan','type-kashiwa','type-minnb','type-unei','type-special');cardEl.classList.add(tcm[mypageCurrentUser.type]||'type-kashiwa');}
+  const ub=document.getElementById('upgrade-banner');
+  if(ub)ub.style.display=['カシワビジター','ビジター','一般'].includes(mypageCurrentUser.type)?'block':'none';
+  callGAS('getUnreadMessageCount',mypageCurrentUser.fullname).then(c=>{
+    const b=document.getElementById('mypage-message-banner');
+    if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}
+  }).catch(()=>{});
+  loadMypageData(true,true);
+}
 
-    // プログレスバー
-    const pct = Math.round(progress / 10 * 100);
-    const remaining = 10 - progress;
-    document.getElementById('progress-area').innerHTML =
-      '<div style="font-size:13px;color:#888;margin-bottom:6px">次の無料チケットまで</div>' +
-      '<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px">' +
-        '<span>' + progress + '/10回</span>' +
-        '<span>🎟 あと' + remaining + '回でGET！</span>' +
-      '</div>';
+function getMemberRank(n){return n>=50?'プラチナ':n>=30?'ゴールド':n>=10?'シルバー':'ブロンズ';}
 
-    // 予約一覧
-    const reservations = d.myReservations || [];
-    const resEl = document.getElementById('reservation-list');
-    if (!reservations.length) {
-      resEl.innerHTML = '<div class="empty">予約がありません</div>';
-    } else {
-      resEl.innerHTML = reservations.map(r =>
-        '<div class="reserve-item">' +
-          '<div style="font-size:15px;font-weight:700">' + (SPORT_ICON[r[2]]||'') + ' ' + r[2] + '</div>' +
-          '<div style="font-size:13px;color:#888;margin-top:2px">' + r[1] + '（' + getDow(r[1]) + '） ／ ' + r[3] + '</div>' +
-          '<div style="font-size:12px;margin-top:4px;color:#555">' + (r[7]||'⭕') + ' ' + ({'⭕':'参加','△':'未定','❌':'不参加'}[r[7]]||'参加') + '</div>' +
-        '</div>'
-      ).join('');
+async function loadMypageData(checkNotice,updateRankCache){
+  document.getElementById('mypage-reservation-list').innerHTML='<div class="empty">読み込み中...</div>';
+  document.getElementById('mypage-schedule-list').innerHTML='<div class="empty">読み込み中...</div>';
+  try{
+    const d=await callGAS('getMyPageData',mypageCurrentUser.fullname);
+    if(checkNotice&&d.referralNotice)showReferralNoticePopup(d.referralNotice);
+    let progress=d.ticketProgress||0,tickets=d.ticketCount||0;
+    document.getElementById('mypage-total-count').textContent=d.totalCount;
+    document.getElementById('mypage-month-count').textContent=d.monthCount;
+    currentTicketCount=tickets;
+    document.getElementById('mypage-ticket-count').textContent=tickets+'枚';
+    const tb=document.getElementById('ticket-stat-box');
+    if(tickets>0){tb.style.background='linear-gradient(135deg,#e8f5e9,#c8e6c9)';tb.style.border='2px solid #4CAF50';}
+    else{tb.style.background='linear-gradient(135deg,#f0fdf4,#e8f5e9)';tb.style.border='1px solid rgba(74,197,80,0.15)';}
+    const rank=d.rank||getMemberRank(d.totalCount);
+    if(updateRankCache){mypageCurrentUser.rank=rank;localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));}
+    applyRankStyle(document.querySelector('.member-card'),'mc-card-stars',rank);
+    const pct=Math.round(progress/10*100),remaining=10-progress,isMaxed=tickets>0;
+    const barStyle=isMaxed?'width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite':'width:'+pct+'%';
+    document.getElementById('mypage-progress-area').innerHTML=
+      '<div style="font-size:13px;color:'+(isMaxed?'#b8860b':'#888')+';margin-bottom:6px;font-weight:'+(isMaxed?'700':'400')+'">'+(isMaxed?'✨ 無料チケットあり！タップして使おう！':'次の無料チケットまで')+'</div>'+
+      '<div class="progress-bar-bg" style="'+(isMaxed?'box-shadow:0 0 10px rgba(255,215,0,0.7)':'')+'"><div class="progress-bar-fill" style="'+barStyle+'"></div></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>'+(isMaxed?'🏅 チケット '+tickets+'枚！':progress+'/10回')+'</span><span>🎟 10回で1枚GET！</span></div>'+
+      '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:'+(isMaxed?'#b8860b':'#f57c00')+'">'+(isMaxed?'次回参加が無料になります🎉':'🎟 あと'+remaining+'回でチケット1枚！')+'</div>'+
+      '<div style="display:flex;justify-content:center;gap:20px;margin-top:12px"><div onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;text-decoration:underline;cursor:pointer;">スポログの貯め方 →</div><div onclick="openRankInfo()" style="font-size:13px;color:#1a3a5c;text-decoration:underline;cursor:pointer;">ランクについて →</div></div>';
+    const reservations=await callGAS('getMyReservations',mypageCurrentUser.fullname).catch(()=>[]);
+    renderReservationList(reservations);
+    const schedules=await callGAS('getUpcomingSchedules',mypageCurrentUser.memberSport||'全て').catch(()=>[]);
+    renderScheduleList(schedules);
+    if(schedules&&schedules.length){
+      const first=schedules[0];
+      const nm=await callGAS('getReservations',first[0],first[4]).catch(()=>[]);
+      const active=nm.filter(r=>(r[7]||'⭕')!=='❌');
+      const card=document.getElementById('next-member-card');
+      if(active.length>0){
+        document.getElementById('next-member-info').textContent=(SPORT_ICON[first[4]]||'')+' '+first[4]+' ／ '+first[0]+'（'+getDow(first[0])+'）';
+        document.getElementById('next-member-list').innerHTML=active.map(r=>'<span class="member-chip" style="'+(r[4]===mypageCurrentUser.fullname?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(r[7]||'⭕')+' '+r[5]+(r[4]===mypageCurrentUser.fullname?' 👈':'')+'</span>').join('');
+        document.getElementById('next-member-count').textContent=active.length+'人参加予定';
+        card.style.display='block';
+      }else card.style.display='none';
     }
+  }catch(e){document.getElementById('mypage-progress-area').innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';}
+}
 
-  } catch(e) {
-    document.getElementById('progress-area').innerHTML = '<div style="color:#e53935;font-size:13px">エラー：' + e.message + '</div>';
-    document.getElementById('reservation-list').innerHTML = '<div style="color:#e53935;font-size:13px;text-align:center;padding:16px">読み込みエラー</div>';
-  }
+function renderReservationList(reservations){
+  const el=document.getElementById('mypage-reservation-list');
+  if(!reservations||!reservations.length){el.innerHTML='<div class="empty">予約がありません</div>';return;}
+  el.innerHTML=reservations.map((r,idx)=>{
+    const st=r[7]||'⭕',sl={'⭕':'参加','△':'未定','❌':'不参加'};
+    return '<div style="padding:12px 0;border-bottom:1px solid #f0f4f8"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[r[2]]||'')+' '+r[2]+'</div><div style="font-size:13px;color:#888;margin-top:2px">'+r[1]+'（'+getDow(r[1])+'） ／ '+r[3]+'</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:#888" id="st-label-'+idx+'">'+st+' '+sl[st]+'</span><button onclick="toggleReserveEdit('+idx+')" style="background:#f0f4f8;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;color:#555">変更</button></div></div><div id="reserve-edit-'+idx+'" style="display:none;margin-top:10px;"><div style="display:flex;gap:6px;margin-bottom:8px"><button class="status-sel-btn '+(st==='⭕'?'sel-maru':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'⭕\',this,'+idx+')">⭕<div style="font-size:10px;margin-top:2px">参加</div></button><button class="status-sel-btn '+(st==='△'?'sel-sankaku':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'△\',this,'+idx+')">△<div style="font-size:10px;margin-top:2px">未定</div></button><button class="status-sel-btn '+(st==='❌'?'sel-batsu':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'❌\',this,'+idx+')">❌<div style="font-size:10px;margin-top:2px">不参加</div></button></div><div style="display:flex;gap:8px"><button onclick="saveSingleStatus(\''+r[1]+'\',\''+r[2]+'\','+idx+')" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">💾 保存</button><button onclick="cancelSingleReserve(\''+r[1]+'\',\''+r[2]+'\')" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">🗑 キャンセル</button></div></div></div>';
+  }).join('');
+}
+
+function renderScheduleList(schedules){
+  const el=document.getElementById('mypage-schedule-list');
+  if(!schedules||!schedules.length){el.innerHTML='<div class="empty">予定がありません</div>';return;}
+  el.innerHTML=schedules.map((s,i)=>'<div class="schedule-item" onclick="toggleMypageSchedule('+i+',\''+s[0]+'\',\''+s[4]+'\',\''+s[2]+'\')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[s[4]]||'')+' '+s[4]+'</div><div style="font-size:13px;color:#888;margin-top:4px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div></div><div style="font-size:20px;color:#aaa" id="sched-arrow-'+i+'">›</div></div><div id="mypage-detail-'+i+'" style="display:none;margin-top:12px"></div></div>').join('');
+}
+
+function toggleReserveEdit(idx){const el=document.getElementById('reserve-edit-'+idx);if(el)el.style.display=el.style.display==='block'?'none':'block';}
+function setPendingStatus(key,status,btn,idx){
+  if(!window._pendingStatuses)window._pendingStatuses={};
+  window._pendingStatuses[key]=status;
+  btn.parentElement.querySelectorAll('.status-sel-btn').forEach(b=>b.classList.remove('sel-maru','sel-sankaku','sel-batsu'));
+  if(status==='⭕')btn.classList.add('sel-maru');else if(status==='△')btn.classList.add('sel-sankaku');else btn.classList.add('sel-batsu');
+  const label=document.getElementById('st-label-'+idx);if(label)label.textContent=status+' '+{'⭕':'参加','△':'未定','❌':'不参加'}[status];
+}
+async function saveSingleStatus(date,sport,idx){
+  if(!mypageCurrentUser)return;
+  const status=(window._pendingStatuses||{})[date+'_'+sport];
+  if(!status)return alert('ステータスを選択してください');
+  try{await callGAS('updateReservationStatus',date,sport,mypageCurrentUser.fullname,status);document.getElementById('reserve-edit-'+idx).style.display='none';loadMypageData();}catch(e){alert('エラー：'+e.message);}
+}
+async function cancelSingleReserve(date,sport){
+  if(!mypageCurrentUser)return;if(!confirm('この予約をキャンセルしますか？'))return;
+  try{await callGAS('cancelReservation',date,sport,mypageCurrentUser.fullname);loadMypageData();}catch(e){alert('エラー：'+e.message);}
+}
+
+async function toggleMypageSchedule(i,date,sport,place){
+  const detail=document.getElementById('mypage-detail-'+i),arrow=document.getElementById('sched-arrow-'+i);
+  if(detail.style.display==='block'){detail.style.display='none';arrow.textContent='›';return;}
+  detail.style.display='block';arrow.textContent='∨';
+  try{
+    const reservations=await callGAS('getReservations',date,sport);
+    const myRes=reservations.find(r=>r[4]===mypageCurrentUser.fullname);
+    if(myRes){
+      const st=myRes[7]||'⭕';
+      detail.innerHTML='<div style="font-size:14px;color:#555;margin-bottom:10px">予約済み：<strong>'+st+'</strong></div><button class="view-members-btn" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')">👥 参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div><button class="btn btn-danger" style="font-size:14px;padding:12px;margin-top:10px" onclick="mypageCancelReserve(\''+date+'\',\''+sport+'\')">キャンセルする</button>';
+    }else{
+      detail.innerHTML='<div style="font-size:13px;color:#888;margin-bottom:10px">参加ステータスを選んで予約</div><div class="status-select-row"><button class="status-sel-btn" id="sel-'+i+'-maru" onclick="selectStatus('+i+',\'⭕\')">⭕<div style="font-size:11px;color:#888;margin-top:4px">参加</div></button><button class="status-sel-btn" id="sel-'+i+'-sankaku" onclick="selectStatus('+i+',\'△\')">△<div style="font-size:11px;color:#888;margin-top:4px">未定</div></button><button class="status-sel-btn" id="sel-'+i+'-batsu" onclick="selectStatus('+i+',\'❌\')">❌<div style="font-size:11px;color:#888;margin-top:4px">不参加</div></button></div><button id="reserve-btn-'+i+'" class="btn btn-primary" style="font-size:15px;padding:14px;margin-top:8px" onclick="mypageAddReserve(\''+date+'\',\''+sport+'\',\''+place+'\','+i+')">予約する</button><button class="view-members-btn" style="margin-top:8px" onclick="loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')">👥 参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
+      selectStatus(i,'⭕');
+    }
+  }catch(e){detail.innerHTML='<div class="empty">読み込みエラー</div>';}
+}
+
+function selectStatus(i,status){
+  selectedStatuses[i]=status;
+  const m={'⭕':'maru','△':'sankaku','❌':'batsu'},cm={'maru':'sel-maru','sankaku':'sel-sankaku','batsu':'sel-batsu'};
+  ['maru','sankaku','batsu'].forEach(k=>{const el=document.getElementById('sel-'+i+'-'+k);if(!el)return;el.classList.remove('sel-maru','sel-sankaku','sel-batsu');if(m[status]===k)el.classList.add(cm[k]);});
+}
+
+async function loadDetailMembers(i,date,sport){
+  const area=document.getElementById('detail-members-'+i);
+  if(area.style.display==='block'){area.style.display='none';return;}
+  area.style.display='block';area.innerHTML='<div style="color:#bbb;font-size:14px;padding:8px 0">読み込み中...</div>';
+  try{
+    const r=await callGAS('getReservations',date,sport);
+    area.innerHTML=r.length?'<div style="font-size:13px;color:#888;margin-bottom:6px">参加予定（'+r.filter(x=>(x[7]||'⭕')!=='❌').length+'人）</div>'+r.map(x=>{const st=x[7]||'⭕';if(st==='❌')return'';return'<div class="reserve-member-item"><span style="font-size:18px">'+st+'</span><span style="font-size:15px">'+x[5]+'</span>'+(x[4]===mypageCurrentUser.fullname?'<span style="font-size:11px;background:#e6f4ea;color:#188038;padding:2px 8px;border-radius:10px;margin-left:auto">あなた</span>':'')+'</div>';}).filter(Boolean).join(''):'<div style="color:#bbb;font-size:14px;padding:8px 0">まだ予約がありません</div>';
+  }catch(e){area.innerHTML='<div style="color:#e53935;font-size:14px">読み込みエラー</div>';}
+}
+
+async function mypageAddReserve(date,sport,place,i){
+  if(!mypageCurrentUser)return;
+  const status=selectedStatuses[i]||'⭕';
+  const row=[new Date().toLocaleString('ja-JP'),date,sport,place,mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'',''];
+  const btn=document.getElementById('reserve-btn-'+i);if(btn){btn.disabled=true;btn.textContent='送信中...';}
+  try{const result=await callGAS('addReservation',row);if(result==='duplicate'){alert('すでに予約済みです！');return;}loadMypageData();}
+  catch(e){alert('エラー：'+e.message);}finally{if(btn){btn.disabled=false;btn.textContent='予約する';}}
+}
+async function mypageCancelReserve(date,sport){
+  if(!mypageCurrentUser)return;if(!confirm('予約をキャンセルしますか？'))return;
+  try{await callGAS('cancelReservation',date,sport,mypageCurrentUser.fullname);loadMypageData();}catch(e){alert('エラー：'+e.message);}
+}
+
+function showScheduleMode(mode){
+  const sb=document.getElementById('mode-single-btn'),bb=document.getElementById('mode-bulk-btn');
+  const sa=document.getElementById('mypage-schedule-list'),ba=document.getElementById('bulk-reserve-area');
+  if(mode==='single'){sb.style.background='linear-gradient(135deg,#1a3a5c,#0f2744)';sb.style.color='#fff';bb.style.background='#f0f4f8';bb.style.color='#555';sa.style.display='block';ba.style.display='none';}
+  else{bb.style.background='linear-gradient(135deg,#1a3a5c,#0f2744)';bb.style.color='#fff';sb.style.background='#f0f4f8';sb.style.color='#555';sa.style.display='none';ba.style.display='block';loadBulkScheduleList();}
+}
+async function loadBulkScheduleList(){
+  const el=document.getElementById('bulk-schedule-list');el.innerHTML='<div class="empty">読み込み中...</div>';
+  try{
+    const s=await callGAS('getUpcomingSchedules',mypageCurrentUser?mypageCurrentUser.memberSport:'全て');
+    if(!s||!s.length){el.innerHTML='<div class="empty">予定がありません</div>';return;}
+    el.innerHTML=s.map((x,i)=>'<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f4f8"><input type="checkbox" class="bulk-check" data-idx="'+i+'" style="width:24px;height:24px;flex-shrink:0;accent-color:#1a3a5c;"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[x[4]]||'')+' '+x[4]+'</div><div style="font-size:13px;color:#888;margin-top:2px">'+x[0]+'（'+getDow(x[0])+'） '+x[1]+' ／ '+x[2]+'</div></div></div>').join('');
+    window._bulkSchedules=s;
+  }catch(e){el.innerHTML='<div class="empty">読み込みエラー</div>';}
+}
+async function submitBulkReservations(){
+  if(!mypageCurrentUser)return;
+  const checks=document.querySelectorAll('.bulk-check:checked');if(!checks.length)return alert('予約する日程を選択してください');
+  const s=window._bulkSchedules||[];
+  const rows=Array.from(checks).map(c=>{const x=s[parseInt(c.dataset.idx)];return[new Date().toLocaleString('ja-JP'),x[0],x[4],x[2],mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'','⭕','',''];});
+  const btn=document.querySelector('#bulk-reserve-area > button');if(btn){btn.disabled=true;btn.textContent='予約中...';}
+  try{const added=await callGAS('bulkAddReservations',rows);alert(added+'件予約しました！');showScheduleMode('single');loadMypageData();}
+  catch(e){alert('エラー：'+e.message);}finally{if(btn){btn.disabled=false;btn.textContent='✅ 選択した日程を予約する';}}
+}
+
+function toggleReservationAccordion(){
+  const c=document.getElementById('reservation-accordion-content'),a=document.getElementById('reservation-accordion-arrow');
+  c.style.display=c.style.display==='none'?'block':'none';a.textContent=c.style.display==='none'?'›':'∨';
+  if(c.style.display==='block'&&mypageCurrentUser)callGAS('getMyReservations',mypageCurrentUser.fullname).then(renderReservationList).catch(()=>{});
+}
+function toggleScheduleAccordion(){
+  const c=document.getElementById('schedule-accordion-content'),a=document.getElementById('schedule-accordion-arrow');
+  c.style.display=c.style.display==='none'?'block':'none';a.textContent=c.style.display==='none'?'›':'∨';
+  if(c.style.display==='block'&&mypageCurrentUser)callGAS('getUpcomingSchedules',mypageCurrentUser.memberSport||'全て').then(renderScheduleList).catch(()=>{});
+}
+
+function openMemberCard(){
+  if(!mypageCurrentUser)return;
+  document.getElementById('card-modal-name').textContent=mypageCurrentUser.nickname+' さん';
+  const tl2={'みんB':'みんなのBUKATSU会員','カシワ':'カシワ会員','応援団':'応援団会員'};
+  document.getElementById('card-modal-type').textContent=tl2[mypageCurrentUser.type]||mypageCurrentUser.type||'一般';
+  document.getElementById('card-modal-number').textContent=mypageCurrentUser.memberNumber||'';
+  document.getElementById('card-modal-sport').textContent=mypageCurrentUser.memberSport||'未設定';
+  document.getElementById('card-modal-gender').textContent=mypageCurrentUser.gender||'未設定';
+  const total=parseInt(document.getElementById('mypage-total-count').textContent)||0;
+  const rank=mypageCurrentUser.rank||getMemberRank(total);
+  document.getElementById('card-modal-rank').textContent=rank;
+  const modalEl=document.querySelector('.member-card-modal');
+  const tcm2={'応援団':'type-ouendan','カシワ':'type-kashiwa','みんB':'type-minnb','運営':'type-unei','特別会員':'type-special'};
+  if(modalEl){modalEl.classList.remove('type-ouendan','type-kashiwa','type-minnb','type-unei','type-special');modalEl.classList.add(tcm2[mypageCurrentUser.type]||'type-kashiwa');}
+  applyRankStyle(modalEl,'mc-modal-stars',rank);
+  document.getElementById('member-card-overlay').style.display='flex';
+}
+function closeMemberCard(){document.getElementById('member-card-overlay').style.display='none';}
+
+function openEditProfile(){
+  closeMemberCard();
+  document.getElementById('edit-nickname').value=mypageCurrentUser.nickname||'';
+  document.getElementById('edit-sport').value=mypageCurrentUser.memberSport||'';
+  document.getElementById('edit-profile-overlay').style.display='flex';
+}
+function closeEditProfile(){document.getElementById('edit-profile-overlay').style.display='none';}
+async function saveEditProfile(){
+  const nickname=document.getElementById('edit-nickname').value.trim();
+  if(!nickname)return alert('ニックネームを入力してください');
+  const area=document.getElementById('edit-area').value,sport=document.getElementById('edit-sport').value,gender=document.getElementById('edit-gender').value;
+  try{
+    await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
+    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    closeEditProfile();document.getElementById('mypage-logged-name').textContent=nickname+' さん';alert('プロフィールを更新しました！');
+  }catch(e){alert('エラー：'+e.message);}
+}
+
+function openTicketModal(){
+  if(!mypageCurrentUser)return;if(currentTicketCount<=0){alert('現在使えるチケットがありません');return;}
+  document.getElementById('ticket-modal-name').textContent=mypageCurrentUser.nickname+' さん';
+  document.getElementById('ticket-modal-count').textContent=currentTicketCount+'枚 所持';
+  document.getElementById('ticket-modal-overlay').style.display='flex';
+}
+function closeTicketModal(){document.getElementById('ticket-modal-overlay').style.display='none';}
+async function useTicketModal(){
+  if(!mypageCurrentUser)return;if(!confirm('チケットを1枚使いますか？\n（運営スタッフが確認した上で押してください）'))return;
+  try{await callGAS('useFreeTicket',mypageCurrentUser.fullname);closeTicketModal();alert('チケットを使用しました！');loadMypageData();}catch(e){alert('エラー：'+e.message);}
+}
+
+function applyRankStyle(cardEl,starsId,rank){
+  if(!cardEl)return;
+  cardEl.classList.remove('rank-bronze','rank-silver','rank-gold','rank-platinum');
+  cardEl.classList.add({'ブロンズ':'rank-bronze','シルバー':'rank-silver','ゴールド':'rank-gold','プラチナ':'rank-platinum'}[rank]||'rank-bronze');
+  const starsEl=document.getElementById(starsId);if(!starsEl)return;starsEl.innerHTML='';
+  if(rank==='ゴールド'){for(let i=0;i<16;i++){const s=document.createElement('div');s.className='star-gold';const sz=Math.random()*2+1,colors=['#ffd580','#ffe9a0','#fff3c0','#ffc84a'];s.style.cssText='width:'+sz+'px;height:'+sz+'px;background:'+colors[Math.floor(Math.random()*4)]+';left:'+(42+Math.random()*52)+'%;top:'+(Math.random()*90+5)+'%;animation-delay:'+(Math.random()*3)+'s;animation-duration:'+(2+Math.random()*2)+'s';starsEl.appendChild(s);}}
+  else if(rank==='プラチナ'){for(let i=0;i<28;i++){const s=document.createElement('div');s.className='star-plat';const sz=Math.random()*2.5+1;s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(40+Math.random()*55)+'%;top:'+(Math.random()*90+5)+'%;animation-delay:'+(Math.random()*2)+'s;animation-duration:'+(1.5+Math.random()*2)+'s';starsEl.appendChild(s);}}
+}
+
+function initDobSelects(){
+  const yEl=document.getElementById('reg-dob-y');if(!yEl)return;
+  const ty=new Date().getFullYear();for(let y=ty;y>=ty-100;y--){const o=document.createElement('option');o.value=y;o.textContent=y+'年';yEl.appendChild(o);}
+  const dEl=document.getElementById('reg-dob-d');for(let d=1;d<=31;d++){const o=document.createElement('option');o.value=String(d).padStart(2,'0');o.textContent=d+'日';dEl.appendChild(o);}
+}
+function getDobValue(){
+  const y=document.getElementById('reg-dob-y').value,m=document.getElementById('reg-dob-m').value,d=document.getElementById('reg-dob-d').value;
+  if(!y||!m||!d)return'';const val=y+m+d;document.getElementById('reg-dob').value=val;return val;
+}
+function checkMinor(){
+  const dob=getDobValue(),area=document.getElementById('minor-consent-area');if(!area)return;
+  if(dob.length!==8){area.style.display='none';return;}
+  const b=new Date(dob.substring(0,4)+'-'+dob.substring(4,6)+'-'+dob.substring(6,8));if(isNaN(b.getTime())){area.style.display='none';return;}
+  const t=new Date();let age=t.getFullYear()-b.getFullYear();const mo=t.getMonth()-b.getMonth();if(mo<0||(mo===0&&t.getDate()<b.getDate()))age--;
+  area.style.display=age<18?'block':'none';
+}
+function isMinor(){
+  const dob=getDobValue();if(dob.length!==8)return false;
+  const b=new Date(dob.substring(0,4)+'-'+dob.substring(4,6)+'-'+dob.substring(6,8));if(isNaN(b.getTime()))return false;
+  const t=new Date();let age=t.getFullYear()-b.getFullYear();const mo=t.getMonth()-b.getMonth();if(mo<0||(mo===0&&t.getDate()<b.getDate()))age--;return age<18;
+}
+
+async function searchTempMember(){
+  const name=document.getElementById('reg-search-name').value.trim();if(!name)return alert('フルネームを入力してください');if(!/^[ァ-ヶー]+$/.test(name))return alert('カタカナで入力してください');
+  const re=document.getElementById('reg-search-result');re.innerHTML='<div style="color:#aaa;font-size:14px">検索中...</div>';
+  try{
+    const result=await callGAS('searchTempAttendee',name);
+    if(result.exact){
+      re.innerHTML='';
+      document.getElementById('reg-confirm-box').innerHTML='<div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+result.exact[1]+' さん</div><div style="font-size:13px;color:#555;line-height:2.2"><span style="color:#aaa;font-size:12px">初参加日：</span>'+result.exact[0]+'<br><span style="color:#aaa;font-size:12px">種目：</span>'+(result.exact[2]||'未定')+'<br><span style="color:#aaa;font-size:12px">紹介者：</span>'+(result.exact[3]||'なし')+'</div>';
+      document.getElementById('reg-confirmed-fullname').value=result.exact[1];document.getElementById('reg-confirmed-referrer').value=result.exact[3]||'';document.getElementById('reg-confirmed-sport').value=result.exact[2]||'';
+      document.getElementById('reg-step1').style.display='none';document.getElementById('reg-step2').style.display='block';
+    }else if(result.suggestions&&result.suggestions.length>0){
+      re.innerHTML='<div style="background:#e8f4fd;border:1.5px solid #90caf9;border-radius:12px;padding:14px;font-size:14px;color:#555;"><div style="font-weight:700;color:#1565c0;margin-bottom:10px">🔍 もしかして…？</div>'+result.suggestions.map(s=>'<div onclick="selectSuggestion(\''+s[1]+'\',\''+(s[2]||'')+'\',\''+(s[3]||'')+'\')" style="padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:8px;cursor:pointer;border:1.5px solid #e0e8f0;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:15px;font-weight:700;color:#1a1a2e">'+s[1]+'</div><div style="font-size:12px;color:#888;margin-top:2px">'+s[0]+' ／ '+(s[2]||'未定')+'</div></div><div style="font-size:18px;color:#aaa">›</div></div>').join('')+'</div>';
+    }else{
+      re.innerHTML='<div style="background:#fff3e0;border:1.5px solid #f57c00;border-radius:12px;padding:14px;font-size:14px;color:#555;line-height:2"><div style="font-weight:700;color:#f57c00;margin-bottom:6px">⚠️ 体験登録が見つかりませんでした</div>運営スタッフに声をかけてお友達紹介タブから登録してもらってください。</div>';
+    }
+  }catch(e){re.innerHTML='<div style="color:#e53935;font-size:14px">読み込みエラー</div>';}
+}
+function confirmTempMember(){
+  const sport=document.getElementById('reg-confirmed-sport').value;
+  if(sport){const sel=document.getElementById('reg-sport');for(let i=0;i<sel.options.length;i++){if(sel.options[i].value===sport){sel.value=sport;break;}}}
+  document.getElementById('reg-step2').style.display='none';document.getElementById('reg-step3').style.display='block';
+}
+function resetRegFlow(){
+  document.getElementById('reg-step1').style.display='block';document.getElementById('reg-step2').style.display='none';document.getElementById('reg-step3').style.display='none';
+  document.getElementById('reg-search-name').value='';document.getElementById('reg-search-result').innerHTML='';
+}
+function selectSuggestion(fullname,sport,referrer){
+  document.getElementById('reg-confirm-box').innerHTML='<div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+fullname+' さん</div><div style="font-size:13px;color:#555;line-height:2.2"><span style="color:#aaa;font-size:12px">種目：</span>'+(sport||'未定')+'<br><span style="color:#aaa;font-size:12px">紹介者：</span>'+(referrer||'なし')+'</div>';
+  document.getElementById('reg-confirmed-fullname').value=fullname;document.getElementById('reg-confirmed-referrer').value=referrer||'';document.getElementById('reg-confirmed-sport').value=sport||'';
+  document.getElementById('reg-search-result').innerHTML='';document.getElementById('reg-step1').style.display='none';document.getElementById('reg-step2').style.display='block';
+}
+async function registerAttendee(){
+  const fullname=document.getElementById('reg-confirmed-fullname').value.trim();
+  const fc=document.getElementById('reg-fullname-confirm').value.trim();
+  if(!/^[ァ-ヶー]{4,}$/.test(fc)){document.getElementById('reg-fullname-error').style.display='block';return;}
+  document.getElementById('reg-fullname-error').style.display='none';
+  const nickname=document.getElementById('reg-nickname').value.trim(),dob=getDobValue(),gender=document.getElementById('reg-gender').value,area=document.getElementById('reg-area').value,sport=document.getElementById('reg-sport').value;
+  const eRel=document.getElementById('reg-emergency-rel')?document.getElementById('reg-emergency-rel').value:'';
+  const eTel=document.getElementById('reg-emergency-tel')?document.getElementById('reg-emergency-tel').value.trim():'';
+  const referrer=document.getElementById('reg-confirmed-referrer').value.trim();
+  if(!fullname)return alert('検索からやり直してください');if(!nickname)return alert('呼ばれたい名前を入力してください');if(dob.length!==8)return alert('生年月日を選択してください');if(!area)return alert('在住エリアを選択してください');if(!sport)return alert('参加予定のスポーツを選択してください');if(!document.getElementById('reg-consent').checked)return alert('個人情報の取り扱いへの同意が必要です');if(isMinor()&&!document.getElementById('reg-minor-consent').checked)return alert('18歳未満の方は保護者の同意が必要です');
+  const btn=document.getElementById('reg-submit-btn');btn.disabled=true;btn.textContent='登録中...';
+  try{
+    const memberNumber=await callGAS('completeRegistration',fullname,nickname,dob,sport,area,gender,eRel,eTel,referrer);
+    btn.disabled=false;btn.textContent='登録する';
+    mypageCurrentUser={fullname,nickname,memberSport:sport,memberNumber,type:'一般'};localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    toggleRegisterAccordion();resetRegFlow();
+    const ov=document.createElement('div');ov.className='ticket-overlay';
+    ov.innerHTML='<div class="ticket-blur-bg"></div><div class="ticket-modal" style="text-align:center"><div style="font-size:56px;margin-bottom:8px">🎉</div><div style="font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:6px">登録完了！</div><div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:4px">'+nickname+' さん</div><div style="font-size:13px;color:#888;margin-bottom:16px">ようこそカシワのBUKATSUへ！</div><div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:20px"><div style="font-size:11px;color:#aaa;margin-bottom:4px">会員番号</div><div style="font-size:24px;font-weight:800;color:#1a1a2e;letter-spacing:2px">'+memberNumber+'</div></div><button onclick="this.closest(\'.ticket-overlay\').remove();showMypageMain();" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer">マイページへ →</button></div>';
+    document.body.appendChild(ov);
+  }catch(e){btn.disabled=false;btn.textContent='登録する';alert('エラー：'+e.message);}
+}
+
+function renderCampaignPop(){
+  const m=new Date().getMonth()+1;let bg,tc,ac,title,sub,label;
+  if(m>=3&&m<=5){bg='#fff0f2';tc='#4a282d';ac='#e91e63';title='Spring Sports Time!';sub='みんなで楽しく体を動かそう🌸';label='春の紹介キャンペーン開催中！';}
+  else if(m>=6&&m<=8){bg='#e1f5fe';tc='#1a3545';ac='#0288d1';title='Summer Sports Fun!';sub='汗を流してリフレッシュしよう☀️';label='夏の紹介キャンペーン開催中！';}
+  else if(m>=9&&m<=11){bg='#fff3e0';tc='#4e342e';ac='#ef6c00';title='Autumn Sports Days!';sub='スポーツの秋！仲間を誘って遊ぼう🍁';label='秋の紹介キャンペーン開催中！';}
+  else{bg='#f3e5f5';tc='#311b92';ac='#7b1fa2';title='Winter Sports Party!';sub='寒さに負けず、みんなで温まろう⛄️';label='冬の紹介キャンペーン開催中！';}
+  document.getElementById('referral-campaign-pop').innerHTML='<div class="card" style="background:'+bg+';color:'+tc+';text-align:center;padding:14px 12px;margin-bottom:12px"><div style="font-size:11px;font-weight:800;color:'+ac+';letter-spacing:0.5px;margin-bottom:2px">📢 '+label+'</div><div style="font-family:\'Dancing Script\',cursive;font-size:26px;color:'+ac+';font-weight:700;line-height:1.2">'+title+'</div><div style="font-size:13px;font-weight:700;margin-top:1px;color:'+tc+';opacity:0.85">'+sub+'</div><div style="margin-top:10px;background:#fff;border-radius:10px;padding:10px 8px"><div style="font-size:14px;font-weight:700;line-height:1.4;color:#222">お友達を1人紹介するごとに…<br><span style="color:'+ac+';font-size:16px;font-weight:900">無料チケット 1枚</span> プレゼント！🎟✨</div></div></div>';
+}
+function initReferralTab(){
+  renderCampaignPop();
+  if(mypageCurrentUser){document.getElementById('referral-unauthed-area').style.display='none';document.getElementById('referral-authed-area').style.display='block';loadReferralSchedules();}
+  else{document.getElementById('referral-unauthed-area').style.display='block';document.getElementById('referral-authed-area').style.display='none';}
+}
+async function referralLogin(){
+  const fullname=document.getElementById('ref-login-fullname').value.trim(),dob=document.getElementById('ref-login-dob').value.trim();
+  if(!fullname||dob.length!==8)return alert('入力を確認してください');
+  document.getElementById('referral-login-error').style.display='none';
+  try{
+    const data=await callGAS('loginAttendee',fullname,dob);
+    if(!data){document.getElementById('referral-login-error').style.display='block';return;}
+    mypageCurrentUser={fullname:data[1],nickname:data[0],memberSport:data[5]||'全て',memberNumber:data[9]||'',type:data[2]||'一般'};
+    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    document.getElementById('ref-login-fullname').value='';document.getElementById('ref-login-dob').value='';
+    initReferralTab();
+  }catch(e){alert('エラー：'+e.message);}
+}
+async function loadReferralSchedules(){
+  const sel=document.getElementById('ref-friend-schedule');sel.innerHTML='<option value="">読み込み中...</option>';
+  try{
+    const s=await callGAS('getUpcomingSchedules','全て');
+    if(!s||!s.length){sel.innerHTML='<option value="">予定がありません</option>';return;}
+    sel.innerHTML=s.map(x=>'<option value="'+x[0]+'_'+x[4]+'">'+x[0]+'（'+getDow(x[0])+'）'+x[4]+' @ '+x[2]+'</option>').join('');
+  }catch(e){sel.innerHTML='<option value="">読み込みエラー</option>';}
+}
+async function submitReferral(){
+  const fn=document.getElementById('ref-friend-fullname').value.trim(),exp=document.getElementById('ref-friend-exp').value,sched=document.getElementById('ref-friend-schedule').value;
+  if(!fn)return alert('お友達のお名前を入力してください');if(!/^[ァ-ヶー]+$/.test(fn))return alert('フルネームはカタカナのみで入力してください');if(!exp)return alert('スポーツ経験を選択してください');if(!sched)return alert('参加予定スケジュールを選択してください');
+  try{
+    await callGAS('addTempAttendee',fn,mypageCurrentUser.fullname);
+    const ov=document.createElement('div');ov.className='popup-overlay';
+    ov.innerHTML='<div class="popup-card"><div style="font-size:32px;font-weight:700;color:#222;margin-bottom:8px">'+fn+' さん</div><div style="font-size:16px;color:#444;margin-bottom:8px;line-height:1.8">紹介登録が完了しました！</div><div style="font-size:15px;color:#188038;font-weight:700;margin-top:8px;">当日お待ちしています🎉</div><div class="popup-thankyou" style="margin-top:12px;">Thank you!!</div></div>';
+    document.body.appendChild(ov);document.getElementById('ref-friend-fullname').value='';document.getElementById('ref-friend-exp').value='';
+    setTimeout(()=>{ov.style.transition='opacity 0.5s ease';ov.style.opacity='0';setTimeout(()=>{ov.remove();showTab('home');},500);},4000);
+  }catch(e){alert('エラー：'+e.message);}
+}
+
+function showReferralNoticePopup(msg){
+  const ov=document.createElement('div');ov.className='popup-overlay';
+  ov.innerHTML='<div class="popup-card"><div style="font-size:48px;margin-bottom:8px">🎟</div><div style="font-size:20px;font-weight:700;color:#b8860b;margin-bottom:12px">紹介ボーナス！</div><div style="font-size:15px;color:#444;line-height:1.8;margin-bottom:16px;background:#fffde7;border-radius:12px;padding:14px;border:1.5px solid #f5d060">'+msg+'<br>無料チケット1枚プレゼント🎉</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer">やった！ありがとう🙌</button></div>';
+  document.body.appendChild(ov);
+}
+
+async function openMessageList(){
+  if(!mypageCurrentUser)return;
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:85vh;overflow-y:auto;"><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:16px">✉️ メッセージ</div><div id="message-list-content"><div class="empty">読み込み中...</div></div><button onclick="this.closest(\'.ticket-overlay\').remove();refreshMessageBanner()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;">閉じる</button></div>';
+  document.body.appendChild(ov);
+  try{
+    const messages=await callGAS('getMyMessages',mypageCurrentUser.fullname);
+    const el=document.getElementById('message-list-content');if(!el)return;
+    if(!messages||!messages.length){el.innerHTML='<div class="empty">メッセージはありません</div>';return;}
+    el.innerHTML=messages.map(m=>{const u=m[3]==='未読';return'<div style="padding:14px;border-radius:12px;margin-bottom:10px;background:'+(u?'#f0f9ff':'#f8fafc')+';border:1.5px solid '+(u?'#90caf9':'#e0e8f0')+'"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;color:#888">'+m[0]+'</div>'+(u?'<div style="font-size:11px;background:#1a3a5c;color:#fff;padding:2px 8px;border-radius:10px;font-weight:700">NEW</div>':'')+'</div><div style="font-size:14px;color:#1a1a2e;line-height:1.8;white-space:pre-line">'+m[2]+'</div></div>';}).join('');
+    callGAS('markMessagesAsRead',mypageCurrentUser.fullname).catch(()=>{});
+  }catch(e){}
+}
+async function refreshMessageBanner(){
+  if(!mypageCurrentUser)return;
+  try{const c=await callGAS('getUnreadMessageCount',mypageCurrentUser.fullname);const b=document.getElementById('mypage-message-banner');if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}}catch(e){}
+}
+
+function openUpgradeModal(){
+  const ov=document.createElement('div');ov.className='ticket-overlay';ov.id='upgrade-modal-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:85vh;overflow-y:auto;"><div style="text-align:center;font-size:36px;margin-bottom:8px">⬆️</div><div style="text-align:center;font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:4px">プランアップグレード</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">ご希望のプランを選択してください</div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"><div onclick="selectUpgradePlan(\'カシワ会員\')" id="plan-kashiwa" style="border:2px solid #e0e8f0;border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🏀 カシワ会員</div><div style="font-size:13px;color:#888;line-height:1.8">入会金 ¥3,300 / 回数券 ¥4,000（11枚）</div></div><div onclick="selectUpgradePlan(\'応援団\')" id="plan-ouendan" style="border:2px solid #e0e8f0;border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">🌟 応援団会員</div><div style="font-size:13px;color:#888;line-height:1.8">月額 ¥2,200 / 初回 +¥3,300<br>参加費定額・何回でも参加し放題</div></div></div><div id="upgrade-payment-select" style="display:none;margin-bottom:20px"><div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:10px">お支払い方法</div><div style="display:flex;gap:8px"><div onclick="selectPayment(\'現金\')" id="pay-cash" style="flex:1;border:2px solid #e0e8f0;border-radius:12px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:24px;margin-bottom:4px">💴</div><div style="font-size:13px;font-weight:700">現金</div></div><div onclick="selectPayment(\'クレジットカード\')" id="pay-card" style="flex:1;border:2px solid #e0e8f0;border-radius:12px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:24px;margin-bottom:4px">💳</div><div style="font-size:13px;font-weight:700">クレカ</div><div style="font-size:10px;color:#888;margin-top:2px">準備中</div></div></div></div><div id="upgrade-confirm-area" style="display:none;background:#f0f9ff;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#444;line-height:2">申請後、運営からメッセージでご連絡します。</div><button id="upgrade-submit-btn" onclick="submitUpgradeRequest()" style="display:none;width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">申請する</button><button onclick="document.getElementById(\'upgrade-modal-overlay\').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;">キャンセル</button></div>';
+  document.body.appendChild(ov);
+}
+let _sup='',_spay='';
+function selectUpgradePlan(plan){_sup=plan;['kashiwa','ouendan'].forEach(p=>{const el=document.getElementById('plan-'+p);if(el)el.style.border='2px solid #e0e8f0';});const el=document.getElementById('plan-'+(plan==='カシワ会員'?'kashiwa':'ouendan'));if(el)el.style.border='2px solid #1a3a5c';document.getElementById('upgrade-payment-select').style.display='block';}
+function selectPayment(method){if(method==='クレジットカード'){alert('クレジットカード決済は準備中です。');return;}_spay=method;['cash','card'].forEach(p=>{const el=document.getElementById('pay-'+p);if(el)el.style.border='2px solid #e0e8f0';});const el=document.getElementById('pay-cash');if(el)el.style.border='2px solid #1a3a5c';document.getElementById('upgrade-confirm-area').style.display='block';document.getElementById('upgrade-submit-btn').style.display='block';}
+async function submitUpgradeRequest(){
+  if(!_sup||!_spay)return alert('プランとお支払い方法を選択してください');if(!mypageCurrentUser)return;
+  const btn=document.getElementById('upgrade-submit-btn');btn.disabled=true;btn.textContent='申請中...';
+  try{
+    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,_sup,_spay);
+    document.getElementById('upgrade-modal-overlay').remove();
+    const ov=document.createElement('div');ov.className='popup-overlay';ov.innerHTML='<div class="popup-card"><div style="font-size:48px;margin-bottom:8px">✅</div><div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px">申請を受け付けました！</div><div style="font-size:14px;color:#888;line-height:1.8;margin-bottom:16px">運営からメッセージでご連絡します。</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">OK</button></div>';document.body.appendChild(ov);
+  }catch(e){btn.disabled=false;btn.textContent='申請する';alert('エラーが発生しました。');}
+}
+
+function openSporlogInfo(){
+  const ov=document.createElement('div');ov.className='ticket-overlay';ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;"><div style="text-align:center;font-size:36px;margin-bottom:8px">🏅</div><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:4px">スポログとは？</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">Sports Log — 参加の記録</div><div style="background:#f0f9ff;border-radius:14px;padding:16px;margin-bottom:14px;"><div style="font-size:14px;font-weight:700;color:#1a3a5c;margin-bottom:8px">📌 スポログの貯め方</div><div style="font-size:14px;color:#444;line-height:2.2;">① カシワのBUKATSUに参加する<br>② 参加のたびに自動で記録される<br>③ 10回貯まると無料チケット1枚GET！</div></div><div style="background:#fff8e1;border:1.5px solid #f5d060;border-radius:14px;padding:16px;margin-bottom:20px;"><div style="font-size:14px;font-weight:700;color:#b8860b;margin-bottom:8px">🎟 無料チケットって？</div><div style="font-size:14px;color:#444;line-height:2.2;">参加費が1回分 <strong>無料</strong> になるチケットです！</div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';document.body.appendChild(ov);
+}
+function openRankInfo(){
+  const ov=document.createElement('div');ov.className='ticket-overlay';ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:85vh;overflow-y:auto;"><div style="text-align:center;font-size:36px;margin-bottom:8px">🏅</div><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:4px">ランクシステム</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">参加回数でランクが上がります！</div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"><div style="background:linear-gradient(135deg,#3e2010,#a0522d);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800">ブロンズ</div><div style="font-size:12px;opacity:0.7;margin-top:2px">0〜9回</div></div><div style="background:linear-gradient(135deg,#4a5a6a,#78909c);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800">シルバー</div><div style="font-size:12px;opacity:0.7;margin-top:2px">10〜29回</div></div><div style="background:linear-gradient(135deg,#7a4a00,#c67c00);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800">ゴールド</div><div style="font-size:12px;opacity:0.7;margin-top:2px">30〜49回</div></div><div style="background:linear-gradient(135deg,#1a0a4a,#2d1b69);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800;color:#c8a8ff">プラチナ</div><div style="font-size:12px;opacity:0.7;margin-top:2px">50回以上</div></div></div><div style="background:#f0f9ff;border-radius:12px;padding:14px;margin-bottom:20px;font-size:13px;color:#444;line-height:2">📌 累計参加回数で自動的に決まります。ランクが上がると会員証のデザインが変わります✨</div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';document.body.appendChild(ov);
 }
 </script>
 </body>
