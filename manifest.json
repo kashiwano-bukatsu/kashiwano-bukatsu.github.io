@@ -1,0 +1,22 @@
+{
+  "name": "カシワのBUKATSU",
+  "short_name": "カシワのBUKATSU",
+  "description": "カシワのBUKATSU 会員アプリ",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a3a5c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

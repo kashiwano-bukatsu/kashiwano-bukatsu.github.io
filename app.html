@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>カシワのBUKATSU</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="カシワのBUKATSU">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Helvetica Neue',sans-serif}
+body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
+.wrapper{width:100%;max-width:600px;margin:0 auto;background:#f0f4f8}
+
+/* ヘッダー */
+.header{background:linear-gradient(135deg,#2d4a7a 0%,#1a3a5c 50%,#0f2744 100%);color:#fff;padding:20px 16px 14px;text-align:center;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-40px;right:-20px;width:130px;height:130px;border-radius:50%;background:rgba(74,197,80,0.12)}
+.header h1{font-size:22px;font-weight:800;letter-spacing:1px;position:relative}
+.header p{font-size:12px;color:rgba(255,255,255,0.65);margin-top:5px;position:relative}
+
+/* カード */
+.card{background:#fff;border-radius:20px;padding:20px;margin:14px;box-shadow:0 4px 20px rgba(0,0,0,0.07)}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;color:#1a1a2e;display:flex;align-items:center;gap:8px}
+.card-title-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4CAF50,#1a3a5c);flex-shrink:0}
+
+/* 会員カード */
+.member-card{background:linear-gradient(135deg,#1a3a5c 0%,#0f2744 100%);color:#fff;border-radius:20px;padding:20px;margin:14px;box-shadow:0 8px 32px rgba(26,58,92,0.3);position:relative;overflow:hidden}
+.member-card::before{content:'';position:absolute;top:-30px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(74,197,80,0.15)}
+.member-card-name{font-size:22px;font-weight:800;margin-bottom:2px}
+.member-card-type{font-size:12px;color:rgba(255,255,255,0.6)}
+.member-badge{display:inline-block;background:rgba(74,197,80,0.2);color:#7dda80;border:1px solid rgba(74,197,80,0.35);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;letter-spacing:1px;margin-top:8px}
+.logout-btn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer}
+
+/* フォーム */
+.label{font-size:14px;color:#888;margin-bottom:8px;margin-top:16px;font-weight:500}
+.label:first-child{margin-top:0}
+input,select{width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;-webkit-appearance:none;appearance:none;color:#1a1a2e}
+input:focus{outline:none;border-color:#1a3a5c;background:#fff}
+
+/* ボタン */
+.btn{width:100%;padding:16px;font-size:16px;font-weight:700;border-radius:14px;cursor:pointer;border:none;margin-top:14px;display:block;text-align:center;transition:opacity 0.2s}
+.btn-primary{background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff}
+.btn:active{opacity:0.8}
+
+/* 統計 */
+.stats-row{display:flex;gap:10px;margin-bottom:16px}
+.stat-box{flex:1;background:linear-gradient(135deg,#f5f7ff,#eef2ff);border-radius:14px;padding:14px 10px;text-align:center;border:1px solid rgba(26,58,92,0.07)}
+.stat-box.ticket-box{background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-color:rgba(74,197,80,0.15);cursor:pointer}
+.stat-val{font-size:26px;font-weight:800;color:#1a1a2e}
+.stat-label{font-size:10px;color:#888;margin-top:3px}
+
+/* プログレス */
+.progress-bar-bg{background:#f0f4f8;border-radius:999px;height:10px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:999px;transition:width 0.4s}
+
+/* エラー */
+.error-msg{color:#e53935;font-size:14px;margin-top:8px;text-align:center;display:none}
+
+/* ローディング */
+.loading{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
+
+/* スプラッシュ */
+#splash{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;transition:opacity 0.6s ease}
+@keyframes bar{from{width:0}to{width:40px}}
+@keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* 予約アイテム */
+.reserve-item{padding:12px 0;border-bottom:1px solid #f0f4f8}
+.reserve-item:last-child{border-bottom:none}
+.empty{text-align:center;color:#bbb;padding:32px 0;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- スプラッシュ -->
+<div id="splash">
+  <div style="font-size:13px;color:#888;letter-spacing:2px;margin-bottom:8px">Kashiwa no</div>
+  <div style="font-size:36px;font-weight:900;letter-spacing:4px;color:#1a1a2e">BUKATSU</div>
+  <div style="margin-top:24px;width:40px;height:3px;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:2px;animation:bar 1.2s ease forwards"></div>
+</div>
+
+<div class="wrapper">
+  <div class="header">
+    <h1>カシワのBUKATSU</h1>
+    <p id="today-info">読み込み中...</p>
+  </div>
+
+  <!-- ログインエリア -->
+  <div id="login-area" class="card" style="display:none">
+    <div class="card-title"><div class="card-title-dot"></div>マイページ ログイン</div>
+    <div class="label">フルネーム（カタカナ）</div>
+    <input type="text" id="login-fullname" placeholder="例：カシワタロウ" autocomplete="username">
+    <div class="label">生年月日</div>
+    <input type="password" id="login-dob" placeholder="例：20100506（YYYYMMDD）" maxlength="8" autocomplete="current-password">
+    <button class="btn btn-primary" onclick="doLogin()">ログイン</button>
+    <div class="error-msg" id="login-error">フルネームまたは生年月日が正しくありません</div>
+  </div>
+
+  <!-- マイページ -->
+  <div id="mypage-area" style="display:none">
+    <!-- 会員カード -->
+    <div class="member-card" id="member-card-el">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px">ログイン中</div>
+          <div class="member-card-name" id="mc-name"></div>
+          <div class="member-card-type" id="mc-type"></div>
+          <div class="member-badge" id="mc-number"></div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+      </div>
+    </div>
+
+    <!-- スポログ -->
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>スポログ</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-val" id="total-count">-</div>
+          <div class="stat-label">累計参加</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="month-count">-</div>
+          <div class="stat-label">今月</div>
+        </div>
+        <div class="stat-box ticket-box" onclick="alert('チケット機能はまもなく対応！')">
+          <div class="stat-val" id="ticket-count">-</div>
+          <div class="stat-label">チケット 🎟</div>
+        </div>
+      </div>
+      <div id="progress-area"></div>
+    </div>
+
+    <!-- 予約一覧 -->
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>予約一覧</div>
+      <div id="reservation-list"><div class="loading">読み込み中...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+const SPORT_ICON = {'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+
+let currentUser = null;
+
+// GAS呼び出し共通関数
+async function callGAS(func, ...args) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ func, args }),
+  });
+  const json = await res.json();
+  if (json.status === 'error') throw new Error(json.message);
+  return json.data;
+}
+
+function formatDate(d) {
+  return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');
+}
+function getDow(dateStr) {
+  const d = new Date(dateStr.replace(/\//g,'-'));
+  return ['日','月','火','水','木','金','土'][d.getDay()];
+}
+
+// 初期化
+window.addEventListener('load', () => {
+  // 今日の日付表示
+  document.getElementById('today-info').textContent = formatDate(new Date());
+
+  // スプラッシュ
+  const splash = document.getElementById('splash');
+  setTimeout(() => {
+    splash.style.opacity = '0';
+    setTimeout(() => {
+      splash.style.display = 'none';
+      // ログイン状態チェック
+      const saved = localStorage.getItem('bukatsu_user');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          showMypage();
+        } catch(e) {
+          showLogin();
+        }
+      } else {
+        showLogin();
+      }
+    }, 600);
+  }, 1500);
+});
+
+function showLogin() {
+  document.getElementById('login-area').style.display = 'block';
+  document.getElementById('mypage-area').style.display = 'none';
+}
+
+function showMypage() {
+  document.getElementById('login-area').style.display = 'none';
+  document.getElementById('mypage-area').style.display = 'block';
+
+  // 会員カード表示
+  document.getElementById('mc-name').textContent = currentUser.nickname + ' さん';
+  document.getElementById('mc-type').textContent = currentUser.type || '一般';
+  document.getElementById('mc-number').textContent = currentUser.memberNumber || '';
+
+  loadMypageData();
+}
+
+async function doLogin() {
+  const fullname = document.getElementById('login-fullname').value.trim();
+  const dob = document.getElementById('login-dob').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!fullname) return alert('フルネームを入力してください');
+  if (dob.length !== 8) return alert('生年月日は8桁で入力してください');
+
+  const btn = document.querySelector('#login-area .btn-primary');
+  btn.textContent = 'ログイン中...';
+  btn.disabled = true;
+
+  try {
+    const data = await callGAS('loginAttendee', fullname, dob);
+    if (!data) {
+      errEl.style.display = 'block';
+      return;
+    }
+    currentUser = {
+      fullname: data[1],
+      nickname: data[0],
+      memberSport: data[5] || '全て',
+      memberNumber: (data[9]||'') + (data[10]||''),
+      type: data[2] || '一般',
+      gender: data[14] || ''
+    };
+    localStorage.setItem('bukatsu_user', JSON.stringify(currentUser));
+    document.getElementById('login-fullname').value = '';
+    document.getElementById('login-dob').value = '';
+    showMypage();
+  } catch(e) {
+    alert('エラー：' + e.message);
+  } finally {
+    btn.textContent = 'ログイン';
+    btn.disabled = false;
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('bukatsu_user');
+  showLogin();
+}
+
+async function loadMypageData() {
+  document.getElementById('reservation-list').innerHTML = '<div class="loading">読み込み中...</div>';
+
+  try {
+    const d = await callGAS('getMyPageData', currentUser.fullname);
+
+    // スポログ
+    document.getElementById('total-count').textContent = d.totalCount;
+    document.getElementById('month-count').textContent = d.monthCount;
+
+    let tickets = d.ticketCount || 0;
+    let progress = d.ticketProgress || 0;
+    document.getElementById('ticket-count').textContent = tickets + '枚';
+
+    // プログレスバー
+    const pct = Math.round(progress / 10 * 100);
+    const remaining = 10 - progress;
+    document.getElementById('progress-area').innerHTML =
+      '<div style="font-size:13px;color:#888;margin-bottom:6px">次の無料チケットまで</div>' +
+      '<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px">' +
+        '<span>' + progress + '/10回</span>' +
+        '<span>🎟 あと' + remaining + '回でGET！</span>' +
+      '</div>';
+
+    // 予約一覧
+    const reservations = d.myReservations || [];
+    const resEl = document.getElementById('reservation-list');
+    if (!reservations.length) {
+      resEl.innerHTML = '<div class="empty">予約がありません</div>';
+    } else {
+      resEl.innerHTML = reservations.map(r =>
+        '<div class="reserve-item">' +
+          '<div style="font-size:15px;font-weight:700">' + (SPORT_ICON[r[2]]||'') + ' ' + r[2] + '</div>' +
+          '<div style="font-size:13px;color:#888;margin-top:2px">' + r[1] + '（' + getDow(r[1]) + '） ／ ' + r[3] + '</div>' +
+          '<div style="font-size:12px;margin-top:4px;color:#555">' + (r[7]||'⭕') + ' ' + ({'⭕':'参加','△':'未定','❌':'不参加'}[r[7]]||'参加') + '</div>' +
+        '</div>'
+      ).join('');
+    }
+
+  } catch(e) {
+    document.getElementById('progress-area').innerHTML = '<div style="color:#e53935;font-size:13px">エラー：' + e.message + '</div>';
+    document.getElementById('reservation-list').innerHTML = '<div style="color:#e53935;font-size:13px;text-align:center;padding:16px">読み込みエラー</div>';
+  }
+}
+</script>
+</body>
+</html>
