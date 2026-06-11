@@ -25,7 +25,7 @@ body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
 .tab{flex:1;padding:12px 2px;font-size:12px;text-align:center;cursor:pointer;color:#999;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:600;transition:color 0.2s}
 .tab.active{color:#1a3a5c;border-bottom-color:#4CAF50}
 .tab.hidden{display:none}
-.section{display:none;padding:14px}
+.section{display:none;padding:14px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 .section.active{display:block}
 
 /* カード */
@@ -34,7 +34,7 @@ body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
 .card-title-dot{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4CAF50,#1a3a5c);flex-shrink:0}
 
 /* 会員カード */
-.member-card{color:#fff;border-radius:20px;padding:20px;margin-bottom:12px;position:relative;overflow:hidden}
+.member-card{color:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden}
 .member-card::before{content:'';position:absolute;top:-30px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(74,197,80,0.15)}
 .member-card-label{font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:4px}
 .member-card-name{font-size:22px;font-weight:800;margin-bottom:2px}
@@ -256,12 +256,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
           <div class="member-card-type" id="mypage-logged-type"></div>
           <div class="member-badge" id="mypage-member-number"></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <button class="open-card-btn" onclick="openMemberCard()" style="font-size:11px;padding:6px 12px;opacity:0.85">会員証</button>
           <button class="open-card-btn" onclick="openSettings()">設定</button>
         </div>
-      </div>
-      <div style="position:relative;z-index:1;margin-top:12px">
-        <button onclick="openMemberCard()" style="width:100%;padding:11px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px">会員証を開く</button>
       </div>
     </div>
     <div class="card">
@@ -352,7 +350,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 <!-- 設定フルページ -->
 <div id="section-settings" style="display:none;position:fixed;inset:0;background:#f0f4f8;z-index:5000;overflow-y:auto;">
   <div style="background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px">
-    <button onclick="closeSettings()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;"></div><!-- /.wrapper -->larr; 戻る</button>
+    <button onclick="closeSettings()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">← 戻る</button>
     <div style="font-size:18px;font-weight:800">設定</div>
   </div>
   <div style="padding:16px;max-width:600px;margin:0 auto" id="settings-content">
@@ -1349,7 +1347,7 @@ loadMypageData=async function(checkNotice,updateRankCache){
 /* 下タブ */
 body{padding-bottom:70px}
 .tabs{display:none !important}
-.bottom-tabs{position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid #e0e8f0;display:flex;z-index:100;max-width:600px;margin:0 auto;box-shadow:0 -2px 12px rgba(0,0,0,0.08)}
+.bottom-tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e0e8f0;display:flex;z-index:100;max-width:600px;margin:0 auto;box-shadow:0 -2px 12px rgba(0,0,0,0.08);padding-bottom:env(safe-area-inset-bottom,0px)}
 .bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:none;background:none;padding:8px 2px;gap:3px;-webkit-tap-highlight-color:transparent}
 .bottom-tab svg{width:26px;height:26px;transition:transform 0.15s}
 .bottom-tab span{font-size:10px;font-weight:600;color:#aaa;transition:color 0.15s}
@@ -1425,17 +1423,7 @@ const _origShowMypageMain = showMypageMain;
 showMypageMain = function(){
   _origShowMypageMain();
   // 会員カードの上に会員証ボタンを追加（重複防止）
-  if(!document.getElementById('member-card-open-btn-el')){
-    const card = document.getElementById('mc-main-card');
-    if(card){
-      const btn = document.createElement('button');
-      btn.id = 'member-card-open-btn-el';
-      btn.className = 'member-card-open-btn';
-      btn.textContent = '会員証を開く';
-      btn.onclick = openMemberCard;
-      card.parentNode.insertBefore(btn, card);
-    }
-  }
+  // 会員証ボタンはHTML内に固定済み
   // 会員カード内のログアウト・設定ボタンを非表示（ヘッダーとの重複回避）
   const logoutInCard = document.querySelector('.member-card .logout-btn');
   if(logoutInCard) logoutInCard.style.display = 'none';
