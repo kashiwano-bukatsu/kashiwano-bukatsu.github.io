@@ -144,6 +144,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 .reserve-member-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f4f8;font-size:14px}
 .reserve-member-item:last-child{border-bottom:none}
 @keyframes bar{from{width:0}to{width:40px}}
+@keyframes splashLogo{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
 @keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(min-width:600px){.wrapper{box-shadow:0 0 40px rgba(0,0,0,0.1)}}
 
@@ -154,9 +155,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 <body>
 
 <div id="splash" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;transition:opacity 0.6s ease;">
-  <div style="font-size:13px;color:#888;letter-spacing:2px;margin-bottom:8px">Kashiwa no</div>
-  <div style="font-size:36px;font-weight:900;letter-spacing:4px;color:#1a1a2e">BUKATSU</div>
-  <div style="margin-top:24px;width:40px;height:3px;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:2px;animation:bar 1.5s ease forwards;"></div>
+  <img src="logo.png" style="width:90px;height:90px;object-fit:contain;margin-bottom:16px;animation:splashLogo 0.8s ease forwards;opacity:0" alt="ロゴ">
+  <div style="font-size:13px;color:#888;letter-spacing:3px;margin-bottom:6px;font-weight:500">Kashiwa no</div>
+  <div style="font-size:32px;font-weight:900;letter-spacing:4px;color:#1a1a2e">BUKATSU</div>
+  <div style="margin-top:20px;width:40px;height:3px;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:2px;animation:bar 1.5s ease forwards;"></div>
 </div>
 
 <div class="wrapper">
@@ -1344,4 +1346,447 @@ loadMypageData=async function(checkNotice,updateRankCache){
   await _origLoadMypageData(checkNotice,updateRankCache);
   await loadNextReservation();
 };
+</script>
+<!-- ===== 大型パッチ：CSS・HTML・JS ===== -->
+<style>
+/* 下タブ */
+body{padding-bottom:70px}
+.tabs{display:none !important}
+.bottom-tabs{position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid #e0e8f0;display:flex;z-index:100;max-width:600px;margin:0 auto;box-shadow:0 -2px 12px rgba(0,0,0,0.08)}
+.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:none;background:none;padding:8px 2px;gap:3px;-webkit-tap-highlight-color:transparent}
+.bottom-tab svg{width:26px;height:26px;transition:transform 0.15s}
+.bottom-tab span{font-size:10px;font-weight:600;color:#aaa;transition:color 0.15s}
+.bottom-tab.active span{color:#4CAF50}
+.bottom-tab.active svg path,.bottom-tab.active svg circle,.bottom-tab.active svg rect,.bottom-tab.active svg ellipse{fill:#4CAF50 !important}
+.bottom-tab.hidden{display:none}
+/* ヘッダーにログアウトボタン */
+.header-logout{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;display:none;z-index:2}
+/* 会員証ボタン */
+.member-card-open-btn{display:block;width:100%;margin-bottom:12px;padding:14px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:0.5px}
+</style>
+
+<script>
+// ===== 下タブHTML挿入 =====
+document.addEventListener('DOMContentLoaded', function(){
+  const leafSVG = `<svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 3C8 3 4 8 4 14c0 4 2 7.5 5 9.5 1-3 3-6 6-8-2 3-3 6-3 9h2c0-3 1-6 3-8.5V26h2V16.5C21 19 22 22 22 25h2c0-3-1-6-3-9 3 2 5 5.5 6 8.5 3-2 5-5.5 5-9.5 0-6-4-11-10-11C17.5 3 15.5 3 14 3z" fill="#aaa"/></svg>`;
+  const userSVG = `<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5.5" fill="#aaa"/><path d="M5 25c0-5.5 4-9 9-9s9 3.5 9 9z" fill="#aaa"/></svg>`;
+  const calSVG = `<svg viewBox="0 0 28 28" fill="none"><rect x="3" y="6" width="22" height="19" rx="2" fill="#aaa"/><rect x="3" y="6" width="22" height="6" rx="1" fill="#888"/><path d="M3 12h22" stroke="white" stroke-width="0.5"/><path d="M9 3v5M19 3v5" stroke="#aaa" stroke-width="2" stroke-linecap="round"/><rect x="7" y="16" width="4" height="4" rx="1" fill="white"/><rect x="12" y="16" width="4" height="4" rx="1" fill="white"/><rect x="17" y="16" width="4" height="4" rx="1" fill="white"/></svg>`;
+  const refSVG = `<svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="10" r="4.5" fill="#aaa"/><circle cx="20" cy="10" r="4.5" fill="#aaa"/><path d="M2 25c0-4 3.5-7 8-7s8 3 8 7z" fill="#aaa"/><path d="M18 18.5c.6-.3 1.3-.5 2-.5 3.5 0 6 2.5 6 6" stroke="#aaa" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+
+  const tabs = document.createElement('div');
+  tabs.className = 'bottom-tabs';
+  tabs.id = 'bottom-tabs';
+  tabs.innerHTML = `
+    <button class="bottom-tab" id="btab-home" onclick="showTab('home')">${leafSVG}<span>HOME</span></button>
+    <button class="bottom-tab active" id="btab-mypage" onclick="showTab('mypage')">${userSVG}<span>マイページ</span></button>
+    <button class="bottom-tab hidden" id="btab-reserve" onclick="showTab('reserve')">${calSVG}<span>予約</span></button>
+    <button class="bottom-tab hidden" id="btab-referral" onclick="showTab('referral')">${refSVG}<span>紹介</span></button>
+  `;
+  document.body.appendChild(tabs);
+
+  // ヘッダーにログアウトボタン追加
+  const header = document.querySelector('.header');
+  if(header){
+    header.style.position = 'relative';
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'header-logout';
+    logoutBtn.id = 'header-logout-btn';
+    logoutBtn.textContent = 'ログアウト';
+    logoutBtn.onclick = function(){ mypageLogout(); };
+    header.appendChild(logoutBtn);
+  }
+
+  // 設定ボタンのバグ修正：会員カード内のログアウト・設定ボタンを再配置
+  // 設定ボタン → openSettings呼び出し確認
+});
+
+// ===== 下タブ切り替え =====
+const _origShowTab = showTab;
+showTab = function(t){
+  _origShowTab(t);
+  document.querySelectorAll('.bottom-tab').forEach((b,i)=>{
+    b.classList.toggle('active',['home','mypage','reserve','referral'][i]===t);
+  });
+};
+
+// ===== タブ表示更新 =====
+const _origUpdateTabVisibility = updateTabVisibility;
+updateTabVisibility = function(){
+  _origUpdateTabVisibility();
+  const loggedIn = !!mypageCurrentUser;
+  ['reserve','referral'].forEach(t=>{
+    const el = document.getElementById('btab-'+t);
+    if(el) el.classList.toggle('hidden', !loggedIn);
+  });
+  // ヘッダーログアウトボタン
+  const lb = document.getElementById('header-logout-btn');
+  if(lb) lb.style.display = loggedIn ? 'block' : 'none';
+};
+
+// ===== showMypageMainに会員証ボタン追加 =====
+const _origShowMypageMain = showMypageMain;
+showMypageMain = function(){
+  _origShowMypageMain();
+  // 会員カードの上に会員証ボタンを追加（重複防止）
+  if(!document.getElementById('member-card-open-btn-el')){
+    const card = document.getElementById('mc-main-card');
+    if(card){
+      const btn = document.createElement('button');
+      btn.id = 'member-card-open-btn-el';
+      btn.className = 'member-card-open-btn';
+      btn.textContent = '会員証を開く';
+      btn.onclick = openMemberCard;
+      card.parentNode.insertBefore(btn, card);
+    }
+  }
+  // 会員カード内のログアウト・設定ボタンを非表示（ヘッダーとの重複回避）
+  const logoutInCard = document.querySelector('.member-card .logout-btn');
+  if(logoutInCard) logoutInCard.style.display = 'none';
+};
+
+// ===== openSettings バグ修正 =====
+// settingsエリアのinputが存在しない場合の対策
+const _origOpenSettings = openSettings;
+openSettings = function(){
+  const sn = document.getElementById('settings-nickname');
+  const ss = document.getElementById('settings-sport');
+  if(!sn || !ss){
+    // 設定HTMLを動的に挿入
+    injectSettingsHTML();
+    setTimeout(_origOpenSettings, 50);
+    return;
+  }
+  _origOpenSettings();
+};
+
+function injectSettingsHTML(){
+  if(document.getElementById('section-settings')) return;
+  const div = document.createElement('div');
+  div.id = 'section-settings';
+  div.style.cssText = 'display:none;position:fixed;inset:0;background:#f0f4f8;z-index:5000;overflow-y:auto;';
+  div.innerHTML = `
+    <div style="background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px">
+      <button onclick="closeSettings()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">← 戻る</button>
+      <div style="font-size:18px;font-weight:800">設定</div>
+    </div>
+    <div style="padding:16px;max-width:600px;margin:0 auto">
+      <div style="background:#fff;border-radius:20px;padding:20px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.07)">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#1a1a2e;display:flex;align-items:center;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4CAF50,#1a3a5c)"></div>プロフィール編集</div>
+        <div style="font-size:14px;color:#888;margin-bottom:8px;font-weight:500">ニックネーム</div>
+        <input type="text" id="settings-nickname" placeholder="例：コンペイ" style="width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;color:#1a1a2e;margin-bottom:8px">
+        <div style="font-size:14px;color:#888;margin-bottom:8px;font-weight:500;margin-top:8px">在住エリア</div>
+        <select id="settings-area" style="width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;color:#1a1a2e;-webkit-appearance:none">
+          <option value="">選択してください</option><option value="柏市">柏市</option><option value="流山市">流山市</option><option value="我孫子市">我孫子市</option><option value="松戸市">松戸市</option><option value="野田市">野田市</option><option value="八千代市">八千代市</option><option value="印西市">印西市</option><option value="白井市">白井市</option><option value="佐倉市">佐倉市</option><option value="船橋市">船橋市</option><option value="千葉市">千葉市</option><option value="取手市">取手市</option><option value="守谷市">守谷市</option><option value="つくば市">つくば市</option><option value="その他">その他</option>
+        </select>
+        <div style="font-size:14px;color:#888;margin-bottom:8px;font-weight:500;margin-top:8px">参加スポーツ</div>
+        <select id="settings-sport" style="width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;color:#1a1a2e;-webkit-appearance:none">
+          <option value="">選択してください</option><option value="バスケットボール">バスケ</option><option value="バレーボール">バレー</option><option value="バドミントン">バド</option><option value="バスケ＋バレー">バスケ＋バレー</option><option value="バスケ＋バド">バスケ＋バド</option><option value="バレー＋バド">バレー＋バド</option><option value="全て">全て</option>
+        </select>
+        <div style="font-size:14px;color:#888;margin-bottom:8px;font-weight:500;margin-top:8px">性別</div>
+        <select id="settings-gender" style="width:100%;padding:14px 16px;border:1.5px solid #e0e8f0;border-radius:12px;font-size:16px;background:#f8fafc;color:#1a1a2e;-webkit-appearance:none">
+          <option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option>
+        </select>
+        <button onclick="saveSettingsProfile()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;">保存する</button>
+      </div>
+      <div style="background:#fff;border-radius:20px;padding:20px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.07)">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#1a1a2e;display:flex;align-items:center;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4CAF50,#1a3a5c)"></div>会員プラン変更</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div onclick="selectUpgradePlanSettings('カシワのBUKATSU会員')" id="sett-plan-kashiwa" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:700;color:#1a1a2e">カシワのBUKATSU会員</div><div style="font-size:12px;color:#888;margin-top:2px">入会金 1,650円（7月末まで）</div></div><button onclick="event.stopPropagation();openPlanDetailPopup('kashiwa')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button></div>
+          <div onclick="selectUpgradePlanSettings('ファミリー会員')" id="sett-plan-family" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:700;color:#1a1a2e">ファミリー会員</div><div style="font-size:12px;color:#888;margin-top:2px">1人目¥3,300・2人目¥1,650・3人目¥880</div></div><button onclick="event.stopPropagation();openPlanDetailPopup('family')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button></div>
+          <div onclick="selectUpgradePlanSettings('応援団')" id="sett-plan-ouendan" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:700;color:#1a1a2e">応援団会員</div><div style="font-size:12px;color:#888;margin-top:2px">月額 2,200円・参加費定額</div></div><button onclick="event.stopPropagation();openPlanDetailPopup('ouendan')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button></div>
+        </div>
+        <button id="sett-upgrade-btn" onclick="submitSettingsUpgrade()" style="display:none;width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;">申請する</button>
+      </div>
+      <div style="background:#fff;border-radius:20px;padding:20px;margin-bottom:80px;box-shadow:0 4px 20px rgba(0,0,0,0.07)">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#1a1a2e;display:flex;align-items:center;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4CAF50,#1a3a5c)"></div>回数券購入申込</div>
+        <div style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.8">ビジター会員：5,000円（11枚）<br>カシワ会員：4,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button onclick="setTicketCount(1)" id="tc-1" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">1セット</button>
+          <button onclick="setTicketCount(2)" id="tc-2" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">2セット</button>
+          <button onclick="setTicketCount(3)" id="tc-3" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">3セット</button>
+        </div>
+        <button onclick="submitSettingsTicketPurchase()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">申込する</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+// ===== 登録フロー：プラン詳細改善 =====
+// プラン選択のラジオボタンHTML差し替え（補足文削除・詳細ボタン付き）
+function rebuildPlanSelect(){
+  const step3 = document.getElementById('reg-step3');
+  if(!step3) return;
+  const oldPlan = step3.querySelector('.plan-radio-item');
+  if(!oldPlan) return;
+
+  // 既存のplan-radio-itemを全部削除して作り直す
+  const items = step3.querySelectorAll('.plan-radio-item');
+  items.forEach(i => i.remove());
+
+  const planArea = document.createElement('div');
+  planArea.id = 'plan-select-area';
+  planArea.style.marginBottom = '16px';
+
+  const plans = [
+    {key:'visitor', label:'ビジター会員', value:'visitor'},
+    {key:'kashiwa', label:'カシワのBUKATSU会員', value:'kashiwa'},
+    {key:'minnb', label:'みんなのBUKATSU会員', value:'minnb'},
+    {key:'family', label:'ファミリー会員', value:'family'},
+  ];
+
+  planArea.innerHTML = '<div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px">会員種別を選択してください</div>' +
+    plans.map(p => `
+      <div class="plan-radio-item" id="plan-${p.key}" onclick="selectPlan('${p.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px;border:2px solid #e0e8f0;border-radius:14px;margin-bottom:10px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px">
+          <input type="radio" name="plan" value="${p.value}" id="radio-${p.key}" style="width:20px;height:20px;accent-color:#1a3a5c">
+          <div style="font-size:15px;font-weight:700;color:#1a1a2e">${p.label}</div>
+        </div>
+        <button onclick="event.stopPropagation();openPlanDetailPopup('${p.key}')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
+      </div>
+    `).join('') +
+    // キャンペーンバナー
+    `<div id="kashiwa-campaign-badge" style="display:none;margin-top:-6px;margin-bottom:12px">
+      <div style="background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5d060;border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:#b8860b;font-weight:700;margin-bottom:4px">スタートアップキャンペーン 7月末まで</div>
+        <div style="font-size:18px;font-weight:800;color:#1a1a2e"><s style="color:#aaa;font-size:14px">3,300円</s> → 1,650円</div>
+        <div style="font-size:11px;color:#888;margin-top:4px">当日現金でお支払いください</div>
+      </div>
+    </div>` +
+    // ファミリーメンバー追加エリア
+    `<div id="family-members-area" style="display:none;background:#f8fafc;border-radius:14px;padding:16px;margin-bottom:12px;border:1.5px solid #e0e8f0">
+      <div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:12px">家族メンバーを追加</div>
+      <div id="family-member-list"></div>
+      <button onclick="addFamilyMember()" style="width:100%;padding:12px;background:#f0f4f8;border:1.5px dashed #aaa;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;color:#555;margin-top:8px;">+ 家族を追加</button>
+      <div id="family-fee-display" style="margin-top:12px;text-align:right;font-size:13px;color:#888"></div>
+    </div>` +
+    `<div id="kashiwa-consent-area" style="display:none">
+      <div style="background:#f9fafb;border:1px solid #e0e8f0;border-radius:12px;padding:16px;margin-top:16px;font-size:12px;color:#555;line-height:2.0;max-height:200px;overflow-y:scroll">
+        <div style="font-weight:700;font-size:13px;color:#222;margin-bottom:8px">カシワのBUKATSU会員 規約</div>
+        入会金：スタートアップキャンペーン期間中（7月末まで）1,650円。通常3,300円。入会金は当日現金にてお支払いください。回数券：4,000円（11枚）。有効期限なし。退会時の返金はできません。
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:16px;padding:14px;background:#fff;border-radius:12px;border:1.5px solid #e0e8f0"><input type="checkbox" id="reg-kashiwa-consent" style="width:26px;height:26px;accent-color:#1a3a5c"><label for="reg-kashiwa-consent" style="font-size:15px;color:#333;line-height:1.5;flex:1">カシワ会員規約に同意します</label></div>
+    </div>`;
+
+  // reg-step3の最初に挿入
+  const firstChild = step3.querySelector('input[type=hidden]');
+  if(firstChild) step3.insertBefore(planArea, firstChild);
+  else step3.prepend(planArea);
+}
+
+// ファミリーメンバー管理
+let familyMembers = [];
+function addFamilyMember(){
+  const idx = familyMembers.length;
+  familyMembers.push({name:'', dob:''});
+  renderFamilyMembers();
+}
+function removeFamilyMember(idx){
+  familyMembers.splice(idx, 1);
+  renderFamilyMembers();
+}
+function renderFamilyMembers(){
+  const list = document.getElementById('family-member-list');
+  if(!list) return;
+  list.innerHTML = familyMembers.map((m, i) => `
+    <div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid #e0e8f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:#555">${i+2}人目</div>
+        <button onclick="removeFamilyMember(${i})" style="background:#fce8e6;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#e53935;cursor:pointer;">削除</button>
+      </div>
+      <input type="text" placeholder="フルネーム（カタカナ）" value="${m.name}" oninput="familyMembers[${i}].name=this.value;updateFamilyFee()" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#f8fafc;color:#1a1a2e;margin-bottom:8px">
+      <input type="text" placeholder="生年月日（YYYYMMDD）" value="${m.dob}" oninput="familyMembers[${i}].dob=this.value" maxlength="8" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#f8fafc;color:#1a1a2e">
+    </div>
+  `).join('');
+  updateFamilyFee();
+}
+function updateFamilyFee(){
+  const fees = [3300, 1650, 880];
+  const total = familyMembers.reduce((sum, m, i) => sum + (fees[i+1] || 880), 3300);
+  const el = document.getElementById('family-fee-display');
+  if(!el) return;
+  let breakdown = '代表者：3,300円';
+  familyMembers.forEach((m, i) => {
+    const fee = fees[i+1] || 880;
+    breakdown += `<br>${i+2}人目：${fee.toLocaleString()}円`;
+  });
+  el.innerHTML = `<div style="background:#fff8e1;border-radius:10px;padding:10px;border:1px solid #f5d060;font-size:13px;color:#444;line-height:2">${breakdown}<br><strong style="color:#1a1a2e">合計入会金：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>`;
+}
+
+// selectPlan上書き
+const _origSelectPlan = selectPlan;
+selectPlan = function(plan){
+  selectedPlan = plan;
+  document.querySelectorAll('.plan-radio-item').forEach(el => el.classList.remove('selected'));
+  const el = document.getElementById('plan-'+plan);
+  if(el) el.classList.add('selected');
+  const radio = document.getElementById('radio-'+plan);
+  if(radio) radio.checked = true;
+  const cb = document.getElementById('kashiwa-campaign-badge');
+  const ca = document.getElementById('kashiwa-consent-area');
+  const fa = document.getElementById('family-members-area');
+  if(cb) cb.style.display = plan==='kashiwa' ? 'block' : 'none';
+  if(ca) ca.style.display = plan==='kashiwa' ? 'block' : 'none';
+  if(fa) fa.style.display = plan==='family' ? 'block' : 'none';
+  if(plan==='family') renderFamilyMembers();
+};
+
+// confirmTempMember上書き（プラン選択UI再構築）
+const _origConfirmTempMember = confirmTempMember;
+confirmTempMember = function(){
+  _origConfirmTempMember();
+  rebuildPlanSelect();
+  selectPlan('visitor');
+};
+
+// ===== 登録確認画面 =====
+const _origRegisterAttendee = registerAttendee;
+registerAttendee = function(){
+  // 確認画面を挟む
+  if(!selectedPlan) return alert('会員種別を選択してください');
+  const fullname = document.getElementById('reg-confirmed-fullname').value.trim();
+  const fc = document.getElementById('reg-fullname-confirm').value.trim();
+  if(!/^[ァ-ヶー]{4,}$/.test(fc)){document.getElementById('reg-fullname-error').style.display='block';return;}
+  document.getElementById('reg-fullname-error').style.display='none';
+  const nickname = document.getElementById('reg-nickname').value.trim();
+  const dob = getDobValue();
+  const area = document.getElementById('reg-area').value;
+  const sport = document.getElementById('reg-sport').value;
+  if(!fullname) return alert('検索からやり直してください');
+  if(!nickname) return alert('ニックネームを入力してください');
+  if(dob.length!==8) return alert('生年月日を選択してください');
+  if(!area) return alert('在住エリアを選択してください');
+  if(!sport) return alert('参加予定のスポーツを選択してください');
+  if(!document.getElementById('reg-consent').checked) return alert('個人情報の取り扱いへの同意が必要です');
+  if(selectedPlan==='kashiwa' && !document.getElementById('reg-kashiwa-consent').checked) return alert('カシワ会員規約への同意が必要です');
+  if(isMinor() && !document.getElementById('reg-minor-consent').checked) return alert('18歳未満の方は保護者の同意が必要です');
+
+  // 入会金計算
+  const planLabel = {'visitor':'ビジター会員','kashiwa':'カシワのBUKATSU会員','minnb':'みんなのBUKATSU会員','family':'ファミリー会員'}[selectedPlan];
+  let feeHtml = '';
+  if(selectedPlan === 'kashiwa'){
+    feeHtml = '<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">入会金：<strong>1,650円</strong>（キャンペーン中）<br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>';
+  } else if(selectedPlan === 'family'){
+    const fees = [3300, 1650, 880];
+    const total = familyMembers.reduce((s,m,i) => s+(fees[i+1]||880), 3300);
+    let bd = '代表者：3,300円';
+    familyMembers.forEach((m,i) => { bd += `<br>${i+2}人目（${m.name||'未入力'}）：${(fees[i+1]||880).toLocaleString()}円`; });
+    feeHtml = `<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">${bd}<br><strong>合計：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>`;
+  }
+
+  // 確認モーダル表示
+  const ov = document.createElement('div');
+  ov.className = 'ticket-overlay';
+  ov.id = 'reg-confirm-overlay';
+  ov.innerHTML = `
+    <div class="ticket-blur-bg"></div>
+    <div class="ticket-modal" style="text-align:left;max-height:90vh;overflow-y:auto;">
+      <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">登録内容の確認</div>
+      <div style="background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:16px;font-size:14px;color:#444;line-height:2.2">
+        <div><span style="color:#888;font-size:12px">お名前</span><br>${fc}</div>
+        <div style="margin-top:8px"><span style="color:#888;font-size:12px">ニックネーム</span><br>${nickname}</div>
+        <div style="margin-top:8px"><span style="color:#888;font-size:12px">会員種別</span><br>${planLabel}</div>
+        <div style="margin-top:8px"><span style="color:#888;font-size:12px">スポーツ</span><br>${sport}</div>
+        <div style="margin-top:8px"><span style="color:#888;font-size:12px">エリア</span><br>${area}</div>
+      </div>
+      ${feeHtml}
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button onclick="document.getElementById('reg-confirm-overlay').remove()" style="flex:1;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;">修正する</button>
+        <button onclick="document.getElementById('reg-confirm-overlay').remove();_execRegister()" style="flex:1;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">登録する</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(ov);
+};
+
+// 実際の登録処理
+async function _execRegister(){
+  const fullname = document.getElementById('reg-confirmed-fullname').value.trim();
+  const fc = document.getElementById('reg-fullname-confirm').value.trim();
+  const nickname = document.getElementById('reg-nickname').value.trim();
+  const dob = getDobValue();
+  const gender = document.getElementById('reg-gender').value;
+  const area = document.getElementById('reg-area').value;
+  const sport = document.getElementById('reg-sport').value;
+  const eRel = document.getElementById('reg-emergency-rel') ? document.getElementById('reg-emergency-rel').value : '';
+  const eTel = document.getElementById('reg-emergency-tel') ? document.getElementById('reg-emergency-tel').value.trim() : '';
+  const referrer = document.getElementById('reg-confirmed-referrer').value.trim();
+  const typeMap = {'visitor':'ビジター会員','kashiwa':'カシワのBUKATSU会員','minnb':'みんなのBUKATSU会員','family':'ファミリー会員'};
+  const memberType = typeMap[selectedPlan];
+
+  try{
+    const memberNumber = await callGAS('completeRegistration', fullname, nickname, dob, sport, area, gender, eRel, eTel, referrer);
+    if(selectedPlan === 'kashiwa' || selectedPlan === 'minnb' || selectedPlan === 'family'){
+      await callGAS('updateAttendeeType', fullname, memberType).catch(()=>{});
+    }
+    // ファミリーメンバー登録
+    if(selectedPlan === 'family' && familyMembers.length > 0){
+      for(const m of familyMembers){
+        if(m.name && m.dob){
+          await callGAS('completeRegistration', m.name, m.name, m.dob, sport, area, '', '', '', fullname).catch(()=>{});
+          await callGAS('updateAttendeeType', m.name, 'ファミリー会員').catch(()=>{});
+        }
+      }
+    }
+    // 自動ウェルカムメッセージ送信
+    let welcomeMsg = `ご登録ありがとうございます！\n一緒にスポーツを楽しみましょう！\n\n会員番号：${memberNumber}`;
+    if(selectedPlan === 'kashiwa'){
+      welcomeMsg += '\n\n入会金 1,650円を次回ご参加時にスタッフへお支払いください。\n（キャンペーン価格：通常3,300円）';
+    } else if(selectedPlan === 'family'){
+      const fees = [3300, 1650, 880];
+      const total = familyMembers.reduce((s,m,i) => s+(fees[i+1]||880), 3300);
+      welcomeMsg += `\n\n入会金合計 ¥${total.toLocaleString()} を次回ご参加時にスタッフへお支払いください。`;
+    }
+    await callGAS('sendMessage', fullname, welcomeMsg, false).catch(()=>{});
+
+    mypageCurrentUser = {fullname, nickname, memberSport:sport, memberNumber, type:memberType};
+    localStorage.setItem('bukatsu_user', JSON.stringify(mypageCurrentUser));
+    closeRegisterModal();
+    resetRegFlow();
+    familyMembers = [];
+
+    // 完了画面
+    const ov = document.createElement('div');
+    ov.className = 'ticket-overlay';
+    ov.innerHTML = `
+      <div class="ticket-blur-bg"></div>
+      <div class="ticket-modal" style="text-align:center">
+        <div style="font-size:56px;margin-bottom:12px">🎉</div>
+        <div style="font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:6px">ご登録ありがとうございます！</div>
+        <div style="font-size:15px;color:#555;margin-bottom:16px;line-height:1.8">一緒にスポーツを楽しみましょう！</div>
+        <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:20px">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px">会員番号</div>
+          <div style="font-size:24px;font-weight:800;color:#1a1a2e;letter-spacing:2px">${memberNumber}</div>
+        </div>
+        ${selectedPlan==='kashiwa' ? '<div style="background:#fff8e1;border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;color:#b8860b;font-weight:600">入会金 1,650円を次回参加時にお支払いください</div>' : ''}
+        <button onclick="this.closest(\'.ticket-overlay\').remove();showMypageMain();" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer">マイページへ</button>
+      </div>`;
+    document.body.appendChild(ov);
+  }catch(e){
+    alert('エラー：'+e.message);
+  }
+}
+
+// ===== GAS doPost に sendMessage 追加確認 =====
+// ※ GAS側のallowedに 'sendMessage': sendMessage を追加してください
+
+// ===== オンラインヨガ部（カミングスーン）=====
+// HOMEに追加
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    const homeSection = document.getElementById('section-home');
+    if(!homeSection || document.getElementById('yoga-card')) return;
+    const yogaCard = document.createElement('div');
+    yogaCard.id = 'yoga-card';
+    yogaCard.className = 'card';
+    yogaCard.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>オンラインヨガ部</div>
+        <div style="font-size:11px;background:#f0f4f8;color:#888;padding:4px 10px;border-radius:8px;font-weight:600">Coming Soon</div>
+      </div>
+      <div style="font-size:13px;color:#aaa;margin-top:10px;line-height:1.8">オンラインヨガ部が近日スタート予定！<br>詳細は決まり次第お知らせします。</div>
+    `;
+    homeSection.appendChild(yogaCard);
+  }, 500);
+});
 </script>
