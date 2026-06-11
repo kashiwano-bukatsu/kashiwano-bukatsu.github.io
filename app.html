@@ -51,18 +51,25 @@ body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
 .type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 30%,#8b1010 100%);box-shadow:0 8px 32px rgba(183,28,28,0.35)}
 
 /* ランク */
-.rank-bronze.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 45%,#a0522d 100%)}
-.rank-silver.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 45%,#78909c 100%)}
-.rank-gold.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 45%,#c67c00 100%)}
-.rank-platinum.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 42%,#1a0a4a 100%)}
-.rank-bronze.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 45%,#a0522d 100%)}
-.rank-silver.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 45%,#78909c 100%)}
-.rank-gold.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 45%,#c67c00 100%)}
-.rank-platinum.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 42%,#1a0a4a 100%)}
-.rank-bronze.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 45%,#a0522d 100%)}
-.rank-silver.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 45%,#78909c 100%)}
-.rank-gold.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 45%,#e8a000 100%)}
-.rank-platinum.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 42%,#1a0a4a 100%)}
+/* ファミリー会員カラー */
+.type-family{background:linear-gradient(135deg,#e6a817 0%,#f0c040 100%);box-shadow:0 8px 32px rgba(230,168,23,0.35)}
+/* ランクカラー修正（右側グラデーション明確化） */
+.rank-bronze.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 40%,#8b4513 70%,#a0522d 100%)}
+.rank-silver.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 40%,#607d8b 70%,#78909c 100%)}
+.rank-gold.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 40%,#b8860b 70%,#c67c00 100%)}
+.rank-platinum.type-kashiwa{background:linear-gradient(135deg,#0d2240 0%,#1a3a5c 38%,#1a0a4a 60%,#3d1f7a 100%)}
+.rank-bronze.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 40%,#8b4513 70%,#a0522d 100%)}
+.rank-silver.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 40%,#607d8b 70%,#78909c 100%)}
+.rank-gold.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 40%,#b8860b 70%,#c67c00 100%)}
+.rank-platinum.type-minnb{background:linear-gradient(135deg,#1b3a0a 0%,#33691e 38%,#1a0a4a 60%,#3d1f7a 100%)}
+.rank-bronze.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 40%,#8b4513 70%,#a0522d 100%)}
+.rank-silver.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 40%,#607d8b 70%,#78909c 100%)}
+.rank-gold.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 40%,#b8860b 70%,#e8a000 100%)}
+.rank-platinum.type-ouendan{background:linear-gradient(135deg,#5a3a00 0%,#8b6508 38%,#1a0a4a 60%,#3d1f7a 100%)}
+.rank-bronze.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 40%,#8b4513 70%,#a0522d 100%)}
+.rank-silver.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 40%,#607d8b 70%,#78909c 100%)}
+.rank-gold.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 40%,#b8860b 70%,#e8a000 100%)}
+.rank-platinum.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 38%,#1a0a4a 60%,#3d1f7a 100%)}
 
 /* プログレス */
 .progress-bar-bg{background:#f0f4f8;border-radius:999px;height:10px;overflow:hidden;margin:8px 0}
@@ -249,11 +256,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
           <button class="logout-btn" onclick="mypageLogout()">ログアウト</button>
-          <button class="open-card-btn" onclick="openMemberCard()">会員証を開く</button>
+          <button class="open-card-btn" onclick="openSettings()">設定</button>
         </div>
-      </div>
-      <div id="upgrade-banner" style="display:none;margin-top:12px;position:relative;z-index:1">
-        <button onclick="openUpgradeModal()" style="width:100%;padding:12px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">プランをアップグレードする</button>
       </div>
     </div>
     <div class="card">
@@ -264,6 +268,11 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <div id="ticket-stat-box" onclick="openTicketModal()" style="flex:1;background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(74,197,80,0.15);cursor:pointer"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-ticket-count">0枚</div><div style="font-size:10px;color:#888;margin-top:2px">チケット</div></div>
       </div>
       <div id="mypage-progress-area"></div>
+      <!-- 次回予約 -->
+      <div id="mypage-next-reserve" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8">
+        <div style="font-size:13px;color:#888;margin-bottom:8px" id="mypage-next-reserve-label"></div>
+        <div id="mypage-next-reserve-content"></div>
+      </div>
     </div>
     <!-- 活動記録（ビジター以外） -->
     <div id="videos-card" class="card" style="display:none">
@@ -338,6 +347,16 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <select id="ref-friend-schedule"><option value="">スケジュールを読み込み中...</option></select>
       <button class="btn btn-primary" onclick="submitReferral()">紹介する</button>
     </div>
+  </div>
+</div>
+
+<!-- 設定フルページ -->
+<div id="section-settings" style="display:none;position:fixed;inset:0;background:#f0f4f8;z-index:5000;overflow-y:auto;">
+  <div style="background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px">
+    <button onclick="closeSettings()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;"></div><!-- /.wrapper -->larr; 戻る</button>
+    <div style="font-size:18px;font-weight:800">設定</div>
+  </div>
+  <div style="padding:16px;max-width:600px;margin:0 auto" id="settings-content">
   </div>
 </div>
 
@@ -1220,3 +1239,109 @@ function openRankInfo(){
 </script>
 </body>
 </html>
+<!-- JS追加パッチ -->
+<script>
+// ===== 設定フルページ =====
+function openSettings(){
+  if(!mypageCurrentUser)return;
+  document.getElementById('settings-nickname').value=mypageCurrentUser.nickname||'';
+  document.getElementById('settings-sport').value=mypageCurrentUser.memberSport||'';
+  setTicketCount(1);
+  document.getElementById('section-settings').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeSettings(){
+  document.getElementById('section-settings').style.display='none';
+  document.body.style.overflow='';
+}
+async function saveSettingsProfile(){
+  const nickname=document.getElementById('settings-nickname').value.trim();
+  if(!nickname)return alert('ニックネームを入力してください');
+  const area=document.getElementById('settings-area').value;
+  const sport=document.getElementById('settings-sport').value;
+  const gender=document.getElementById('settings-gender').value;
+  try{
+    await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
+    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    document.getElementById('mypage-logged-name').textContent=nickname+' さん';
+    alert('プロフィールを更新しました');
+  }catch(e){alert('エラー：'+e.message);}
+}
+let _settingsUpgradePlan='';
+function selectUpgradePlanSettings(plan){
+  _settingsUpgradePlan=plan;
+  ['sett-plan-kashiwa','sett-plan-family','sett-plan-ouendan'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.border='2px solid #e0e8f0';});
+  const km={'カシワのBUKATSU会員':'kashiwa','ファミリー会員':'family','応援団':'ouendan'};
+  const el=document.getElementById('sett-plan-'+km[plan]);if(el)el.style.border='2px solid #1a3a5c';
+  document.getElementById('sett-upgrade-btn').style.display='block';
+}
+async function submitSettingsUpgrade(){
+  if(!_settingsUpgradePlan||!mypageCurrentUser)return;
+  const btn=document.getElementById('sett-upgrade-btn');btn.disabled=true;btn.textContent='申請中...';
+  try{
+    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,_settingsUpgradePlan,'現金（当日）');
+    btn.disabled=false;btn.textContent='申請する';
+    showSimplePopup('申請を受け付けました','スタッフからご連絡します。');
+  }catch(e){btn.disabled=false;btn.textContent='申請する';alert('エラー：'+e.message);}
+}
+async function submitSettingsTicketPurchase(){
+  if(!mypageCurrentUser)return;
+  try{
+    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,'回数券購入 '+_ticketCount+'セット','現金（当日）');
+    showSimplePopup('申込を受け付けました','当日スタッフにお声がけください。');
+  }catch(e){alert('エラー：'+e.message);}
+}
+
+// ===== プラン詳細ポップアップ =====
+function openPlanDetailPopup(plan){
+  const details={
+    visitor:{title:'ビジター会員',body:'登録費無料。\n参加費：バスケ・バレー 500円 / バドミントン 700円\n回数券：5,000円（11枚）'},
+    kashiwa:{title:'カシワのBUKATSU会員',body:'入会金 1,650円（7月末キャンペーン中）\n通常 3,300円\n回数券 4,000円（11枚）\n他種目体験参加無料\n活動記録動画閲覧可能'},
+    family:{title:'ファミリー会員',body:'1人目：入会金 3,300円\n2人目：入会金 1,650円\n3人目：入会金 880円\n参加費：1人目 500円 / 2人目以降 200円\n回数券は家族間でシェアOK'},
+    minnb:{title:'みんなのBUKATSU会員',body:'八千代BUKATSUでの入会金支払済の方向け\n入会金：無料\n参加費：バド 400円 / 他 200円\n回数券：2,000円（11枚）'},
+    ouendan:{title:'応援団会員',body:'月額 2,200円（参加費定額・何回でも参加し放題）\n初回のみ入会金 3,300円\n半年一括 11,000円（1ヶ月分お得）'}
+  };
+  const d=details[plan]||{title:'',body:''};
+  const ov=document.createElement('div');ov.className='popup-overlay';
+  ov.innerHTML='<div class="popup-card" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">'+d.title+'</div><div style="font-size:14px;color:#444;line-height:2;white-space:pre-line;margin-bottom:20px">'+d.body+'</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">閉じる</button></div>';
+  document.body.appendChild(ov);
+}
+
+// ===== ファミリー会員カラー対応 =====
+const _origGetTypeClass=getTypeClass;
+getTypeClass=function(type){
+  if(type==='ファミリー会員')return'type-family';
+  return _origGetTypeClass(type);
+};
+
+// ===== 次回予約表示 =====
+async function loadNextReservation(){
+  if(!mypageCurrentUser)return;
+  try{
+    const reservations=await callGAS('getMyReservations',mypageCurrentUser.fullname);
+    const el=document.getElementById('mypage-next-reserve');
+    const label=document.getElementById('mypage-next-reserve-label');
+    const content=document.getElementById('mypage-next-reserve-content');
+    if(!el)return;
+    if(!reservations||!reservations.length){el.style.display='none';return;}
+    const next=reservations[0];
+    const st=next[7]||'⭕';
+    const stLabel={'⭕':'参加','△':'未定','❌':'不参加'};
+    label.textContent=mypageCurrentUser.nickname+' さんの次回予約';
+    content.innerHTML='<div style="background:#f8fafc;border-radius:12px;padding:14px;border-left:4px solid #1a3a5c">'+
+      '<div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">'+(SPORT_ICON[next[2]]||'')+' '+next[2]+'</div>'+
+      '<div style="font-size:13px;color:#888">'+next[1]+'（'+getDow(next[1])+'） ／ '+next[3]+'</div>'+
+      '<div style="font-size:12px;margin-top:6px;color:#555">'+st+' '+stLabel[st]+'</div>'+
+    '</div>';
+    el.style.display='block';
+  }catch(e){}
+}
+
+// loadMypageData後に次回予約も読み込む
+const _origLoadMypageData=loadMypageData;
+loadMypageData=async function(checkNotice,updateRankCache){
+  await _origLoadMypageData(checkNotice,updateRankCache);
+  await loadNextReservation();
+};
+</script>
