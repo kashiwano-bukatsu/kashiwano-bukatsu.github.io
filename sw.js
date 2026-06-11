@@ -1,14 +1,13 @@
-const VERSION = 'v1.0.0';
-const CACHE_NAME = 'kashiwa-bukatsu-' + VERSION;
+const CACHE_NAME = 'kashiwa-bukatsu-cache';
 
 const CACHE_FILES = [
   '/app.html',
   '/logo.png',
   '/icon.png',
   '/manifest.json',
-  '/sw.js',
 ];
 
+// インストール時にキャッシュ
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
@@ -16,6 +15,7 @@ self.addEventListener('install', event => {
   );
 });
 
+// 古いキャッシュ削除
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -24,22 +24,19 @@ self.addEventListener('activate', event => {
   );
 });
 
+// ネットワーク優先・失敗時のみキャッシュ使用
 self.addEventListener('fetch', event => {
+  // GAS通信はSWをスルー
   if (event.request.url.includes('script.google.com')) return;
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
+        // 成功したらキャッシュも更新しておく
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request)) // オフライン時のみキャッシュ
   );
-});
-
-// バージョン情報をページに伝える
-self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'getVersion') {
-    event.ports[0].postMessage({ version: VERSION });
-  }
 });
