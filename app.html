@@ -376,31 +376,44 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <!-- プラン変更 -->
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>会員プラン変更</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div onclick="selectUpgradePlanSettings('カシワのBUKATSU会員')" id="sett-plan-kashiwa" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
-          <div><div style="font-size:14px;font-weight:700;color:#1a1a2e">カシワのBUKATSU会員</div><div style="font-size:12px;color:#888;margin-top:2px">入会金 1,650円（7月末まで）</div></div>
-          <button onclick="event.stopPropagation();openPlanDetailPopup('kashiwa')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
+      <div style="background:#f0f4f8;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:2px">現在のプラン</div>
+          <div style="font-size:16px;font-weight:800;color:#1a1a2e" id="sett-current-plan">読み込み中...</div>
         </div>
-        <div onclick="selectUpgradePlanSettings('ファミリー会員')" id="sett-plan-family" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
-          <div><div style="font-size:14px;font-weight:700;color:#1a1a2e">ファミリー会員</div><div style="font-size:12px;color:#888;margin-top:2px">1人目¥3,300・2人目¥1,650・3人目¥880</div></div>
-          <button onclick="event.stopPropagation();openPlanDetailPopup('family')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
-        </div>
-        <div onclick="selectUpgradePlanSettings('応援団')" id="sett-plan-ouendan" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
-          <div><div style="font-size:14px;font-weight:700;color:#1a1a2e">応援団会員</div><div style="font-size:12px;color:#888;margin-top:2px">月額 2,200円・参加費定額</div></div>
-          <button onclick="event.stopPropagation();openPlanDetailPopup('ouendan')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
+        <button onclick="togglePlanChangeArea()" id="sett-plan-change-btn" style="padding:8px 16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">変更する</button>
+      </div>
+      <div id="sett-plan-change-area" style="display:none">
+        <div style="font-size:13px;color:#888;margin-bottom:10px">変更先のプランを選択してください</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div onclick="selectUpgradePlanSettings('ビジター会員')" id="sett-plan-visitor" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">ビジター会員</div>
+          <div onclick="selectUpgradePlanSettings('カシワのBUKATSU会員')" id="sett-plan-kashiwa" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">
+            カシワのBUKATSU会員
+          </div>
+          <div onclick="selectUpgradePlanSettings('ファミリー会員')" id="sett-plan-family" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">ファミリー会員</div>
+          <div onclick="selectUpgradePlanSettings('みんなのBUKATSU会員')" id="sett-plan-minnb" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">みんなのBUKATSU会員</div>
+          <div onclick="selectUpgradePlanSettings('応援団')" id="sett-plan-ouendan" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer">
+            <div style="font-size:15px;font-weight:700;color:#1a1a2e">応援団</div>
+            <div style="font-size:12px;color:#888;margin-top:4px;line-height:1.7">カシワのBUKATSUを継続的に応援してくださる方へのプランです。毎月の定額支援への返礼として、バドミントンを含む全種目に参加費無料で何度でも参加いただけます。半年ごとの契約。</div>
+          </div>
         </div>
       </div>
-      <button id="sett-upgrade-btn" onclick="submitSettingsUpgrade()" style="display:none;width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;">申請する</button>
     </div>
     <!-- 回数券 -->
-    <div class="card" style="margin-bottom:100px">
+    <div id="sett-ticket-section" class="card" style="margin-bottom:100px">
       <div class="card-title"><div class="card-title-dot"></div>回数券購入申込</div>
-      <div style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.8">ビジター会員：5,000円（11枚）<br>カシワ会員：4,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span></div>
+      <div id="sett-ticket-pending" style="display:none;background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5d060;border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
+        <div style="font-size:12px;color:#b8860b;font-weight:700;margin-bottom:4px">申請中</div>
+        <div style="font-size:15px;font-weight:800;color:#1a1a2e" id="sett-ticket-pending-text"></div>
+        <div style="font-size:12px;color:#888;margin-top:4px">当日スタッフにお支払いください</div>
+      </div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.8" id="sett-ticket-price-info"></div>
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button onclick="setTicketCount(1)" id="tc-1" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">1セット</button>
         <button onclick="setTicketCount(2)" id="tc-2" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">2セット</button>
         <button onclick="setTicketCount(3)" id="tc-3" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">3セット</button>
       </div>
+      <div id="sett-ticket-total" style="text-align:right;font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:10px"></div>
       <button class="btn btn-primary" onclick="submitSettingsTicketPurchase()">申込する</button>
     </div>
   </div>
@@ -613,11 +626,18 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WB
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
 let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor';
 
+let _gasRunning = false;
 async function callGAS(func,...args){
-  const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
-  const json=await res.json();
-  if(json.status==='error')throw new Error(json.message);
-  return json.data;
+  if(_gasRunning) return Promise.reject(new Error('処理中です'));
+  _gasRunning = true;
+  try{
+    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
+    const json=await res.json();
+    if(json.status==='error')throw new Error(json.message);
+    return json.data;
+  }finally{
+    _gasRunning = false;
+  }
 }
 function formatDate(d){return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
 function getDow(s){return['日','月','火','水','木','金','土'][new Date(s.replace(/\//g,'-')).getDay()];}
@@ -1015,6 +1035,12 @@ let _ticketCount=1;
 function setTicketCount(n){
   _ticketCount=n;
   [1,2,3].forEach(i=>{const el=document.getElementById('tc-'+i);if(el){el.style.border=i===n?'2px solid #1a3a5c':'2px solid #e0e8f0';el.style.background=i===n?'#f0f4ff':'#fff';}});
+  // 金額表示更新
+  if(mypageCurrentUser){
+    const price=calcTicketPrice(n,mypageCurrentUser.type);
+    const el=document.getElementById('sett-ticket-total');
+    if(el) el.textContent='合計 ¥'+price.toLocaleString();
+  }
 }
 async function submitTicketPurchase(){
   if(!mypageCurrentUser)return;
@@ -1163,16 +1189,13 @@ async function registerAttendee(){
   if(isMinor()&&!document.getElementById('reg-minor-consent').checked)return alert('18歳未満の方は保護者の同意が必要です');
 
   // 種別設定
-  const typeMap={'visitor':'ビジター会員','kashiwa':'カシワのBUKATSU会員','minnb':'みんなのBUKATSU会員'};
-  const memberType=typeMap[selectedPlan];
+  const typeMap={'visitor':'ビジター会員','kashiwa':'カシワのBUKATSU会員','family':'ファミリー会員','minnb':'みんなのBUKATSU会員'};
+  const memberType=typeMap[selectedPlan]||'ビジター会員';
 
   const btn=document.getElementById('reg-submit-btn');btn.disabled=true;btn.textContent='登録中...';
   try{
-    const memberNumber=await callGAS('completeRegistration',fullname,nickname,dob,sport,area,gender,eRel,eTel,referrer);
-    // カシワ会員の場合は種別更新
-    if(selectedPlan==='kashiwa'||selectedPlan==='minnb'){
-      await callGAS('updateAttendeeType',fullname,memberType).catch(()=>{});
-    }
+    // memberTypeをGASに渡して種別を正しく登録
+    const memberNumber=await callGAS('completeRegistration',fullname,nickname,dob,sport,area,gender,eRel,eTel,referrer,selectedPlan);
     btn.disabled=false;btn.textContent='登録する';
     mypageCurrentUser={fullname,nickname,memberSport:sport,memberNumber,type:memberType};
     localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
@@ -1315,28 +1338,95 @@ async function saveSettingsProfile(){
   }catch(e){alert('エラー：'+e.message);}
 }
 let _settingsUpgradePlan='';
+function togglePlanChangeArea(){
+  const area=document.getElementById('sett-plan-change-area');
+  const btn=document.getElementById('sett-plan-change-btn');
+  const isOpen=area.style.display!=='none';
+  area.style.display=isOpen?'none':'block';
+  btn.textContent=isOpen?'変更する':'閉じる';
+}
 function selectUpgradePlanSettings(plan){
   _settingsUpgradePlan=plan;
-  ['sett-plan-kashiwa','sett-plan-family','sett-plan-ouendan'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.border='2px solid #e0e8f0';});
-  const km={'カシワのBUKATSU会員':'kashiwa','ファミリー会員':'family','応援団':'ouendan'};
-  const el=document.getElementById('sett-plan-'+km[plan]);if(el)el.style.border='2px solid #1a3a5c';
-  document.getElementById('sett-upgrade-btn').style.display='block';
+  ['sett-plan-visitor','sett-plan-kashiwa','sett-plan-family','sett-plan-minnb','sett-plan-ouendan'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.border='2px solid #e0e8f0';
+  });
+  const keyMap={'ビジター会員':'visitor','カシワのBUKATSU会員':'kashiwa','ファミリー会員':'family','みんなのBUKATSU会員':'minnb','応援団':'ouendan'};
+  const el=document.getElementById('sett-plan-'+keyMap[plan]);
+  if(el)el.style.border='2px solid #1a3a5c';
+  // 確認POPUP
+  const ov=document.createElement('div');ov.className='popup-overlay';
+  ov.innerHTML=`<div class="popup-card">
+    <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:8px">プラン変更の申請</div>
+    <div style="font-size:14px;color:#555;margin-bottom:20px;line-height:1.8"><strong>${plan}</strong> への変更を申請しますか？<br><span style="font-size:12px;color:#888">承認後にプランが変更されます</span></div>
+    <button onclick="confirmUpgradeRequest('${plan}',this.closest('.popup-overlay'))" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">申請する</button>
+    <button onclick="this.closest('.popup-overlay').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">キャンセル</button>
+  </div>`;
+  document.body.appendChild(ov);
 }
-async function submitSettingsUpgrade(){
-  if(!_settingsUpgradePlan||!mypageCurrentUser)return;
-  const btn=document.getElementById('sett-upgrade-btn');btn.disabled=true;btn.textContent='申請中...';
+async function confirmUpgradeRequest(plan, overlay){
+  if(!mypageCurrentUser)return;
+  const btn=overlay.querySelector('button');btn.disabled=true;btn.textContent='申請中...';
   try{
-    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,_settingsUpgradePlan,'現金（当日）');
-    btn.disabled=false;btn.textContent='申請する';
+    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,plan,'現金（当日）');
+    overlay.remove();
     showSimplePopup('申請を受け付けました','スタッフからご連絡します。');
+    document.getElementById('sett-plan-change-area').style.display='none';
+    document.getElementById('sett-plan-change-btn').textContent='変更する';
   }catch(e){btn.disabled=false;btn.textContent='申請する';alert('エラー：'+e.message);}
 }
 async function submitSettingsTicketPurchase(){
   if(!mypageCurrentUser)return;
+  const price=calcTicketPrice(_ticketCount,mypageCurrentUser.type);
+  const ov=document.createElement('div');ov.className='popup-overlay';
+  ov.innerHTML=`<div class="popup-card">
+    <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:8px">回数券購入の確認</div>
+    <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:16px;text-align:left">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:14px;color:#888">セット数</span><span style="font-size:14px;font-weight:700">${_ticketCount}セット（${_ticketCount*11}枚）</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:14px;color:#888">お支払い金額</span><span style="font-size:18px;font-weight:800;color:#1a1a2e">¥${price.toLocaleString()}</span></div>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:16px;text-align:center">当日スタッフに現金でお支払いください</div>
+    <button onclick="doTicketRequest(${_ticketCount},${price},this.closest('.popup-overlay'))" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">申込する</button>
+    <button onclick="this.closest('.popup-overlay').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">キャンセル</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+async function doTicketRequest(sets,price,overlay){
+  const btn=overlay.querySelector('button');btn.disabled=true;btn.textContent='申込中...';
   try{
-    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,'回数券購入 '+_ticketCount+'セット','現金（当日）');
+    await callGAS('submitTicketRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.type,sets,price);
+    overlay.remove();
     showSimplePopup('申込を受け付けました','当日スタッフにお声がけください。');
-  }catch(e){alert('エラー：'+e.message);}
+    loadTicketPendingCard();
+  }catch(e){btn.disabled=false;btn.textContent='申込する';alert('エラー：'+e.message);}
+}
+function calcTicketPrice(sets,type){
+  const isFamily=type==='ファミリー会員';
+  const isMinnb=['みんなのBUKATSU会員','みんB会員'].includes(type);
+  const isVisitorType=['ビジター会員','カシワビジター','ビジター','一般'].includes(type);
+  if(isMinnb) return sets*2000;
+  if(isFamily){
+    if(sets===1)return 4000;
+    if(sets===2)return 6000;
+    return 8000;
+  }
+  if(isVisitorType) return sets*5000;
+  return sets*4000; // カシワ・応援団等
+}
+async function loadTicketPendingCard(){
+  if(!mypageCurrentUser)return;
+  try{
+    const list=await callGAS('getMyTicketRequests',mypageCurrentUser.fullname);
+    const el=document.getElementById('sett-ticket-pending');
+    const txt=document.getElementById('sett-ticket-pending-text');
+    if(list&&list.length>0&&el&&txt){
+      const r=list[0];
+      txt.textContent=r[4]+'セット（¥'+Number(r[5]).toLocaleString()+'）';
+      el.style.display='block';
+    }else if(el){
+      el.style.display='none';
+    }
+  }catch(e){}
 }
 
 // ===== プラン詳細ポップアップ =====
@@ -1872,7 +1962,23 @@ openSettings = function(){
   if(ss) ss.value = mypageCurrentUser.memberSport || '';
   if(sa) sa.value = mypageCurrentUser.area || '';
   if(sg) sg.value = mypageCurrentUser.gender || '';
+  // 現在のプラン表示
+  const cp=document.getElementById('sett-current-plan');
+  if(cp) cp.textContent=mypageCurrentUser.type||'ビジター会員';
+  // 応援団は回数券不要
+  const ts=document.getElementById('sett-ticket-section');
+  if(ts) ts.style.display=mypageCurrentUser.type==='応援団'?'none':'block';
+  // 回数券料金説明
+  const pi=document.getElementById('sett-ticket-price-info');
+  if(pi){
+    const t=mypageCurrentUser.type;
+    if(['みんなのBUKATSU会員','みんB会員'].includes(t)) pi.innerHTML='2,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
+    else if(t==='ファミリー会員') pi.innerHTML='1セット 4,000円・2セット 6,000円・3セット 8,000円（各11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
+    else if(['ビジター会員','カシワビジター','ビジター','一般'].includes(t)) pi.innerHTML='5,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
+    else pi.innerHTML='4,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
+  }
   setTicketCount(1);
+  loadTicketPendingCard();
   el.style.display = 'block';
   document.body.style.overflow = 'hidden';
 };
