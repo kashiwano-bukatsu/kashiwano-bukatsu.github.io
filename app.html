@@ -1790,3 +1790,61 @@ window.addEventListener('load', function(){
   }, 500);
 });
 </script>
+<script>
+// Service Worker 登録
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        // 新しいバージョンが来たら即適用
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // 更新があることをユーザーに通知
+              if (confirm('アプリが更新されました。最新版に切り替えますか？')) {
+                newWorker.postMessage({ action: 'skipWaiting' });
+                window.location.reload();
+              }
+            }
+          });
+        });
+      })
+      .catch(err => console.log('SW登録失敗:', err));
+
+    // SW更新時にページリロード
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  });
+}
+</script>
+<script>
+// ===== サイレント自動更新 + バージョン表示 =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    // 新バージョン検知 → 即サイレント適用
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.postMessage({ action: 'skipWaiting' });
+        }
+      });
+    });
+    // SW切り替わったら静かにリロード
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+    // バージョンをヘッダーに表示
+    if (navigator.serviceWorker.controller) {
+      const mc = new MessageChannel();
+      mc.port1.onmessage = e => {
+        const el = document.getElementById('app-version');
+        if (el && e.data.version) el.textContent = e.data.version;
+      };
+      navigator.serviceWorker.controller.postMessage({ action: 'getVersion' }, [mc.port2]);
+    }
+  }).catch(err => console.log('SW登録失敗:', err));
+}
+</script>
