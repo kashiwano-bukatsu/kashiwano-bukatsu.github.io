@@ -257,7 +257,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
           <div class="member-badge" id="mypage-member-number"></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-          <button class="open-card-btn" onclick="openMemberCard()" style="font-size:11px;padding:6px 12px;opacity:0.85">会員証</button>
+          <button class="open-card-btn" onclick="openMemberCard()">会員証</button>
           <button class="open-card-btn" onclick="openSettings()">設定</button>
         </div>
       </div>
@@ -354,6 +354,55 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div style="font-size:18px;font-weight:800">設定</div>
   </div>
   <div style="padding:16px;max-width:600px;margin:0 auto" id="settings-content">
+    <!-- プロフィール編集 -->
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>プロフィール編集</div>
+      <div class="label" style="margin-top:0">ニックネーム</div>
+      <input type="text" id="settings-nickname" placeholder="例：コンペイ">
+      <div class="label">在住エリア</div>
+      <select id="settings-area">
+        <option value="">選択してください</option><option value="柏市">柏市</option><option value="流山市">流山市</option><option value="我孫子市">我孫子市</option><option value="松戸市">松戸市</option><option value="野田市">野田市</option><option value="八千代市">八千代市</option><option value="印西市">印西市</option><option value="白井市">白井市</option><option value="佐倉市">佐倉市</option><option value="船橋市">船橋市</option><option value="千葉市">千葉市</option><option value="取手市">取手市</option><option value="守谷市">守谷市</option><option value="つくば市">つくば市</option><option value="その他">その他</option>
+      </select>
+      <div class="label">参加スポーツ</div>
+      <select id="settings-sport">
+        <option value="">選択してください</option><option value="バスケットボール">バスケ</option><option value="バレーボール">バレー</option><option value="バドミントン">バド</option><option value="バスケ＋バレー">バスケ＋バレー</option><option value="バスケ＋バド">バスケ＋バド</option><option value="バレー＋バド">バレー＋バド</option><option value="全て">全て</option>
+      </select>
+      <div class="label">性別</div>
+      <select id="settings-gender">
+        <option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option>
+      </select>
+      <button class="btn btn-primary" onclick="saveSettingsProfile()" style="margin-top:14px">保存する</button>
+    </div>
+    <!-- プラン変更 -->
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>会員プラン変更</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div onclick="selectUpgradePlanSettings('カシワのBUKATSU会員')" id="sett-plan-kashiwa" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:14px;font-weight:700;color:#1a1a2e">カシワのBUKATSU会員</div><div style="font-size:12px;color:#888;margin-top:2px">入会金 1,650円（7月末まで）</div></div>
+          <button onclick="event.stopPropagation();openPlanDetailPopup('kashiwa')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
+        </div>
+        <div onclick="selectUpgradePlanSettings('ファミリー会員')" id="sett-plan-family" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:14px;font-weight:700;color:#1a1a2e">ファミリー会員</div><div style="font-size:12px;color:#888;margin-top:2px">1人目¥3,300・2人目¥1,650・3人目¥880</div></div>
+          <button onclick="event.stopPropagation();openPlanDetailPopup('family')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
+        </div>
+        <div onclick="selectUpgradePlanSettings('応援団')" id="sett-plan-ouendan" style="border:2px solid #e0e8f0;border-radius:14px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:14px;font-weight:700;color:#1a1a2e">応援団会員</div><div style="font-size:12px;color:#888;margin-top:2px">月額 2,200円・参加費定額</div></div>
+          <button onclick="event.stopPropagation();openPlanDetailPopup('ouendan')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap">詳細</button>
+        </div>
+      </div>
+      <button id="sett-upgrade-btn" onclick="submitSettingsUpgrade()" style="display:none;width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;">申請する</button>
+    </div>
+    <!-- 回数券 -->
+    <div class="card" style="margin-bottom:100px">
+      <div class="card-title"><div class="card-title-dot"></div>回数券購入申込</div>
+      <div style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.8">ビジター会員：5,000円（11枚）<br>カシワ会員：4,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button onclick="setTicketCount(1)" id="tc-1" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">1セット</button>
+        <button onclick="setTicketCount(2)" id="tc-2" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">2セット</button>
+        <button onclick="setTicketCount(3)" id="tc-3" style="flex:1;padding:12px;border:2px solid #e0e8f0;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;background:#fff">3セット</button>
+      </div>
+      <button class="btn btn-primary" onclick="submitSettingsTicketPurchase()">申込する</button>
+    </div>
   </div>
 </div>
 
@@ -685,7 +734,7 @@ async function mypageLogin(){
   try{
     const data=await callGAS('loginAttendee',fullname,dob);
     if(!data){document.getElementById('mypage-login-error').style.display='block';return;}
-    mypageCurrentUser={fullname:data[1],nickname:data[0],memberSport:data[5]||'全て',memberNumber:(data[9]||'')+(data[10]||''),type:data[2]||'一般',gender:data[14]||''};
+    mypageCurrentUser={fullname:data[1],nickname:data[0],memberSport:data[5]||'全て',memberNumber:(data[9]||'')+(data[10]||''),type:data[2]||'一般',gender:data[14]||'',area:data[6]||''};
     localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
     localStorage.setItem('bukatsu_auto_login',remember?'true':'false');
     closeLoginModal();
@@ -1847,8 +1896,12 @@ openSettings = function(){
   // 現在の値をセット
   const sn = document.getElementById('settings-nickname');
   const ss = document.getElementById('settings-sport');
+  const sa = document.getElementById('settings-area');
+  const sg = document.getElementById('settings-gender');
   if(sn) sn.value = mypageCurrentUser.nickname || '';
   if(ss) ss.value = mypageCurrentUser.memberSport || '';
+  if(sa) sa.value = mypageCurrentUser.area || '';
+  if(sg) sg.value = mypageCurrentUser.gender || '';
   setTicketCount(1);
   el.style.display = 'block';
   document.body.style.overflow = 'hidden';
