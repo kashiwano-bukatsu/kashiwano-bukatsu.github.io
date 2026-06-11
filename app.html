@@ -257,9 +257,11 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
           <div class="member-badge" id="mypage-member-number"></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-          <button class="logout-btn" onclick="mypageLogout()">ログアウト</button>
           <button class="open-card-btn" onclick="openSettings()">設定</button>
         </div>
+      </div>
+      <div style="position:relative;z-index:1;margin-top:12px">
+        <button onclick="openMemberCard()" style="width:100%;padding:11px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px">会員証を開く</button>
       </div>
     </div>
     <div class="card">
@@ -281,12 +283,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div class="card-title"><div class="card-title-dot"></div>活動記録</div>
       <a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>
     </div>
-    <!-- 回数券購入 -->
-    <div class="card">
-      <div class="card-title"><div class="card-title-dot"></div>回数券を購入する</div>
-      <div style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.8">ビジター会員：5,000円（11枚）<br>カシワ会員：4,000円（11枚）</div>
-      <button onclick="openTicketPurchaseModal()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">購入申込をする</button>
-    </div>
+
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>問い合わせはこちら</div>
       <div style="display:flex;gap:12px">
@@ -1847,4 +1844,49 @@ if ('serviceWorker' in navigator) {
     }
   }).catch(err => console.log('SW登録失敗:', err));
 }
+</script>
+<script>
+// ===== 設定・会員証・ログアウト 完全上書き =====
+
+// 設定を開く（シンプル版）
+openSettings = function(){
+  if(!mypageCurrentUser) return;
+  let el = document.getElementById('section-settings');
+  if(!el){
+    injectSettingsHTML();
+    el = document.getElementById('section-settings');
+  }
+  // 現在の値をセット
+  const sn = document.getElementById('settings-nickname');
+  const ss = document.getElementById('settings-sport');
+  if(sn) sn.value = mypageCurrentUser.nickname || '';
+  if(ss) ss.value = mypageCurrentUser.memberSport || '';
+  setTicketCount(1);
+  el.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+};
+
+closeSettings = function(){
+  const el = document.getElementById('section-settings');
+  if(el) el.style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+// ヘッダーログアウトを確実に表示
+const _fixShowMypageMain = showMypageMain;
+showMypageMain = function(){
+  _fixShowMypageMain();
+  // ヘッダーログアウトボタン表示
+  const lb = document.getElementById('header-logout-btn');
+  if(lb) lb.style.display = 'block';
+  // 会員カード内のログアウトボタン非表示
+  document.querySelectorAll('.logout-btn').forEach(b => b.style.display = 'none');
+};
+
+const _fixMypageLogout = mypageLogout;
+mypageLogout = function(){
+  _fixMypageLogout();
+  const lb = document.getElementById('header-logout-btn');
+  if(lb) lb.style.display = 'none';
+};
 </script>
