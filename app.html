@@ -386,16 +386,37 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div id="sett-plan-change-area" style="display:none">
         <div style="font-size:13px;color:#888;margin-bottom:10px">変更先のプランを選択してください</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <div onclick="selectUpgradePlanSettings('ビジター会員')" id="sett-plan-visitor" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">ビジター会員</div>
-          <div onclick="selectUpgradePlanSettings('カシワのBUKATSU会員')" id="sett-plan-kashiwa" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">
-            カシワのBUKATSU会員
+
+          <!-- ビジター -->
+          <div style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between" id="sett-plan-visitor">
+            <div onclick="selectUpgradePlanSettings('ビジター会員')" style="flex:1;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">ビジター会員</div>
+            <button onclick="openPlanDetailSettings('visitor')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap;margin-left:8px">詳細</button>
           </div>
-          <div onclick="selectUpgradePlanSettings('ファミリー会員')" id="sett-plan-family" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">ファミリー会員</div>
-          <div onclick="selectUpgradePlanSettings('みんなのBUKATSU会員')" id="sett-plan-minnb" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">みんなのBUKATSU会員</div>
-          <div onclick="selectUpgradePlanSettings('応援団')" id="sett-plan-ouendan" style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;cursor:pointer">
-            <div style="font-size:15px;font-weight:700;color:#1a1a2e">応援団</div>
-            <div style="font-size:12px;color:#888;margin-top:4px;line-height:1.7">カシワのBUKATSUを継続的に応援してくださる方へのプランです。毎月の定額支援への返礼として、バドミントンを含む全種目に参加費無料で何度でも参加いただけます。半年ごとの契約。</div>
+
+          <!-- カシワ -->
+          <div style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between" id="sett-plan-kashiwa">
+            <div onclick="selectUpgradePlanSettings('カシワのBUKATSU会員')" style="flex:1;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">カシワのBUKATSU会員</div>
+            <button onclick="openPlanDetailSettings('kashiwa')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap;margin-left:8px">詳細</button>
           </div>
+
+          <!-- ファミリー -->
+          <div style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between" id="sett-plan-family">
+            <div onclick="selectUpgradePlanSettings('ファミリー会員')" style="flex:1;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">ファミリー会員</div>
+            <button onclick="openPlanDetailSettings('family')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap;margin-left:8px">詳細</button>
+          </div>
+
+          <!-- みんB -->
+          <div style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between" id="sett-plan-minnb">
+            <div onclick="selectUpgradePlanSettings('みんなのBUKATSU会員')" style="flex:1;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">みんなのBUKATSU会員</div>
+            <button onclick="openPlanDetailSettings('minnb')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap;margin-left:8px">詳細</button>
+          </div>
+
+          <!-- 応援団 -->
+          <div style="border:2px solid #e0e8f0;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between" id="sett-plan-ouendan">
+            <div onclick="selectUpgradePlanSettings('応援団')" style="flex:1;cursor:pointer;font-size:15px;font-weight:700;color:#1a1a2e">応援団</div>
+            <button onclick="openPlanDetailSettings('ouendan')" style="font-size:11px;padding:4px 10px;background:#f0f4f8;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555;white-space:nowrap;margin-left:8px">詳細</button>
+          </div>
+
         </div>
       </div>
     </div>
@@ -626,17 +647,18 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WB
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
 let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor';
 
-let _gasRunning = false;
+const _gasRunning = {};
 async function callGAS(func,...args){
-  if(_gasRunning) return Promise.reject(new Error('処理中です'));
-  _gasRunning = true;
+  // 同じ関数の連打だけ防止（別関数の並列呼び出しはOK）
+  if(_gasRunning[func]) return Promise.reject(new Error('処理中です'));
+  _gasRunning[func] = true;
   try{
     const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
     const json=await res.json();
     if(json.status==='error')throw new Error(json.message);
     return json.data;
   }finally{
-    _gasRunning = false;
+    _gasRunning[func] = false;
   }
 }
 function formatDate(d){return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
@@ -1338,6 +1360,8 @@ async function saveSettingsProfile(){
   }catch(e){alert('エラー：'+e.message);}
 }
 let _settingsUpgradePlan='';
+let _familyMembers=[];
+
 function togglePlanChangeArea(){
   const area=document.getElementById('sett-plan-change-area');
   const btn=document.getElementById('sett-plan-change-btn');
@@ -1345,6 +1369,40 @@ function togglePlanChangeArea(){
   area.style.display=isOpen?'none':'block';
   btn.textContent=isOpen?'変更する':'閉じる';
 }
+
+function openPlanDetailSettings(plan){
+  const details={
+    visitor:{
+      title:'ビジター会員',
+      body:'登録費：無料\n参加費：バスケ・バレー 500円／バドミントン 700円\n回数券：5,000円（11枚）\nまずは気軽に参加したい方向けのプランです。'
+    },
+    kashiwa:{
+      title:'カシワのBUKATSU会員',
+      body:'入会金：1,650円（7月末キャンペーン中）\n　　　　通常 3,300円\n参加費：バスケ・バレー 500円／バドミントン 700円\n回数券：4,000円（11枚）\n他種目の体験参加無料\n活動記録動画の閲覧可能'
+    },
+    family:{
+      title:'ファミリー会員',
+      body:'入会金：1人目 3,300円\n　　　　2人目 1,650円\n　　　　3人目以降 880円\n参加費：1人目 500円／2人目以降 200円\n回数券：4,000円（11枚）※家族間でシェアOK\n家族みんなで楽しめるプランです。'
+    },
+    minnb:{
+      title:'みんなのBUKATSU会員',
+      body:'入会金：無料（八千代BUKATSU入会済の方）\n参加費：バドミントン 400円／その他 200円\n回数券：2,000円（11枚）'
+    },
+    ouendan:{
+      title:'応援団',
+      body:'カシワのBUKATSUを継続的に応援してくださる方へのプランです。毎月の定額支援への返礼として、バドミントンを含む全種目に参加費無料で何度でも参加いただけます。\n\n料金：月額 2,200円\n　　　半年一括 11,000円（1ヶ月分お得）\n契約：半年ごとの更新\n初回のみ入会金 3,300円'
+    }
+  };
+  const d=details[plan]||{title:'',body:''};
+  const ov=document.createElement('div');ov.className='popup-overlay';
+  ov.innerHTML=`<div class="popup-card" style="text-align:left">
+    <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">${d.title}</div>
+    <div style="font-size:14px;color:#444;line-height:2;white-space:pre-line;margin-bottom:20px">${d.body}</div>
+    <button onclick="this.closest('.popup-overlay').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">閉じる</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
 function selectUpgradePlanSettings(plan){
   _settingsUpgradePlan=plan;
   ['sett-plan-visitor','sett-plan-kashiwa','sett-plan-family','sett-plan-minnb','sett-plan-ouendan'].forEach(id=>{
@@ -1354,16 +1412,103 @@ function selectUpgradePlanSettings(plan){
   const keyMap={'ビジター会員':'visitor','カシワのBUKATSU会員':'kashiwa','ファミリー会員':'family','みんなのBUKATSU会員':'minnb','応援団':'ouendan'};
   const el=document.getElementById('sett-plan-'+keyMap[plan]);
   if(el)el.style.border='2px solid #1a3a5c';
-  // 確認POPUP
-  const ov=document.createElement('div');ov.className='popup-overlay';
-  ov.innerHTML=`<div class="popup-card">
-    <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:8px">プラン変更の申請</div>
-    <div style="font-size:14px;color:#555;margin-bottom:20px;line-height:1.8"><strong>${plan}</strong> への変更を申請しますか？<br><span style="font-size:12px;color:#888">承認後にプランが変更されます</span></div>
-    <button onclick="confirmUpgradeRequest('${plan}',this.closest('.popup-overlay'))" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">申請する</button>
-    <button onclick="this.closest('.popup-overlay').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">キャンセル</button>
-  </div>`;
-  document.body.appendChild(ov);
+
+  if(plan==='ファミリー会員'){
+    openFamilyUpgradeModal();
+  } else {
+    // 通常の確認POPUP
+    const ov=document.createElement('div');ov.className='popup-overlay';
+    ov.innerHTML=`<div class="popup-card">
+      <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:8px">プラン変更の申請</div>
+      <div style="font-size:14px;color:#555;margin-bottom:20px;line-height:1.8"><strong>${plan}</strong> への変更を申請しますか？<br><span style="font-size:12px;color:#888">承認後にプランが変更されます</span></div>
+      <button onclick="confirmUpgradeRequest('${plan}',this.closest('.popup-overlay'))" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">申請する</button>
+      <button onclick="this.closest('.popup-overlay').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">キャンセル</button>
+    </div>`;
+    document.body.appendChild(ov);
+  }
 }
+
+function openFamilyUpgradeModal(){
+  _familyMembers=[];
+  const ov=document.createElement('div');ov.className='ticket-overlay';ov.id='family-upgrade-overlay';
+  ov.innerHTML=`
+    <div class="ticket-blur-bg" onclick="document.getElementById('family-upgrade-overlay').remove()"></div>
+    <div class="ticket-modal" style="text-align:left;max-height:85vh;overflow-y:auto">
+      <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:6px">ファミリー会員申請</div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px">代表者（あなた）に加えて家族メンバーを登録してください</div>
+      <div style="background:#f0f4f8;border-radius:10px;padding:12px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:#1a1a2e">代表者</div>
+        <div style="font-size:13px;color:#555;margin-top:4px" id="family-rep-name"></div>
+      </div>
+      <div id="family-upgrade-member-list"></div>
+      <button onclick="addFamilyUpgradeMember()" style="width:100%;padding:12px;background:#f0f4f8;border:1.5px dashed #aaa;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;color:#555;margin-bottom:12px">+ 家族を追加</button>
+      <div id="family-upgrade-fee" style="text-align:right;font-size:13px;margin-bottom:14px"></div>
+      <button onclick="submitFamilyUpgrade()" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">申請する</button>
+      <button onclick="document.getElementById('family-upgrade-overlay').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">キャンセル</button>
+    </div>`;
+  document.body.appendChild(ov);
+  const repEl=document.getElementById('family-rep-name');
+  if(repEl&&mypageCurrentUser) repEl.textContent=mypageCurrentUser.nickname+'（'+mypageCurrentUser.fullname+'）';
+  renderFamilyUpgradeMembers();
+}
+
+function addFamilyUpgradeMember(){
+  _familyMembers.push({name:'',relation:''});
+  renderFamilyUpgradeMembers();
+}
+function removeFamilyUpgradeMember(idx){
+  _familyMembers.splice(idx,1);
+  renderFamilyUpgradeMembers();
+}
+function renderFamilyUpgradeMembers(){
+  const list=document.getElementById('family-upgrade-member-list');
+  if(!list)return;
+  list.innerHTML=_familyMembers.map((m,i)=>`
+    <div style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid #e0e8f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:#555">${i+2}人目</div>
+        <button onclick="removeFamilyUpgradeMember(${i})" style="background:#fce8e6;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#e53935;cursor:pointer">削除</button>
+      </div>
+      <input type="text" placeholder="フルネーム（カタカナ）" value="${m.name}" oninput="_familyMembers[${i}].name=this.value;renderFamilyUpgradeFee()" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#fff;color:#1a1a2e;margin-bottom:8px">
+      <select onchange="_familyMembers[${i}].relation=this.value" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#fff;color:#1a1a2e;-webkit-appearance:none">
+        <option value="">代表者との関係</option>
+        <option value="妻" ${m.relation==='妻'?'selected':''}>妻</option>
+        <option value="夫" ${m.relation==='夫'?'selected':''}>夫</option>
+        <option value="子供" ${m.relation==='子供'?'selected':''}>子供</option>
+        <option value="その他" ${m.relation==='その他'?'selected':''}>その他</option>
+      </select>
+    </div>
+  `).join('');
+  renderFamilyUpgradeFee();
+}
+function renderFamilyUpgradeFee(){
+  const fees=[3300,1650,880];
+  let total=3300;
+  _familyMembers.forEach((_,i)=>{total+=fees[i+1]||880;});
+  const el=document.getElementById('family-upgrade-fee');
+  if(!el)return;
+  let breakdown='代表者：3,300円';
+  _familyMembers.forEach((_,i)=>{breakdown+=`／${i+2}人目：${(fees[i+1]||880).toLocaleString()}円`;});
+  el.innerHTML=`<div style="background:#fff8e1;border-radius:10px;padding:10px;border:1px solid #f5d060;font-size:13px;color:#444;line-height:2">${breakdown}<br><strong>合計入会金：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>`;
+}
+async function submitFamilyUpgrade(){
+  if(!mypageCurrentUser)return;
+  if(_familyMembers.length===0)return alert('家族メンバーを1人以上追加してください');
+  if(_familyMembers.some(m=>!m.name||!m.relation))return alert('全メンバーの名前と続柄を入力してください');
+  const memberInfo=_familyMembers.map(m=>`${m.name}（${m.relation}）`).join('、');
+  const fees=[3300,1650,880];
+  let total=3300;
+  _familyMembers.forEach((_,i)=>{total+=fees[i+1]||880;});
+  const memo=`ファミリー会員申請 / 家族：${memberInfo} / 合計入会金：¥${total.toLocaleString()}`;
+  try{
+    await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,'ファミリー会員',memo);
+    document.getElementById('family-upgrade-overlay').remove();
+    showSimplePopup('申請を受け付けました','スタッフからご連絡します。');
+    document.getElementById('sett-plan-change-area').style.display='none';
+    document.getElementById('sett-plan-change-btn').textContent='変更する';
+  }catch(e){alert('エラー：'+e.message);}
+}
+
 async function confirmUpgradeRequest(plan, overlay){
   if(!mypageCurrentUser)return;
   const btn=overlay.querySelector('button');btn.disabled=true;btn.textContent='申請中...';
