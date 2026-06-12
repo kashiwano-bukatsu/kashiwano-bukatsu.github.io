@@ -297,7 +297,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>問い合わせはこちら</div>
       <div style="display:flex;gap:12px">
-        <div style="flex:1;text-align:center;background:#f0fdf4;border:1px solid rgba(74,197,80,0.2);border-radius:14px;padding:16px;opacity:0.5"><div style="font-size:32px;margin-bottom:6px">💬</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">公式LINE</div><div style="font-size:11px;color:#888;margin-top:2px">準備中</div></div>
+        <button onclick="openMessageList()" style="flex:1;text-align:center;background:#f0f4ff;border:1.5px solid rgba(26,58,92,0.15);border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:32px;margin-bottom:6px">💬</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">チャット</div><div style="font-size:11px;color:#888;margin-top:2px">運営に直接連絡</div></button>
         <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="flex:1;text-align:center;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:16px;text-decoration:none"><div style="font-size:32px;margin-bottom:6px">📢</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></a>
       </div>
     </div>
@@ -629,8 +629,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <div style="font-size:22px;font-weight:800;letter-spacing:3px;color:#fff" id="card-modal-number"></div>
       </div>
       <div style="display:flex;gap:10px">
-        <button onclick="openEditProfile()" style="flex:1;padding:12px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">情報を編集</button>
-        <button onclick="closeMemberCard()" style="flex:1;padding:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">閉じる</button>
+        <button onclick="closeMemberCard()" style="width:100%;padding:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;">閉じる</button>
       </div>
     </div>
   </div>
@@ -853,7 +852,7 @@ async function loadMypageData(checkNotice,updateRankCache){
       '<div class="progress-bar-bg" style="'+(isMaxed?'box-shadow:0 0 10px rgba(255,215,0,0.7)':'')+'"><div class="progress-bar-fill" style="'+barStyle+'"></div></div>'+
       '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>'+(isMaxed?'チケット '+tickets+'枚':progress+'/10回')+'</span><span>10回で1枚GET</span></div>'+
       '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:'+(isMaxed?'#b8860b':'#f57c00')+'">'+(isMaxed?'次回参加が無料になります':'あと'+remaining+'回でチケット1枚')+'</div>'+
-      '<div style="display:flex;justify-content:center;gap:20px;margin-top:12px"><div onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;text-decoration:underline;cursor:pointer;">スポログの貯め方</div><div onclick="openRankInfo()" style="font-size:13px;color:#1a3a5c;text-decoration:underline;cursor:pointer;">ランクについて</div></div>';
+      '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
   }catch(e){document.getElementById('mypage-progress-area').innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';}
 }
 
@@ -1400,7 +1399,10 @@ async function refreshMessageBanner(){
 
 // ===== スポログ・ランク情報 =====
 function openSporlogInfo(){
-  const ov=document.createElement('div');ov.className='ticket-overlay';ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;"><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:4px">スポログとは？</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">Sports Log — 参加の記録</div><div style="background:#f0f9ff;border-radius:14px;padding:16px;margin-bottom:14px;"><div style="font-size:14px;font-weight:700;color:#1a3a5c;margin-bottom:8px">スポログの貯め方</div><div style="font-size:14px;color:#444;line-height:2.2;">参加するたびに自動で記録。10回貯まると無料チケット1枚GET！</div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';document.body.appendChild(ov);
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;"><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:4px">スポログとは？</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">Sports Log — 参加の記録</div><div style="background:#f0f9ff;border-radius:14px;padding:16px;margin-bottom:14px;"><div style="font-size:14px;font-weight:700;color:#1a3a5c;margin-bottom:8px">スポログの貯め方</div><div style="font-size:14px;color:#444;line-height:2.2;">参加するたびに自動で記録。<br>現金で10回参加すると無料チケット1枚GET！<br>チケットは次回の参加費に使えます。</div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
+  document.body.appendChild(ov);
+}
 }
 function openRankInfo(){
   const ov=document.createElement('div');ov.className='ticket-overlay';ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:85vh;overflow-y:auto;"><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:4px">ランクシステム</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">参加回数でランクが上がります</div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"><div style="background:linear-gradient(135deg,#3e2010,#a0522d);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800">ブロンズ</div><div style="font-size:12px;opacity:0.7;margin-top:2px">0〜9回</div></div><div style="background:linear-gradient(135deg,#4a5a6a,#78909c);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800">シルバー</div><div style="font-size:12px;opacity:0.7;margin-top:2px">10〜29回</div></div><div style="background:linear-gradient(135deg,#7a4a00,#c67c00);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800">ゴールド</div><div style="font-size:12px;opacity:0.7;margin-top:2px">30〜49回</div></div><div style="background:linear-gradient(135deg,#1a0a4a,#2d1b69);border-radius:14px;padding:14px 16px;color:#fff"><div style="font-size:16px;font-weight:800;color:#c8a8ff">プラチナ</div><div style="font-size:12px;opacity:0.7;margin-top:2px">50回以上</div></div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';document.body.appendChild(ov);
