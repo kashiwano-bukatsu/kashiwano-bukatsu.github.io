@@ -510,7 +510,10 @@ async function doLogin() {
     if (!data) { document.getElementById('login-error').style.display = 'block'; return; }
     const type = String(data[2]).trim();
     const allowedTypes = ['代表', '運営', '部長', '本部'];
-    if (!allowedTypes.includes(type)) { alert('運営メンバーのみログインできます'); return; }
+    if (!allowedTypes.includes(type)) { document.getElementById('login-error').style.display = 'block'; return; }
+    // N列（index13）にパスワードが設定されていない場合は弾く（誕生日ログイン防止）
+    const passwordValue = String(data[13] || '').trim();
+    if (!passwordValue) { document.getElementById('login-error').style.display = 'block'; return; }
     currentUser = { fullname: data[1], nickname: data[0], type, memberNumber: (data[9] || '') + (data[10] || '') };
     localStorage.setItem('bukatsu_staff_user', JSON.stringify(currentUser));
     showMainApp();
