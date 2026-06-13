@@ -1144,7 +1144,7 @@ async function submitUpgradeRequest(){
 
 function showSimplePopup(title,msg){
   const ov=document.createElement('div');ov.className='popup-overlay';
-  ov.innerHTML='<div class="popup-card"><div style="font-size:48px;margin-bottom:8px">✅</div><div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+title+'</div><div style="font-size:14px;color:#888;line-height:1.8;margin-bottom:16px">'+msg+'</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">OK</button></div>';
+  ov.innerHTML='<div class="popup-card"><div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+title+'</div><div style="font-size:14px;color:#888;line-height:1.8;margin-bottom:16px">'+msg+'</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">OK</button></div>';
   document.body.appendChild(ov);
 }
 
