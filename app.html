@@ -822,17 +822,12 @@ function showMypageMain(){
   // 活動記録ボタン（ビジター以外）
   const vc=document.getElementById('videos-card');
   if(vc)vc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
-  callGAS('getUnreadMessageCount',mypageCurrentUser.fullname).then(c=>{
-    const b=document.getElementById('mypage-message-banner');
-    if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}
-  }).catch(()=>{});
-  loadTicketPendingCard();
   loadMypageData(true,true);
 }
 
 async function loadMypageData(checkNotice,updateRankCache){
   try{
-    const d=await callGAS('getMyPageData',mypageCurrentUser.fullname);
+    const d=await callGAS('getMemberDashboard',mypageCurrentUser.fullname);
     if(checkNotice&&d.referralNotice)showReferralNoticePopup(d.referralNotice);
     let progress=d.ticketProgress||0,tickets=d.ticketCount||0;
     document.getElementById('mypage-total-count').textContent=d.totalCount;
@@ -843,7 +838,13 @@ async function loadMypageData(checkNotice,updateRankCache){
     if(tickets>0){tb.style.background='linear-gradient(135deg,#e8f5e9,#c8e6c9)';tb.style.border='2px solid #4CAF50';}
     else{tb.style.background='linear-gradient(135deg,#f0fdf4,#e8f5e9)';tb.style.border='1px solid rgba(74,197,80,0.15)';}
     const rank=d.rank||getMemberRank(d.totalCount);
-    if(updateRankCache){mypageCurrentUser.rank=rank;localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));}
+    if(updateRankCache){
+      mypageCurrentUser.rank=rank;
+      mypageCurrentUser.area=d.area||'';
+      mypageCurrentUser.gender=d.gender||'';
+      mypageCurrentUser.memberSport=d.memberSport||'全て';
+      localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
     const pct=Math.round(progress/10*100),remaining=10-progress,isMaxed=tickets>0;
     const barStyle=isMaxed?'width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite':'width:'+pct+'%';
@@ -853,10 +854,19 @@ async function loadMypageData(checkNotice,updateRankCache){
       '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>'+(isMaxed?'チケット '+tickets+'枚':progress+'/10回')+'</span><span>10回で1枚GET</span></div>'+
       '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:'+(isMaxed?'#b8860b':'#f57c00')+'">'+(isMaxed?'次回参加が無料になります':'あと'+remaining+'回でチケット1枚')+'</div>'+
       '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+    // 未読バナー
+    const c=d.unreadCount||0;
+    const b=document.getElementById('mypage-message-banner');
+    if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}
+    // 申請中チケットカード
+    const hasPT=d.pendingTickets&&d.pendingTickets.length>0;
+    const ptCard=document.getElementById('mypage-ticket-pending-card');
+    const ptTxt=document.getElementById('mypage-ticket-pending-text');
+    if(hasPT&&ptCard&&ptTxt){ptTxt.textContent=d.pendingTickets[0][4]+'セット（¥'+Number(d.pendingTickets[0][5]).toLocaleString()+'）';ptCard.style.display='block';}
+    else if(ptCard){ptCard.style.display='none';}
   }catch(e){document.getElementById('mypage-progress-area').innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';}
 }
 
-// ===== 予約タブ =====
 async function initReserveTab(){
   if(!mypageCurrentUser){
     document.getElementById('reserve-login-required').style.display='block';
