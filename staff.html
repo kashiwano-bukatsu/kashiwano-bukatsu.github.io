@@ -607,13 +607,67 @@ function renderHome(d) {
 // ===== 当日 =====
 async function loadDailyTab() {
   try {
-    const pending = await callGAS('getPendingSchedules');
-    pendingSchedules = pending;
-    const staffs = await callGAS('getStaffMembers');
+    const d = await callGAS('getStaffDailyData');
+    // レポート用スケジュール
+    pendingSchedules = d.pendingSchedules || [];
     const rSel = document.getElementById('r-staff-select');
-    if (rSel) rSel.innerHTML = '<option value="">-- 選択 --</option>' + staffs.map(s => `<option value="${s[0]}">${s[0]}</option>`).join('');
-  } catch(e) {}
-  renderDailyList();
+    if (rSel) rSel.innerHTML = '<option value="">-- 選択 --</option>' + (d.staffMembers||[]).map(s => `<option value="${s[0]}">${s[0]}</option>`).join('');
+    renderDailyListFromData(d);
+  } catch(e) { document.getElementById('daily-unified-list').innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
+}
+
+function renderDailyListFromData(d) {
+  const el = document.getElementById('daily-unified-list');
+  const todayFmt = d.today;
+  window._todayFmt = todayFmt;
+  const sport = d.todaySchedule ? d.todaySchedule[4] : '';
+  window._todaySport = sport;
+  const isBad = sport === 'バドミントン';
+  const checkedInNames = new Set(d.checkedInNames || []);
+  const masterMap = {};
+  (d.attendees || []).forEach(a => { masterMap[a[1]] = a; });
+  const allItems = [];
+  (d.reservations || []).forEach(r => {
+    if ((r[7] || '⭕') === '❌') return;
+    const master = masterMap[r[4]] || {};
+    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', isNew: false });
+  });
+  const tempUsers = (d.attendees || []).filter(r => r[10] === '仮登録');
+  (d.tempAttendees || []).forEach(t => {
+    if (!(d.attendees || []).find(a => a[1] === t[1])) {
+      (d.attendees || []).push([t[1], t[1], '体験', '', '', '', '', '', '', '', '仮登録']);
+    }
+  });
+  tempUsers.forEach(u => {
+    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[0], type: '体験', isNew: true, isNovice: u[2] === '初心者' });
+  });
+  if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
+  el.innerHTML = allItems.map(item => {
+    const isChecked = checkedInNames.has(item.fullname);
+    const type = item.type;
+    const isFree = ['運営', '代表', '部長', '本部', '特別会員'].includes(type);
+    let options = [];
+    if (isFree) options = [{ label: '¥0（運営）', value: 0 }];
+    else if (['みんB会員', 'みんなのBUKATSU会員'].includes(type)) options = isBad ? [{ label: '¥400', value: 400 }, { label: '¥200', value: 200 }] : [{ label: '¥200', value: 200 }];
+    else if (type === '応援団' || type === '応援団会員') options = [{ label: '¥0（応援団）', value: 0 }];
+    else if (type.includes('回数券')) options = isBad ? [{ label: '回数券+¥200', value: 200, useTicket: true }, { label: '回数券¥0', value: 0, useTicket: true }] : [{ label: '回数券¥0', value: 0, useTicket: true }];
+    else options = isBad ? [{ label: '¥700', value: 700 }, { label: '¥500', value: 500 }, { label: '¥0', value: 0 }] : [{ label: '¥500', value: 500 }, { label: '¥700', value: 700 }, { label: '¥0', value: 0 }];
+    const optData = JSON.stringify(options);
+    const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
+    const safeId = item.fullname.replace(/[^a-zA-Z0-9]/g, '');
+    if (isChecked) return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a;opacity:0.4"><div style="flex:1;font-size:14px;color:#aaa">${item.nickname}</div><div style="font-size:11px;color:#666">済</div></div>`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a" id="daily-item-${safeId}">
+      <input type="checkbox" class="daily-checkin-box" data-fullname="${item.fullname}" data-nickname="${item.nickname}" data-type="${type}" data-opts='${optData}' style="width:20px;height:20px;flex-shrink:0;accent-color:#48bb78">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;color:#fff">${item.isNew ? '<span style="font-size:10px;color:#68d391;border:1px solid #68d391;border-radius:4px;padding:1px 4px;margin-right:4px">NEW</span>' : ''}${item.nickname}</div>
+        <div style="font-size:11px;color:#aaa">${type}</div>
+      </div>
+      <select id="pay-sel-${safeId}" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.daily-checkin-box').forEach(cb => {
+    cb.addEventListener('change', () => { const row = cb.closest('[id^="daily-item-"]'); if (row) row.style.opacity = cb.checked ? '0.4' : '1'; });
+  });
 }
 
 async function renderDailyList() {
@@ -780,8 +834,7 @@ async function addNewModalMember() {
 
 // ===== 申請管理 =====
 async function loadRequestsTab() {
-  loadUpgradeRequests();
-  loadTicketRequests();
+  await Promise.all([loadUpgradeRequests(), loadTicketRequests()]);
 }
 
 async function loadUpgradeRequests() {
@@ -1040,11 +1093,13 @@ async function loadScheduleListTab() {
 // ===== レポート =====
 async function loadReportTab() {
   try {
-    const pending = await callGAS('getPendingSchedules');
+    const [pending, staffs] = await Promise.all([
+      callGAS('getPendingSchedules'),
+      callGAS('getStaffMembers')
+    ]);
     pendingSchedules = pending;
     const sel = document.getElementById('r-schedule');
     sel.innerHTML = '<option value="">-- 選択してください --</option>' + pending.map((r, i) => `<option value="${i}">${r[0]} ${r[1]} ${r[4]} @ ${r[2]}</option>`).join('');
-    const staffs = await callGAS('getStaffMembers');
     document.getElementById('r-staff-select').innerHTML = '<option value="">-- 選択 --</option>' + staffs.map(s => `<option value="${s[0]}">${s[0]}</option>`).join('');
   } catch(e) {}
 }
@@ -1113,31 +1168,38 @@ async function saveReport() {
 // ===== サマリー =====
 async function loadSummary() {
   try {
-    const [reports, settings, cashData, logs] = await Promise.all([callGAS('getSummary'), callGAS('getSessionCounts'), callGAS('getCashLedger'), callGAS('getAttendanceLog')]);
-    const counts = {}; settings.forEach(r => { counts[r[0]] = Number(r[1]); });
-    if (reports && reports.length) reports.forEach(r => { counts[r[3]] = (counts[r[3]] || 0) + 1; });
+    const d = await callGAS('getStaffSummaryData');
+    const reports = d.reports || [], cashData = d.cashLedger || [], logs = d.attendanceLogs || [];
+    const counts = {};
+    (d.sessionCounts || []).forEach(r => { counts[r[0]] = Number(r[1]); });
+    reports.forEach(r => { counts[r[3]] = (counts[r[3]] || 0) + 1; });
     let total = 0;
     document.getElementById('sum-sport-counts').innerHTML = Object.entries(counts).map(([sport, count]) => { total += count; return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333"><div style="font-size:13px;font-weight:600">${sport}</div><div style="font-size:16px;font-weight:700">第${count}回</div></div>`; }).join('') || '<div class="empty">データなし</div>';
     document.getElementById('sum-count').textContent = total + '回';
     let totInc = 0, totExp = 0, balance = 0;
-    if (reports) reports.forEach(r => { totInc += Number(r[5] || 0); });
-    if (cashData) cashData.forEach(r => { const amt = Number(r[2] || 0); if (r[1] === '収入') { totInc += amt; balance += amt; } else { totExp += amt; balance -= amt; } });
+    reports.forEach(r => { totInc += Number(r[5] || 0); });
+    cashData.forEach(r => { const amt = Number(r[2] || 0); if (r[1] === '収入') { totInc += amt; balance += amt; } else { totExp += amt; balance -= amt; } });
     const pl = totInc - totExp;
-    document.getElementById('sum-income').textContent = '¥' + totInc.toLocaleString(); document.getElementById('sum-expense').textContent = '¥' + totExp.toLocaleString();
+    document.getElementById('sum-income').textContent = '¥' + totInc.toLocaleString();
+    document.getElementById('sum-expense').textContent = '¥' + totExp.toLocaleString();
     const pe = document.getElementById('sum-pl'); pe.textContent = '¥' + pl.toLocaleString(); pe.className = 'stat-val ' + (pl >= 0 ? 'plus' : 'minus');
     document.getElementById('sum-cash').textContent = '¥' + balance.toLocaleString();
-    const ticket = await callGAS('getTicketSales'); document.getElementById('sum-ticket').textContent = (ticket / 11) + '枚';
-    if (logs) {
+    document.getElementById('sum-ticket').textContent = (d.ticketSales / 11) + '枚';
+    if (logs.length) {
       const sports = [...new Set(logs.map(r => r[2]))]; let rankHtml = '';
       sports.forEach(sport => { const sportLogs = logs.filter(r => r[2] === sport), countMap = {}; sportLogs.forEach(r => { countMap[r[3]] = (countMap[r[3]] || 0) + 1; }); const ranked = Object.entries(countMap).sort((a, b) => b[1] - a[1]).slice(0, 5); rankHtml += `<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:#aaa;margin-bottom:8px">${sport}</div>${ranked.map(([name, count], i) => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #333"><div style="font-size:13px">${i + 1}. ${name}</div><div style="font-size:13px;font-weight:700">${count}回</div></div>`).join('')}</div>`; });
       document.getElementById('sum-repeat-rank').innerHTML = rankHtml || '<div class="empty">データなし</div>';
     }
-    if (cashData) {
-      const expenses = cashData.filter(r => r[1] === '支出' || r[1] === 'クレカ精算');
-      document.getElementById('sum-expense-list').innerHTML = !expenses.length ? '<div class="empty">経費記録がありません</div>' : expenses.slice().reverse().map(r => `<div class="item"><div style="display:flex;justify-content:space-between"><div><div class="item-sub">${r[0]} ／ ${r[1]} ／ ${r[3] || ''}</div><div class="item-title">${r[4] || ''}</div></div><div class="item-title minus">-¥${Number(r[2] || 0).toLocaleString()}</div></div></div>`).join('');
-    }
-    loadShuttleStock();
-  } catch(e) {}
+    const expenses = cashData.filter(r => r[1] === '支出' || r[1] === 'クレカ精算');
+    document.getElementById('sum-expense-list').innerHTML = !expenses.length ? '<div class="empty">経費記録がありません</div>' : expenses.slice().reverse().map(r => `<div class="item"><div style="display:flex;justify-content:space-between"><div><div class="item-sub">${r[0]} ／ ${r[1]} ／ ${r[3] || ''}</div><div class="item-title">${r[4] || ''}</div></div><div class="item-title minus">-¥${Number(r[2] || 0).toLocaleString()}</div></div></div>`).join('');
+    // シャトル在庫（既に含まれてる）
+    document.getElementById('shuttle-total').textContent = d.shuttleData.total + '本';
+    document.getElementById('shuttle-remaining').textContent = d.shuttleData.individual + '個';
+    if (d.shuttleData.individual <= 12) document.getElementById('shuttle-remaining').className = 'stat-val warn';
+    // 備品
+    const eqEl = document.getElementById('equipment-list');
+    if (eqEl) eqEl.innerHTML = !(d.equipment||[]).length ? '<div class="empty">備品記録がありません</div>' : (d.equipment||[]).slice().reverse().map(r => `<div class="item"><div style="display:flex;justify-content:space-between"><div><div class="item-sub">${r[0]} ／ ${r[1]}</div><div class="item-title">${r[2]} × ${r[3]}</div>${r[5] ? `<div class="item-sub">📌 ${r[5]}</div>` : ''}</div><div class="item-title">¥${Number(r[4] || 0).toLocaleString()}</div></div></div>`).join('');
+  } catch(e) { console.error(e); }
 }
 
 async function loadShuttleStock() {
