@@ -177,6 +177,11 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 
 <!-- HOME -->
 <div id="section-home" class="section">
+  <!-- お知らせ（一番上） -->
+  <div id="home-notice-card" class="card" style="display:none;border-left:4px solid #1a3a5c">
+    <div class="card-title"><div class="card-title-dot"></div>お知らせ</div>
+    <div id="home-notice-text" style="font-size:14px;line-height:1.8;color:#444;white-space:pre-line"></div>
+  </div>
   <div id="home-today-card" class="card" style="display:none">
     <div class="card-title"><div class="card-title-dot"></div>本日の開催</div>
     <div id="home-today-info"></div>
@@ -211,6 +216,11 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     </div>
     <div id="about-content" style="display:none;margin-top:14px">
       <div style="font-size:14px;line-height:2;color:#444">千葉県柏市を拠点に、バスケットボール・バレーボール・バドミントンを楽しむ地域スポーツコミュニティです。勝ち負けよりも「エンジョイ！」がコンセプト。初心者から経験者まで一緒にプレーできる環境を大切にしています。</div>
+      <!-- カレンダー（ログイン不要） -->
+      <div style="margin-top:16px;border-top:1px solid #f0f4f8;padding-top:16px">
+        <div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:12px">📅 開催スケジュール</div>
+        <div id="home-public-calendar"><div class="empty">読み込み中...</div></div>
+      </div>
     </div>
   </div>
   <div class="card" style="text-align:center">
@@ -288,10 +298,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <div id="mypage-next-reserve-content"></div>
       </div>
     </div>
-    <!-- 活動記録（ビジター以外） -->
+    <!-- 活動記録 -->
     <div id="videos-card" class="card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>活動記録</div>
-      <a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>
+      <div id="videos-card-inner"></div>
     </div>
 
     <div class="card">
@@ -692,6 +702,9 @@ function isVisitor(type){return['ビジター会員','カシワビジター','�
 window.addEventListener('load',()=>{
   initDobSelects();
   document.getElementById('today-info').textContent=formatDate(new Date());
+  // お知らせとカレンダーをHOME表示時に読み込む
+  loadHomeNotice();
+  loadPublicCalendar();
   const splash=document.getElementById('splash');
   setTimeout(()=>{
     splash.style.opacity='0';
@@ -821,7 +834,17 @@ function showMypageMain(){
   if(ub)ub.style.display=isVisitor(mypageCurrentUser.type)?'block':'none';
   // 活動記録ボタン（ビジター以外）
   const vc=document.getElementById('videos-card');
-  if(vc)vc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
+  if(vc){
+    vc.style.display='block';
+    const inner=document.getElementById('videos-card-inner');
+    if(inner){
+      if(isVisitor(mypageCurrentUser.type)){
+        inner.innerHTML='<div onclick="openPremiumOnlyPopup()" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-align:center;cursor:pointer"><div style="font-size:28px;margin-bottom:6px">🔒</div><div style="font-size:15px;font-weight:700;color:#1a1a2e">活動動画を見る</div><div style="font-size:12px;color:#888;margin-top:4px">タップして詳細を見る</div></div>';
+      } else {
+        inner.innerHTML='<a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>';
+      }
+    }
+  }
   loadMypageData(true,true);
 }
 
@@ -1408,6 +1431,56 @@ async function refreshMessageBanner(){
 }
 
 // ===== スポログ・ランク情報 =====
+// ===== HOMEお知らせ =====
+async function loadHomeNotice(){
+  try{
+    const text=await callGAS('getNotice');
+    const card=document.getElementById('home-notice-card');
+    const el=document.getElementById('home-notice-text');
+    if(card&&el){
+      if(text){
+        el.textContent=text;
+        card.style.display='block';
+      } else {
+        card.style.display='none';
+      }
+    }
+  }catch(e){}
+}
+
+// ===== HOMEカレンダー（ログイン不要） =====
+async function loadPublicCalendar(){
+  const el=document.getElementById('home-public-calendar');
+  if(!el)return;
+  try{
+    const schedules=await callGAS('getUpcomingSchedules','全て');
+    if(!schedules||!schedules.length){el.innerHTML='<div class="empty" style="font-size:13px">スケジュールがありません</div>';return;}
+    const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+    el.innerHTML=schedules.slice(0,8).map(s=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f4f8">
+        <div style="font-size:22px">${SPORT_ICON[s[4]]||'🏟'}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:#1a1a2e">${s[4]}</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">📅 ${s[0]}（${getDow(s[0])}） ${s[1]} ／ 📍 ${s[2]}</div>
+        </div>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="empty" style="font-size:13px">読み込めませんでした</div>';}
+}
+
+// ===== 限定コンテンツポップアップ =====
+function openPremiumOnlyPopup(){
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML=`<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div>
+    <div class="ticket-modal" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:12px">🔒</div>
+      <div style="font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:8px">有料会員限定コンテンツ</div>
+      <div style="font-size:14px;color:#666;line-height:1.8;margin-bottom:20px">活動記録動画はカシワのBUKATSU会員以上からご覧いただけます。</div>
+      <button onclick="this.closest('.ticket-overlay').remove();showTab('mypage');setTimeout(()=>openSettings(),300)" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">プランをアップグレードする</button>
+      <button onclick="this.closest('.ticket-overlay').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">閉じる</button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
 function openSporlogInfo(){
   const ov=document.createElement('div');ov.className='ticket-overlay';
   ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;"><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:4px">スポログとは？</div><div style="text-align:center;font-size:13px;color:#888;margin-bottom:20px">Sports Log — 参加の記録</div><div style="background:#f0f9ff;border-radius:14px;padding:16px;margin-bottom:14px;"><div style="font-size:14px;font-weight:700;color:#1a3a5c;margin-bottom:8px">スポログの貯め方</div><div style="font-size:14px;color:#444;line-height:2.2;">参加するたびに自動で記録。<br>現金で10回参加すると無料チケット1枚GET！<br>チケットは次回の参加費に使えます。</div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
