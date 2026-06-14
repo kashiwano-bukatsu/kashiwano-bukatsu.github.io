@@ -70,6 +70,14 @@ body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
 .rank-silver.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 40%,#607d8b 70%,#78909c 100%)}
 .rank-gold.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 40%,#b8860b 70%,#e8a000 100%)}
 .rank-platinum.type-family{background:linear-gradient(135deg,#7a5500 0%,#c8840a 38%,#1a0a4a 60%,#3d1f7a 100%)}
+.rank-bronze.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 40%,#8b4513 70%,#a0522d 100%)}
+.rank-silver.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 40%,#607d8b 70%,#78909c 100%)}
+.rank-gold.type-unei{background:linear-gradient(135deg,#4a0000 0%,#b71c1c 40%,#b8860b 70%,#e8a000 100%)}
+.rank-platinum.type-unei{background:linear-gradient(135deg,#4a0000 0%,#8b1010 38%,#1a0a4a 60%,#3d1f7a 100%)}
+.rank-bronze.type-visitor{background:linear-gradient(135deg,#2a2a3a 0%,#3a3a4a 40%,#8b4513 70%,#a0522d 100%)}
+.rank-silver.type-visitor{background:linear-gradient(135deg,#2a2a3a 0%,#3a3a4a 40%,#607d8b 70%,#78909c 100%)}
+.rank-gold.type-visitor{background:linear-gradient(135deg,#2a2a3a 0%,#3a3a4a 40%,#b8860b 70%,#e8a000 100%)}
+.rank-platinum.type-visitor{background:linear-gradient(135deg,#2a2a3a 0%,#3a3a4a 38%,#1a0a4a 60%,#3d1f7a 100%)}
 
 /* プログレス */
 .progress-bar-bg{background:#f0f4f8;border-radius:999px;height:10px;overflow:hidden;margin:8px 0}
@@ -257,6 +265,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <div style="margin-left:auto;font-size:18px">›</div>
       </div>
     </div>
+    <!-- 会員向けお知らせ -->
+    <div id="mypage-member-notices" style="display:none;margin-bottom:12px"></div>
     <div class="member-card" id="mc-main-card">
       <div class="rank-stars" id="mc-card-stars"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
@@ -887,6 +897,8 @@ async function loadMypageData(checkNotice,updateRankCache){
     const ptTxt=document.getElementById('mypage-ticket-pending-text');
     if(hasPT&&ptCard&&ptTxt){ptTxt.textContent=d.pendingTickets[0][4]+'セット（¥'+Number(d.pendingTickets[0][5]).toLocaleString()+'）';ptCard.style.display='block';}
     else if(ptCard){ptCard.style.display='none';}
+    // 会員向けお知らせ
+    loadMemberNotices();
   }catch(e){document.getElementById('mypage-progress-area').innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';}
 }
 
@@ -1431,6 +1443,23 @@ async function refreshMessageBanner(){
 }
 
 // ===== スポログ・ランク情報 =====
+// ===== 会員向けお知らせ =====
+async function loadMemberNotices(){
+  const el=document.getElementById('mypage-member-notices');
+  if(!el)return;
+  try{
+    const list=await callGAS('getMemberNotices',3);
+    if(!list||!list.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML=list.map(r=>`
+      <div style="background:linear-gradient(135deg,#f0f4ff,#e8eeff);border:1.5px solid rgba(26,58,92,0.12);border-radius:16px;padding:16px;margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">📢 ${r[0]}</div>
+        <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px">${r[1]}</div>
+        <div style="font-size:13px;color:#555;line-height:1.8;white-space:pre-line">${r[2]}</div>
+      </div>`).join('');
+  }catch(e){el.style.display='none';}
+}
+
 // ===== HOMEお知らせ =====
 async function loadHomeNotice(){
   try{
