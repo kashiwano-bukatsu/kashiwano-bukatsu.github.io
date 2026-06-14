@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>カシワのBUKATSU 運営</title>
+<link rel="manifest" href="staff-manifest.json">
+<meta name="theme-color" content="#1e1e1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="BUKATSU運営">
+<link rel="apple-touch-icon" href="icon.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Helvetica Neue',sans-serif}
 body{background:#121212;color:#e0e0e0;font-size:16px}
@@ -368,9 +374,23 @@ textarea{min-height:80px;resize:vertical}
 <!-- 設定 -->
 <div id="section-master" class="section">
   <div class="card">
-    <div class="card-title">📢 お知らせ編集</div>
+    <div class="card-title">📢 HOMEお知らせ編集</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:8px">全員に表示される告知・イベント情報</div>
     <textarea id="notice-text" placeholder="例：次回は5/25です！" style="min-height:80px"></textarea>
     <button class="btn btn-primary" onclick="saveNotice()">保存する</button>
+  </div>
+  <div class="card">
+    <div class="card-title">📨 会員向けお知らせ投稿</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:8px">ログイン済み会員のマイページに表示されます</div>
+    <div class="label">タイトル</div>
+    <input type="text" id="mn-title" placeholder="例：7月の開催スケジュール">
+    <div class="label">本文</div>
+    <textarea id="mn-body" placeholder="お知らせの内容を入力" style="min-height:100px"></textarea>
+    <button class="btn btn-primary" onclick="postMemberNoticeAction()">投稿する</button>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 会員向けお知らせ履歴</div>
+    <div id="member-notice-list"><div class="loading">読み込み中...</div></div>
   </div>
   <div class="card">
     <div class="card-title">出席者種別変更</div>
@@ -454,6 +474,23 @@ textarea{min-height:80px;resize:vertical}
 <div class="toast" id="toast"></div>
 
 <script>
+// ===== Service Worker 登録 =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('staff-sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.postMessage({ action: 'skipWaiting' });
+        }
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  }).catch(err => console.log('SW登録失敗:', err));
+}
+
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
 const _gasRunning = {};
 async function callGAS(func, ...args) {
@@ -1312,8 +1349,55 @@ async function updateResult(idx, val) { try { await callGAS('updateLotteryResult
 // ===== 設定 =====
 async function loadMasterTab() {
   try { const text = await callGAS('getNotice'); const el = document.getElementById('notice-text'); if (el) el.value = text; } catch(e) {}
+  loadMemberNoticeList();
 }
 async function saveNotice() { try { await callGAS('setNotice', document.getElementById('notice-text').value); showToast('お知らせを保存しました！'); } catch(e) { alert('エラー：' + e.message); } }
+
+async function postMemberNoticeAction() {
+  const title = document.getElementById('mn-title').value.trim();
+  const body = document.getElementById('mn-body').value.trim();
+  if (!title || !body) return alert('タイトルと本文を入力してください');
+  const btn = document.querySelector('[onclick="postMemberNoticeAction()"]');
+  btn.disabled = true; btn.textContent = '投稿中...';
+  try {
+    await callGAS('postMemberNotice', title, body, currentUser.nickname);
+    document.getElementById('mn-title').value = '';
+    document.getElementById('mn-body').value = '';
+    showToast('投稿しました！');
+    loadMemberNoticeList();
+  } catch(e) { alert('エラー：' + e.message); }
+  finally { btn.disabled = false; btn.textContent = '投稿する'; }
+}
+
+async function loadMemberNoticeList() {
+  const el = document.getElementById('member-notice-list');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">読み込み中...</div>';
+  try {
+    const list = await callGAS('getMemberNotices', 20);
+    if (!list.length) { el.innerHTML = '<div class="empty">投稿がありません</div>'; return; }
+    el.innerHTML = list.map((r, i) => `
+      <div class="item">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="flex:1">
+            <div style="font-size:12px;color:#aaa;margin-bottom:4px">${r[0]} ／ ${r[3]}</div>
+            <div class="item-title">${r[1]}</div>
+            <div style="font-size:13px;color:#aaa;margin-top:4px;white-space:pre-line;line-height:1.7">${r[2]}</div>
+          </div>
+          <button onclick="unpublishNotice(${list.length - i})" style="background:#333;color:#aaa;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:8px">非公開</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">エラー</div>'; }
+}
+
+async function unpublishNotice(rowIndex) {
+  if (!confirm('このお知らせを非公開にしますか？')) return;
+  try {
+    await callGAS('unpublishMemberNotice', rowIndex);
+    showToast('非公開にしました');
+    loadMemberNoticeList();
+  } catch(e) { alert('エラー：' + e.message); }
+}
 
 async function searchAttendeeForEdit() {
   const val = document.getElementById('at-search').value.trim(); if (!val) return alert('フルネームを入力してください');
