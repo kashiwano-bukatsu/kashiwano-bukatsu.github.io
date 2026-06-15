@@ -924,8 +924,14 @@ async function loadReserveData(){
     renderScheduleList(schedules);
     if(schedules&&schedules.length){
       const first=schedules[0];
-      const nm=await callGAS('getReservations',first[0],first[4]).catch(()=>[]);
-      renderNextMemberCard(nm,first);
+      const [nm,tempList]=await Promise.all([
+        callGAS('getReservations',first[0],first[4]).catch(()=>[]),
+        callGAS('getTempAttendees').catch(()=>[])
+      ]);
+      const tempForFirst=tempList
+        .filter(t=>t[3]===first[0]&&t[2]===first[4])
+        .map(t=>['','','','',t[1],t[1],'','⭕','','NEW']);
+      renderNextMemberCard([...nm,...tempForFirst],first);
     }
   }catch(e){}
 }
