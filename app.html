@@ -1360,19 +1360,6 @@ function showReferralNoticePopup(msg){
 // ===== メッセージ =====
 async function openMessageList(){
   if(!mypageCurrentUser)return;
-  const ov=document.createElement('div');ov.className='ticket-overlay';
-  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:85vh;overflow-y:auto;"><div style="text-align:center;font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:16px">メッセージ</div><div id="message-list-content"><div class="empty">読み込み中...</div></div><button onclick="this.closest(\'.ticket-overlay\').remove();refreshMessageBanner()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;">閉じる</button></div>';
-  document.body.appendChild(ov);
-  try{
-    const messages=await callGAS('getMyMessages',mypageCurrentUser.fullname);
-    const el=document.getElementById('message-list-content');if(!el)return;
-    if(!messages||!messages.length){el.innerHTML='<div class="empty">メッセージはありません</div>';return;}
-    el.innerHTML=messages.map(m=>{const u=m[3]==='未読';return'<div style="padding:14px;border-radius:12px;margin-bottom:10px;background:'+(u?'#f0f9ff':'#f8fafc')+';border:1.5px solid '+(u?'#90caf9':'#e0e8f0')+'"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:11px;color:#888">'+m[0]+'</div>'+(u?'<div style="font-size:11px;background:#1a3a5c;color:#fff;padding:2px 8px;border-radius:10px;font-weight:700">NEW</div>':'')+'</div><div style="font-size:14px;color:#1a1a2e;line-height:1.8;white-space:pre-line">'+m[2]+'</div></div>';}).join('');
-    callGAS('markMessagesAsRead',mypageCurrentUser.fullname).catch(()=>{});
-  }catch(e){}
-}
-async function openMessageList(){
-  if(!mypageCurrentUser)return;
   // LINE風チャット画面を表示
   const ov=document.createElement('div');
   ov.id='member-chat-overlay';
