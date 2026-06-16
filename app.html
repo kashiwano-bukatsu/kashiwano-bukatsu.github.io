@@ -341,9 +341,9 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reservation-list-body','reservation-list-arrow')">
         <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>予約一覧</div>
-        <div id="reservation-list-arrow" style="font-size:18px;color:#aaa">∨</div>
+        <div id="reservation-list-arrow" style="font-size:18px;color:#aaa">›</div>
       </div>
-      <div id="reservation-list-body" style="margin-top:12px">
+      <div id="reservation-list-body" style="display:none;margin-top:12px">
         <div id="mypage-reservation-list"><div class="empty">読み込み中...</div></div>
       </div>
     </div>
@@ -786,7 +786,20 @@ async function loadHomeData(){
       }
     }
     const sorted=Object.entries(d.nextEvents||{}).filter(([,ev])=>ev&&ev.date).sort((a,b)=>a[1].date>b[1].date?1:-1);
-    // home-next-eventsはカレンダーと統合済みのためここでは更新しない
+    // カレンダーカード内の次回開催予定をcountつきで更新
+    const ICONS={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+    const nevEl=document.getElementById('home-next-events');
+    if(nevEl)nevEl.innerHTML=sorted.length?sorted.map(([sport,ev])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:22px">${ICONS[sport]||'🏟'}</div>
+          <div>
+            <div style="font-size:14px;font-weight:700">${sport}</div>
+            <div style="font-size:12px;color:#888">${ev.date}（${getDow(ev.date)}） ${ev.time} ／ ${ev.place}</div>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#555;white-space:nowrap">第${ev.count}回</div>
+      </div>`).join(''):'<div class="empty">予定がありません</div>';
   }catch(e){}
 }
 
@@ -978,7 +991,8 @@ function renderReservationList(reservations){
 function renderScheduleList(schedules){
   const el=document.getElementById('mypage-schedule-list');
   if(!schedules||!schedules.length){el.innerHTML='<div class="empty">予定がありません</div>';return;}
-  el.innerHTML=schedules.map((s,i)=>'<div class="schedule-item" onclick="toggleMypageSchedule('+i+',\''+s[0]+'\',\''+s[4]+'\',\''+s[2]+'\')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[s[4]]||'')+' '+s[4]+'</div><div style="font-size:13px;color:#888;margin-top:4px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div></div><div style="font-size:20px;color:#aaa" id="sched-arrow-'+i+'">›</div></div><div id="mypage-detail-'+i+'" style="display:none;margin-top:12px"></div></div>').join('');
+  const sorted=[...schedules].sort((a,b)=>a[0]>b[0]?1:-1);
+  el.innerHTML=sorted.map((s,i)=>'<div class="schedule-item" onclick="toggleMypageSchedule('+i+',\''+s[0]+'\',\''+s[4]+'\',\''+s[2]+'\')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[s[4]]||'')+' '+s[4]+'</div><div style="font-size:13px;color:#888;margin-top:4px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div></div><div style="font-size:20px;color:#aaa" id="sched-arrow-'+i+'">›</div></div><div id="mypage-detail-'+i+'" style="display:none;margin-top:12px"></div></div>').join('');
 }
 
 function toggleReserveEdit(idx){const el=document.getElementById('reserve-edit-'+idx);if(el)el.style.display=el.style.display==='block'?'none':'block';}
