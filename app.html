@@ -225,6 +225,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     </div>
     <div id="about-content" style="display:none;margin-top:14px">
       <div style="font-size:14px;line-height:2;color:#444">千葉県柏市を拠点に、バスケットボール・バレーボール・バドミントンを楽しむ地域スポーツコミュニティです。勝ち負けよりも「エンジョイ！」がコンセプト。初心者から経験者まで一緒にプレーできる環境を大切にしています。</div>
+    </div>
+  </div>
   <div class="card">
     <div class="card-title"><div class="card-title-dot"></div>📅 開催カレンダー</div>
     <div id="home-month-calendar"><div class="empty">読み込み中...</div></div>
@@ -233,6 +235,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <a href="https://kashiwano-bukatsu.github.io/" target="_blank" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none">公式サイトを見る</a>
   </div>
   <div style="text-align:center;padding:8px 0 16px;color:#bbb;font-size:11px">一般社団法人みんなのBUKATSU</div>
+</div>
 
 <!-- マイページ -->
 <div id="section-mypage" class="section active">
@@ -338,7 +341,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reservation-list-body','reservation-list-arrow')">
         <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>予約一覧</div>
-        <div id="reservation-list-arrow" style="font-size:18px;color:#aaa;transition:transform 0.2s">∨</div>
+        <div id="reservation-list-arrow" style="font-size:18px;color:#aaa">∨</div>
       </div>
       <div id="reservation-list-body" style="margin-top:12px">
         <div id="mypage-reservation-list"><div class="empty">読み込み中...</div></div>
@@ -347,7 +350,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reserve-form-body','reserve-form-arrow')">
         <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>参加予約する</div>
-        <div id="reserve-form-arrow" style="font-size:18px;color:#aaa;transition:transform 0.2s">∨</div>
+        <div id="reserve-form-arrow" style="font-size:18px;color:#aaa">›</div>
       </div>
       <div id="reserve-form-body" style="display:none;margin-top:12px">
         <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -375,14 +378,19 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>お友達を紹介する</div>
       <div class="label">お友達の苗字（カタカナ）</div>
-      <input type="text" id="ref-friend-lastname" placeholder="例：ヤマダ">
+      <input type="text" id="ref-friend-lastname" placeholder="例：ヤマダ" oninput="checkReferralForm()">
+      <div id="ref-err-lastname" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <div class="label">お友達の名前（カタカナ）</div>
-      <input type="text" id="ref-friend-firstname" placeholder="例：タロウ">
+      <input type="text" id="ref-friend-firstname" placeholder="例：タロウ" oninput="checkReferralForm()">
+      <div id="ref-err-firstname" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <div class="label">参加予定スポーツの経験</div>
-      <select id="ref-friend-exp"><option value="">選択してください</option><option value="初心者">初心者</option><option value="部活動経験あり（2年以上）">部活動経験あり（2年以上）</option><option value="社会人以降で経験あり（2年以上）">社会人以降で経験あり（2年以上）</option></select>
+      <select id="ref-friend-exp" onchange="checkReferralForm()"><option value="">選択してください</option><option value="初心者">初心者</option><option value="部活動経験あり（2年以上）">部活動経験あり（2年以上）</option><option value="社会人以降で経験あり（2年以上）">社会人以降で経験あり（2年以上）</option></select>
+      <div id="ref-err-exp" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <div class="label">初参加予定のスケジュール</div>
-      <select id="ref-friend-schedule"><option value="">スケジュールを読み込み中...</option></select>
-      <button class="btn btn-primary" onclick="submitReferral()">紹介する</button>
+      <select id="ref-friend-schedule" onchange="checkReferralForm()"><option value="">スケジュールを読み込み中...</option></select>
+      <div id="ref-err-schedule" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
+      <button id="ref-schedule-retry" onclick="loadReferralSchedules()" style="display:none;margin-top:6px;padding:8px 16px;background:#f0f4f8;border:1.5px solid #ccd;border-radius:10px;font-size:13px;color:#555;cursor:pointer">🔄 再読み込み</button>
+      <button id="referral-submit-btn" class="btn btn-primary" onclick="submitReferral()" style="opacity:0.4;pointer-events:none">紹介する</button>
     </div>
   </div>
 </div>
@@ -925,7 +933,6 @@ async function loadReserveData(){
   document.getElementById('mypage-reservation-list').innerHTML='<div class="empty">読み込み中...</div>';
   document.getElementById('mypage-schedule-list').innerHTML='<div class="empty">読み込み中...</div>';
   try{
-    // 並列で一気に取得
     const [reservations, schedules, tempList] = await Promise.all([
       callGAS('getMyReservations', mypageCurrentUser.fullname).catch(()=>[]),
       callGAS('getUpcomingSchedules', mypageCurrentUser.memberSport||'全て').catch(()=>[]),
@@ -935,7 +942,6 @@ async function loadReserveData(){
     renderScheduleList(schedules);
     if(schedules&&schedules.length){
       const first=schedules[0];
-      // 参加予定メンバーも並列取得
       const nm=await callGAS('getReservations',first[0],first[4]).catch(()=>[]);
       const tempForFirst=tempList
         .filter(t=>t[3]===first[0]&&t[2]===first[4])
@@ -1352,18 +1358,29 @@ async function submitReferral(){
   const firstName=document.getElementById('ref-friend-firstname').value.trim();
   const exp=document.getElementById('ref-friend-exp').value;
   const sched=document.getElementById('ref-friend-schedule').value;
-  if(!lastName)return alert('苗字を入力してください');if(!firstName)return alert('名前を入力してください');
-  if(!/^[ァ-ヶー]+$/.test(lastName)||!/^[ァ-ヶー]+$/.test(firstName))return alert('カタカナで入力してください');
-  if(!exp)return alert('スポーツ経験を選択してください');if(!sched)return alert('参加予定スケジュールを選択してください');
+  ['ref-err-lastname','ref-err-firstname','ref-err-exp','ref-err-schedule'].forEach(id=>{document.getElementById(id).style.display='none';});
+  let hasError=false;
+  if(!lastName){document.getElementById('ref-err-lastname').style.display='block';hasError=true;}
+  if(!firstName){document.getElementById('ref-err-firstname').style.display='block';hasError=true;}
+  if(lastName&&firstName&&(!/^[ァ-ヶー]+$/.test(lastName)||!/^[ァ-ヶー]+$/.test(firstName))){alert('カタカナで入力してください');return;}
+  if(!exp){document.getElementById('ref-err-exp').style.display='block';hasError=true;}
+  if(!sched){document.getElementById('ref-err-schedule').style.display='block';hasError=true;}
+  if(hasError)return;
   const fullname=lastName+firstName;
+  const btn=document.getElementById('referral-submit-btn');
+  if(btn){btn.disabled=true;btn.textContent='送信中...';}
   try{
     await callGAS('addTempAttendee',fullname,mypageCurrentUser.fullname);
     const ov=document.createElement('div');ov.className='popup-overlay';
     ov.innerHTML='<div class="popup-card"><div style="font-size:28px;font-weight:700;color:#222;margin-bottom:8px">'+lastName+' さん</div><div style="font-size:16px;color:#444;margin-bottom:8px;line-height:1.8">紹介登録が完了しました！</div><div style="font-size:15px;color:#188038;font-weight:700;margin-top:8px;">当日お待ちしています</div><div style="font-family:\'Dancing Script\',cursive;font-size:32px;color:#222;letter-spacing:2px;margin-top:12px;">Thank you!!</div></div>';
     document.body.appendChild(ov);
-    document.getElementById('ref-friend-lastname').value='';document.getElementById('ref-friend-firstname').value='';document.getElementById('ref-friend-exp').value='';
+    document.getElementById('ref-friend-lastname').value='';
+    document.getElementById('ref-friend-firstname').value='';
+    document.getElementById('ref-friend-exp').value='';
+    checkReferralForm();
     setTimeout(()=>{ov.style.transition='opacity 0.5s ease';ov.style.opacity='0';setTimeout(()=>{ov.remove();showTab('home');},500);},4000);
   }catch(e){alert('エラー：'+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='紹介する';}}
 }
 
 function showReferralNoticePopup(msg){
@@ -1490,73 +1507,56 @@ async function loadHomeNotice(){
   }catch(e){}
 }
 
-// ===== HOMEカレンダー（ログイン不要） =====
 // ===== HOMEカレンダー（月表示） =====
-let calendarSchedules = [];
-let calendarCurrentMonth = new Date();
-
+let calendarSchedules=[];
+let calendarCurrentMonth=new Date();
 async function loadMonthCalendar(){
   const el=document.getElementById('home-month-calendar');
   if(!el)return;
   try{
-    calendarSchedules=await callGAS('getUpcomingSchedules','全て') || [];
+    calendarSchedules=await callGAS('getUpcomingSchedules','全て')||[];
     renderMonthCalendar(calendarCurrentMonth);
   }catch(e){el.innerHTML='<div class="empty" style="font-size:13px">読み込めませんでした</div>';}
 }
-
 function renderMonthCalendar(date){
-  const el=document.getElementById('home-month-calendar');
-  if(!el)return;
-  const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
-  const year=date.getFullYear(), month=date.getMonth();
+  const el=document.getElementById('home-month-calendar');if(!el)return;
+  const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+  const year=date.getFullYear(),month=date.getMonth();
   const today=new Date();
-  // スケジュールをこの月でフィルタ
   const ym=`${year}/${String(month+1).padStart(2,'0')}`;
   const evMap={};
-  calendarSchedules.forEach(s=>{
-    if(s[0]&&s[0].startsWith(ym)){
-      const d=parseInt(s[0].split('/')[2]);
-      if(!evMap[d])evMap[d]=[];
-      evMap[d].push(s[4]);
-    }
-  });
+  calendarSchedules.forEach(s=>{if(s[0]&&s[0].startsWith(ym)){const d=parseInt(s[0].split('/')[2]);if(!evMap[d])evMap[d]=[];evMap[d].push(s[4]);}});
   const firstDay=new Date(year,month,1).getDay();
   const lastDate=new Date(year,month+1,0).getDate();
   const DOW=['日','月','火','水','木','金','土'];
-  let html=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <button onclick="changeCalendarMonth(-1)" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:#1a3a5c">‹</button>
-      <div style="font-size:15px;font-weight:800;color:#1a1a2e">${year}年${month+1}月</div>
-      <button onclick="changeCalendarMonth(1)" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 10px;color:#1a3a5c">›</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">`;
-  DOW.forEach((d,i)=>{
-    const c=i===0?'#e53935':i===6?'#1976d2':'#888';
-    html+=`<div style="font-size:11px;font-weight:700;color:${c};padding:4px 0">${d}</div>`;
-  });
-  // 空白
-  for(let i=0;i<firstDay;i++) html+='<div></div>';
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <button onclick="changeCalendarMonth(-1)" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 10px;color:#1a3a5c">‹</button>
+    <div style="font-size:15px;font-weight:800;color:#1a1a2e">${year}年${month+1}月</div>
+    <button onclick="changeCalendarMonth(1)" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px 10px;color:#1a3a5c">›</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">`;
+  DOW.forEach((d,i)=>{const c=i===0?'#e53935':i===6?'#1976d2':'#888';html+=`<div style="font-size:11px;font-weight:700;color:${c};padding:4px 0">${d}</div>`;});
+  for(let i=0;i<firstDay;i++)html+='<div></div>';
   for(let d=1;d<=lastDate;d++){
     const isToday=year===today.getFullYear()&&month===today.getMonth()&&d===today.getDate();
-    const icons=evMap[d]?evMap[d].map(s=>SPORT_ICON[s]||'🏟').join(''):'' ;
+    const icons=evMap[d]?evMap[d].map(s=>ICON[s]||'🏟').join(''):'';
     const dow=(firstDay+d-1)%7;
-    const dayColor=dow===0?'#e53935':dow===6?'#1976d2':'#1a1a2e';
+    const dc=dow===0?'#e53935':dow===6?'#1976d2':'#1a1a2e';
     html+=`<div style="padding:4px 2px;border-radius:8px;${isToday?'background:#1a3a5c;':''}">
-      <div style="font-size:13px;font-weight:${isToday?'800':'600'};color:${isToday?'#fff':dayColor}">${d}</div>
-      <div style="font-size:12px;line-height:1.2;margin-top:1px">${icons}</div>
+      <div style="font-size:13px;font-weight:${isToday?'800':'600'};color:${isToday?'#fff':dc}">${d}</div>
+      <div style="font-size:12px;line-height:1.2;min-height:16px">${icons}</div>
     </div>`;
   }
   html+='</div>';
   el.innerHTML=html;
 }
-
 function changeCalendarMonth(diff){
   calendarCurrentMonth=new Date(calendarCurrentMonth.getFullYear(),calendarCurrentMonth.getMonth()+diff,1);
   renderMonthCalendar(calendarCurrentMonth);
 }
 
 // ===== 予約タブ アコーディオン =====
-function toggleReserveAccordion(bodyId, arrowId){
+function toggleReserveAccordion(bodyId,arrowId){
   const body=document.getElementById(bodyId);
   const arrow=document.getElementById(arrowId);
   if(!body)return;
@@ -1565,6 +1565,31 @@ function toggleReserveAccordion(bodyId, arrowId){
   if(arrow)arrow.textContent=isOpen?'›':'∨';
 }
 
+// ===== 紹介フォーム =====
+function checkReferralForm(){
+  const lastName=document.getElementById('ref-friend-lastname').value.trim();
+  const firstName=document.getElementById('ref-friend-firstname').value.trim();
+  const exp=document.getElementById('ref-friend-exp').value;
+  const sched=document.getElementById('ref-friend-schedule').value;
+  const btn=document.getElementById('referral-submit-btn');
+  const allFilled=lastName&&firstName&&exp&&sched;
+  if(btn){btn.style.opacity=allFilled?'1':'0.4';btn.style.pointerEvents=allFilled?'auto':'none';}
+}
+async function loadReferralSchedules(retry=0){
+  const sel=document.getElementById('ref-friend-schedule');
+  const retryBtn=document.getElementById('ref-schedule-retry');
+  if(retryBtn)retryBtn.style.display='none';
+  sel.innerHTML='<option value="">読み込み中...</option>';
+  try{
+    const s=await callGAS('getUpcomingSchedules','全て');
+    if(!s||!s.length){sel.innerHTML='<option value="">予定がありません</option>';return;}
+    sel.innerHTML='<option value="">選択してください</option>'+s.map(x=>'<option value="'+x[0]+'_'+x[4]+'">'+x[0]+'（'+getDow(x[0])+'） '+x[4]+' @ '+x[2]+'</option>').join('');
+    checkReferralForm();
+  }catch(e){
+    if(retry<2){setTimeout(()=>loadReferralSchedules(retry+1),1500);}
+    else{sel.innerHTML='<option value="">読み込み失敗</option>';if(retryBtn)retryBtn.style.display='inline-block';}
+  }
+}
 
 // ===== 限定コンテンツポップアップ =====
 function openPremiumOnlyPopup(){
