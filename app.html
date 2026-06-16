@@ -200,8 +200,12 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div id="home-countdown-detail" style="display:none;margin-top:16px;border-top:1px solid #f0f4f8;padding-top:16px"></div>
   </div>
   <div class="card">
-    <div class="card-title"><div class="card-title-dot"></div>次回開催予定</div>
-    <div id="home-next-events"><div class="empty">読み込み中...</div></div>
+    <div class="card-title"><div class="card-title-dot"></div>📅 開催カレンダー</div>
+    <div id="home-month-calendar"><div class="empty">読み込み中...</div></div>
+    <div style="border-top:1px solid #f0f4f8;margin-top:16px;padding-top:14px">
+      <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:10px">次回開催予定</div>
+      <div id="home-next-events"><div class="empty">読み込み中...</div></div>
+    </div>
   </div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleAccordionHome('beginner-content','beginner-arrow')">
@@ -226,10 +230,6 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div id="about-content" style="display:none;margin-top:14px">
       <div style="font-size:14px;line-height:2;color:#444">千葉県柏市を拠点に、バスケットボール・バレーボール・バドミントンを楽しむ地域スポーツコミュニティです。勝ち負けよりも「エンジョイ！」がコンセプト。初心者から経験者まで一緒にプレーできる環境を大切にしています。</div>
     </div>
-  </div>
-  <div class="card">
-    <div class="card-title"><div class="card-title-dot"></div>📅 開催カレンダー</div>
-    <div id="home-month-calendar"><div class="empty">読み込み中...</div></div>
   </div>
   <div class="card" style="text-align:center">
     <a href="https://kashiwano-bukatsu.github.io/" target="_blank" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none">公式サイトを見る</a>
@@ -786,8 +786,8 @@ async function loadHomeData(){
       }
     }
     const sorted=Object.entries(d.nextEvents||{}).filter(([,ev])=>ev&&ev.date).sort((a,b)=>a[1].date>b[1].date?1:-1);
-    document.getElementById('home-next-events').innerHTML=sorted.length?sorted.map(([sport,ev])=>'<div class="next-event-row"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:24px">'+(SPORT_ICON[sport]||'')+'</div><div><div style="font-size:14px;font-weight:700">'+sport+'</div><div style="font-size:13px;color:#888">'+ev.date+' '+ev.time+' ／ '+ev.place+'</div></div></div><div style="font-size:13px;font-weight:700;color:#555;white-space:nowrap">第'+ev.count+'回</div></div>').join(''):'<div class="empty">予定がありません</div>';
-  }catch(e){document.getElementById('home-next-events').innerHTML='<div class="empty">読み込みエラー</div>';}
+    // home-next-eventsはカレンダーと統合済みのためここでは更新しない
+  }catch(e){}
 }
 
 function toggleCountdownDetail(){
@@ -1507,7 +1507,7 @@ async function loadHomeNotice(){
   }catch(e){}
 }
 
-// ===== HOMEカレンダー（月表示） =====
+// ===== HOMEカレンダー（月表示）＋次回開催予定 =====
 let calendarSchedules=[];
 let calendarCurrentMonth=new Date();
 async function loadMonthCalendar(){
@@ -1549,6 +1549,30 @@ function renderMonthCalendar(date){
   }
   html+='</div>';
   el.innerHTML=html;
+  // 次回開催予定も同時に更新
+  renderNextEventsInCalendar();
+}
+function renderNextEventsInCalendar(){
+  const el=document.getElementById('home-next-events');if(!el)return;
+  const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+  const today=new Date().toISOString().slice(0,10).replace(/-/g,'/');
+  const sportMap={};
+  calendarSchedules.forEach(s=>{
+    if(!s[0]||s[0]<today)return;
+    if(!sportMap[s[4]])sportMap[s[4]]={date:s[0],time:s[1],place:s[2],count:s[10]||''};
+  });
+  const rows=Object.entries(sportMap).sort((a,b)=>a[1].date>b[1].date?1:-1);
+  el.innerHTML=rows.length?rows.map(([sport,ev])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:22px">${ICON[sport]||'🏟'}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700">${sport}</div>
+          <div style="font-size:12px;color:#888">${ev.date}（${getDow(ev.date)}） ${ev.time} ／ ${ev.place}</div>
+        </div>
+      </div>
+      ${ev.count?`<div style="font-size:13px;font-weight:700;color:#555;white-space:nowrap">第${ev.count}回</div>`:''}
+    </div>`).join(''):'<div class="empty">予定がありません</div>';
 }
 function changeCalendarMonth(diff){
   calendarCurrentMonth=new Date(calendarCurrentMonth.getFullYear(),calendarCurrentMonth.getMonth()+diff,1);
