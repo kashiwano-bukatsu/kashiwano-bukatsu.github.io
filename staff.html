@@ -461,10 +461,13 @@ textarea{min-height:80px;resize:vertical}
     </div>
     <div style="border-top:1px solid #333;padding-top:16px">
       <div style="font-size:12px;color:#aaa;margin-bottom:8px">🆕 体験・初回参加</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" id="modal-new-lastname" placeholder="苗字（カタカナ）" style="flex:1;padding:10px;font-size:14px">
+        <input type="text" id="modal-new-firstname" placeholder="名前（カタカナ）" style="flex:1;padding:10px;font-size:14px">
+      </div>
       <div style="display:flex;gap:8px">
-        <input type="text" id="modal-new-name" placeholder="カタカナで入力" style="flex:1;padding:10px;font-size:14px">
         <select id="modal-new-fee" style="padding:10px;font-size:14px;width:110px;background:#2c2c2c;color:#e0e0e0;border:1.5px solid #444;border-radius:8px"><option value="500">¥500</option><option value="700">¥700</option><option value="0">¥0</option></select>
-        <button onclick="addNewModalMember()" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer">追加</button>
+        <button onclick="addNewModalMember()" style="flex:1;background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer">追加</button>
       </div>
     </div>
     <button onclick="closeAddMemberModal()" style="width:100%;padding:12px;background:#333;color:#aaa;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:16px">閉じる</button>
@@ -492,20 +495,21 @@ if ('serviceWorker' in navigator) {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
-const _gasRunning = {};
 async function callGAS(func, ...args) {
-  if (_gasRunning[func]) return Promise.reject(new Error('処理中です'));
-  _gasRunning[func] = true;
-  try {
+  const attempt = async () => {
     const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ func, args }) });
     const json = await res.json();
     if (json.status === 'error') throw new Error(json.message);
     return json.data;
-  } finally {
-    _gasRunning[func] = false;
+  };
+  for (let i = 0; i < 3; i++) {
+    try { return await attempt(); }
+    catch(e) {
+      if (i === 2) throw e;
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    }
   }
 }
-
 const SPORT_ICON = { 'バドミントン': '🏸', 'バスケットボール': '🏀', 'バレーボール': '🏐' };
 const RANK_MEDAL = ['🥇', '🥈', '🥉'];
 const SUBJECTS = { '収入': ['参加費', '補助金', '寄付', 'その他収入'], '支出': ['会場費', '交通費', '備品費', 'シャトル購入', 'その他支出'], 'クレカ精算': ['会場費', '交通費', '備品費', 'シャトル購入', 'その他'] };
@@ -653,6 +657,9 @@ async function loadDailyTab() {
   } catch(e) { document.getElementById('daily-unified-list').innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
 }
 
+const TYPE_ORDER = {'代表':0,'運営':1,'部長':2,'応援団':3,'応援団会員':3,'カシワのBUKATSU会員':4,'カシワ会員':4,'みんなのBUKATSU会員':5,'みんB会員':5,'ビジター会員':6,'体験':7};
+function getTypeOrder(type){ for(const k of Object.keys(TYPE_ORDER)){ if(type&&type.includes(k)) return TYPE_ORDER[k]; } return 8; }
+
 function renderDailyListFromData(d) {
   const el = document.getElementById('daily-unified-list');
   const todayFmt = d.today;
@@ -679,6 +686,7 @@ function renderDailyListFromData(d) {
     if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[0], type: '体験', isNew: true, isNovice: u[2] === '初心者' });
   });
   if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
+  allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
   el.innerHTML = allItems.map(item => {
     const isChecked = checkedInNames.has(item.fullname);
     const type = item.type;
@@ -745,6 +753,7 @@ async function renderDailyList() {
       if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[0], type: '体験', isNew: true, isNovice: u[2] === '初心者' });
     });
     if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
+    allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
     el.innerHTML = allItems.map(item => {
       const isChecked = checkedInNames.has(item.fullname);
       const type = item.type;
@@ -853,17 +862,20 @@ function addExistingDailyMember(fullname, nickname, type) {
 }
 
 async function addNewModalMember() {
-  const name = document.getElementById('modal-new-name').value.trim();
+  const lastName = document.getElementById('modal-new-lastname').value.trim();
+  const firstName = document.getElementById('modal-new-firstname').value.trim();
   const fee = parseInt(document.getElementById('modal-new-fee').value) || 0;
-  if (!name) return alert('フルネームを入力してください');
-  if (!/^[ァ-ヶー]+$/.test(name)) return alert('カタカナで入力してください');
+  if (!lastName || !firstName) return alert('苗字と名前を入力してください');
+  if (!/^[ァ-ヶー]+$/.test(lastName) || !/^[ァ-ヶー]+$/.test(firstName)) return alert('カタカナで入力してください');
+  const name = lastName + firstName;
   const todayFmt = window._todayFmt || getTodayStr();
   const sport = window._todaySport || '';
   try {
     await callGAS('addTempAttendee', name, '', '');
     await callGAS('addAttendanceLog', [todayFmt, '沼南体育館', sport, name, name, '体験', fee]);
     showToast('🆕 ' + name + ' チェックイン！');
-    document.getElementById('modal-new-name').value = '';
+    document.getElementById('modal-new-lastname').value = '';
+    document.getElementById('modal-new-firstname').value = '';
     closeAddMemberModal();
     renderDailyList();
   } catch(e) { alert('エラー：' + e.message); }
