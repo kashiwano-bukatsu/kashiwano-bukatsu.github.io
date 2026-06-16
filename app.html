@@ -368,14 +368,18 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>お友達を紹介する</div>
       <div class="label">お友達の苗字（カタカナ）</div>
-      <input type="text" id="ref-friend-lastname" placeholder="例：ヤマダ">
+      <input type="text" id="ref-friend-lastname" placeholder="例：ヤマダ" oninput="checkReferralForm()">
+      <div id="ref-err-lastname" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <div class="label">お友達の名前（カタカナ）</div>
-      <input type="text" id="ref-friend-firstname" placeholder="例：タロウ">
+      <input type="text" id="ref-friend-firstname" placeholder="例：タロウ" oninput="checkReferralForm()">
+      <div id="ref-err-firstname" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <div class="label">参加予定スポーツの経験</div>
-      <select id="ref-friend-exp"><option value="">選択してください</option><option value="初心者">初心者</option><option value="部活動経験あり（2年以上）">部活動経験あり（2年以上）</option><option value="社会人以降で経験あり（2年以上）">社会人以降で経験あり（2年以上）</option></select>
+      <select id="ref-friend-exp" onchange="checkReferralForm()"><option value="">選択してください</option><option value="初心者">初心者</option><option value="部活動経験あり（2年以上）">部活動経験あり（2年以上）</option><option value="社会人以降で経験あり（2年以上）">社会人以降で経験あり（2年以上）</option></select>
+      <div id="ref-err-exp" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <div class="label">初参加予定のスケジュール</div>
-      <select id="ref-friend-schedule"><option value="">スケジュールを読み込み中...</option></select>
-      <button class="btn btn-primary" onclick="submitReferral()">紹介する</button>
+      <select id="ref-friend-schedule" onchange="checkReferralForm()"><option value="">スケジュールを読み込み中...</option></select>
+      <div id="ref-err-schedule" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
+      <button id="referral-submit-btn" class="btn btn-primary" onclick="submitReferral()" style="opacity:0.4;pointer-events:none">紹介する</button>
     </div>
   </div>
 </div>
@@ -924,14 +928,8 @@ async function loadReserveData(){
     renderScheduleList(schedules);
     if(schedules&&schedules.length){
       const first=schedules[0];
-      const [nm,tempList]=await Promise.all([
-        callGAS('getReservations',first[0],first[4]).catch(()=>[]),
-        callGAS('getTempAttendees').catch(()=>[])
-      ]);
-      const tempForFirst=tempList
-        .filter(t=>t[3]===first[0]&&t[2]===first[4])
-        .map(t=>['','','','',t[1],t[1],'','⭕','','NEW']);
-      renderNextMemberCard([...nm,...tempForFirst],first);
+      const nm=await callGAS('getReservations',first[0],first[4]).catch(()=>[]);
+      renderNextMemberCard(nm,first);
     }
   }catch(e){}
 }
@@ -1338,23 +1336,45 @@ async function loadReferralSchedules(){
   }catch(e){sel.innerHTML='<option value="">読み込みエラー</option>';}
 }
 
+function checkReferralForm(){
+  const lastName=document.getElementById('ref-friend-lastname').value.trim();
+  const firstName=document.getElementById('ref-friend-firstname').value.trim();
+  const exp=document.getElementById('ref-friend-exp').value;
+  const sched=document.getElementById('ref-friend-schedule').value;
+  const btn=document.getElementById('referral-submit-btn');
+  const allFilled=lastName&&firstName&&exp&&sched;
+  if(btn){btn.style.opacity=allFilled?'1':'0.4';btn.style.pointerEvents=allFilled?'auto':'none';}
+}
+
 async function submitReferral(){
   const lastName=document.getElementById('ref-friend-lastname').value.trim();
   const firstName=document.getElementById('ref-friend-firstname').value.trim();
   const exp=document.getElementById('ref-friend-exp').value;
   const sched=document.getElementById('ref-friend-schedule').value;
-  if(!lastName)return alert('苗字を入力してください');if(!firstName)return alert('名前を入力してください');
-  if(!/^[ァ-ヶー]+$/.test(lastName)||!/^[ァ-ヶー]+$/.test(firstName))return alert('カタカナで入力してください');
-  if(!exp)return alert('スポーツ経験を選択してください');if(!sched)return alert('参加予定スケジュールを選択してください');
+  // バリデーション＆赤文字表示
+  let hasError=false;
+  ['ref-err-lastname','ref-err-firstname','ref-err-exp','ref-err-schedule'].forEach(id=>{
+    document.getElementById(id).style.display='none';
+  });
+  if(!lastName){document.getElementById('ref-err-lastname').style.display='block';hasError=true;}
+  if(!firstName){document.getElementById('ref-err-firstname').style.display='block';hasError=true;}
+  if(!/^[ァ-ヶー]+$/.test(lastName)||!/^[ァ-ヶー]+$/.test(firstName)){alert('カタカナで入力してください');return;}
+  if(!exp){document.getElementById('ref-err-exp').style.display='block';hasError=true;}
+  if(!sched){document.getElementById('ref-err-schedule').style.display='block';hasError=true;}
+  if(hasError)return;
   const fullname=lastName+firstName;
+  const btn=document.getElementById('referral-submit-btn');
+  if(btn){btn.disabled=true;btn.textContent='送信中...';}
   try{
     await callGAS('addTempAttendee',fullname,mypageCurrentUser.fullname);
     const ov=document.createElement('div');ov.className='popup-overlay';
     ov.innerHTML='<div class="popup-card"><div style="font-size:28px;font-weight:700;color:#222;margin-bottom:8px">'+lastName+' さん</div><div style="font-size:16px;color:#444;margin-bottom:8px;line-height:1.8">紹介登録が完了しました！</div><div style="font-size:15px;color:#188038;font-weight:700;margin-top:8px;">当日お待ちしています</div><div style="font-family:\'Dancing Script\',cursive;font-size:32px;color:#222;letter-spacing:2px;margin-top:12px;">Thank you!!</div></div>';
     document.body.appendChild(ov);
     document.getElementById('ref-friend-lastname').value='';document.getElementById('ref-friend-firstname').value='';document.getElementById('ref-friend-exp').value='';
+    checkReferralForm();
     setTimeout(()=>{ov.style.transition='opacity 0.5s ease';ov.style.opacity='0';setTimeout(()=>{ov.remove();showTab('home');},500);},4000);
   }catch(e){alert('エラー：'+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='紹介する';}}
 }
 
 function showReferralNoticePopup(msg){
