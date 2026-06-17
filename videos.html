@@ -2,31 +2,186 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>活動記録 | カシワのBUKATSU</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>活動動画 | カシワのBUKATSU</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Helvetica Neue',sans-serif}
-body{background:#f0f4f8;color:#1a1a2e}
-.header{background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;text-align:center}
-.header h1{font-size:20px;font-weight:800}
-.back-btn{display:inline-block;margin-top:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer;text-decoration:underline}
-.content{padding:20px 16px;max-width:600px;margin:0 auto}
-.coming-soon{text-align:center;padding:60px 20px}
-.coming-soon h2{font-size:24px;font-weight:800;color:#1a1a2e;margin-bottom:12px}
-.coming-soon p{font-size:15px;color:#888;line-height:1.8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f4f6f8;color:#1a1a2e;padding-bottom:40px}
+.header{background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:20px 20px 24px;position:relative}
+.header-top{display:flex;align-items:center;gap:10px}
+.back-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;width:34px;height:34px;border-radius:10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.header-title{font-size:18px;font-weight:800}
+.header-sub{font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;margin-left:44px}
+.container{padding:16px}
+.video-grid{display:flex;flex-direction:column;gap:14px}
+.video-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.06);cursor:pointer;transition:transform 0.15s ease}
+.video-card:active{transform:scale(0.98)}
+.thumb-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#0d1b2a;overflow:hidden}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15)}
+.play-circle{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.play-circle::after{content:'';border-style:solid;border-width:9px 0 9px 15px;border-color:transparent transparent transparent #1a3a5c;margin-left:3px}
+.lock-badge{position:absolute;top:10px;right:10px;background:rgba(15,30,50,0.85);color:#ffd54f;font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;display:flex;align-items:center;gap:4px}
+.video-info{padding:14px 16px}
+.video-title{font-size:15px;font-weight:700;line-height:1.5;color:#1a1a2e}
+.video-meta{display:flex;align-items:center;gap:8px;margin-top:6px}
+.video-date{font-size:12px;color:#999}
+.video-sport-tag{font-size:11px;background:#f0f4f8;color:#555;padding:3px 9px;border-radius:8px;font-weight:600}
+.empty-state{text-align:center;padding:60px 20px;color:#aaa}
+.empty-state .icon{font-size:40px;margin-bottom:12px;opacity:0.5}
+.empty-state .msg{font-size:14px}
+.loading-state{text-align:center;padding:60px 20px}
+.loading-spin{width:32px;height:32px;border:3px solid #e0e8f0;border-top-color:#1a3a5c;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.loading-state .msg{font-size:13px;color:#999}
+
+/* 限定コンテンツ ポップアップ */
+.popup-overlay{position:fixed;inset:0;background:rgba(15,25,40,0.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.popup-card{background:#fff;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;animation:popIn 0.25s ease}
+@keyframes popIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+.popup-lock-icon{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1a3a5c,#0f2744);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
+.popup-title{font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:8px}
+.popup-body{font-size:13.5px;color:#888;line-height:1.8;margin-bottom:22px}
+.popup-btn{width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+
+/* 動画プレイヤー */
+.player-overlay{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;z-index:9999}
+.player-header{display:flex;align-items:center;padding:14px 16px;background:#0d1b2a}
+.player-close{background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.player-frame-wrap{flex:1;display:flex;align-items:center;justify-content:center;background:#000}
+.player-frame-wrap iframe{width:100%;aspect-ratio:16/9}
 </style>
 </head>
 <body>
+
 <div class="header">
-  <h1>活動記録</h1>
-  <div class="back-btn" onclick="history.back()">← アプリに戻る</div>
+  <div class="header-top">
+    <button class="back-btn" onclick="window.location.href='app.html'">‹</button>
+    <div class="header-title">活動動画</div>
+  </div>
+  <div class="header-sub">過去の活動の様子をチェック！</div>
 </div>
-<div class="content">
-  <div class="coming-soon">
-    <div style="font-size:64px;margin-bottom:16px">🎬</div>
-    <h2>Coming Soon</h2>
-    <p>活動記録動画を近日公開予定です。<br>お楽しみに！</p>
+
+<div class="container">
+  <div id="video-list" class="loading-state">
+    <div class="loading-spin"></div>
+    <div class="msg">読み込み中...</div>
   </div>
 </div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+
+async function callGAS(func,...args){
+  const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
+  const json=await res.json();
+  if(json.status==='error')throw new Error(json.message);
+  return json.data;
+}
+
+const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+
+function isVisitor(type){
+  return ['ビジター会員','カシワビジター','ビジター','一般'].includes(type);
+}
+
+function getCurrentUser(){
+  try{
+    const saved=localStorage.getItem('bukatsu_user');
+    return saved?JSON.parse(saved):null;
+  }catch(e){return null;}
+}
+
+function extractYoutubeId(url){
+  const m=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{6,})/);
+  return m?m[1]:null;
+}
+
+function canWatch(){
+  const user=getCurrentUser();
+  if(!user)return false;
+  if(user.isApplying)return false;
+  if(isVisitor(user.type))return false;
+  return true;
+}
+
+function openPremiumPopup(){
+  const ov=document.createElement('div');
+  ov.className='popup-overlay';
+  ov.innerHTML=`
+    <div class="popup-card">
+      <div class="popup-lock-icon">🔒</div>
+      <div class="popup-title">カシワのBUKATSU会員限定コンテンツです</div>
+      <div class="popup-body">活動動画はカシワのBUKATSU会員以上の方がご覧いただけます。<br>マイページから会員プランをご確認ください。</div>
+      <button class="popup-btn" onclick="this.closest('.popup-overlay').remove()">閉じる</button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function openPlayer(youtubeId){
+  const ov=document.createElement('div');
+  ov.className='player-overlay';
+  ov.innerHTML=`
+    <div class="player-header">
+      <button class="player-close" onclick="this.closest('.player-overlay').remove()">×</button>
+    </div>
+    <div class="player-frame-wrap">
+      <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+function handleVideoClick(youtubeId){
+  if(canWatch()){
+    openPlayer(youtubeId);
+  }else{
+    openPremiumPopup();
+  }
+}
+
+function renderVideoList(videos){
+  const el=document.getElementById('video-list');
+  if(!videos||!videos.length){
+    el.className='empty-state';
+    el.innerHTML='<div class="icon">🎬</div><div class="msg">まだ動画が公開されていません</div>';
+    return;
+  }
+  el.className='video-grid';
+  const watchable=canWatch();
+  el.innerHTML=videos.map(v=>{
+    const date=v[0],title=v[1],url=v[2],sport=v[3]||'';
+    const ytId=extractYoutubeId(url);
+    const thumb=ytId?`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`:'';
+    return `
+      <div class="video-card" onclick="handleVideoClick('${ytId}')">
+        <div class="thumb-wrap">
+          ${thumb?`<img src="${thumb}" alt="${title}">`:''}
+          <div class="play-overlay"><div class="play-circle"></div></div>
+          ${!watchable?'<div class="lock-badge">🔒 会員限定</div>':''}
+        </div>
+        <div class="video-info">
+          <div class="video-title">${title}</div>
+          <div class="video-meta">
+            <span class="video-date">${date}</span>
+            ${sport?`<span class="video-sport-tag">${SPORT_ICON[sport]||''} ${sport}</span>`:''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function init(){
+  try{
+    const videos=await callGAS('getVideoList');
+    renderVideoList(videos);
+  }catch(e){
+    const el=document.getElementById('video-list');
+    el.className='empty-state';
+    el.innerHTML='<div class="icon">⚠️</div><div class="msg">読み込みに失敗しました</div>';
+  }
+}
+init();
+</script>
 </body>
 </html>

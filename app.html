@@ -154,6 +154,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 .reserve-member-item:last-child{border-bottom:none}
 @keyframes bar{from{width:0}to{width:40px}}
 @keyframes splashLogo{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
+@keyframes prepSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.prep-spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#1a3a5c;border-radius:50%;animation:prepSpin 1s linear infinite;margin:0 auto 8px}
 @keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(min-width:600px){.wrapper{box-shadow:0 0 40px rgba(0,0,0,0.1)}}
 
@@ -767,15 +769,14 @@ function showTab(t){
     document.getElementById('section-'+x).classList.toggle('active',x===t);
   });
   if(t==='home')loadHomeData();
-  if(t==='reserve'){if(checkApplying())return;initReserveTab();}
-  if(t==='referral'){if(checkApplying())return;initReferralTab();}
+  if(t==='reserve'){initReserveTab();}
+  if(t==='referral'){initReferralTab();}
 }
 
 function updateTabVisibility(){
   const loggedIn=!!mypageCurrentUser;
-  const isApplying=loggedIn&&mypageCurrentUser.isApplying;
   ['reserve','referral'].forEach(t=>{
-    document.getElementById('tab-'+t).classList.toggle('hidden',!loggedIn||isApplying);
+    document.getElementById('tab-'+t).classList.toggle('hidden',!loggedIn);
   });
 }
 
@@ -886,19 +887,13 @@ function showMypageMain(){
   document.getElementById('mypage-member-number').textContent=mypageCurrentUser.memberNumber||'';
   const ub=document.getElementById('upgrade-banner');
   if(ub)ub.style.display=isVisitor(mypageCurrentUser.type)?'block':'none';
-  // 活動記録ボタン（ビジター以外）
+  // 活動記録ボタン（誰でもタップ可能、限定判定はvideos.html側）
   const vc=document.getElementById('videos-card');
   if(vc){
     vc.style.display='block';
     const inner=document.getElementById('videos-card-inner');
     if(inner){
-      if(mypageCurrentUser.isApplying){
-        inner.innerHTML='<div onclick="checkApplying()" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-align:center;cursor:pointer"><div style="font-size:28px;margin-bottom:6px">⏳</div><div style="font-size:15px;font-weight:700;color:#1a1a2e">活動動画を見る</div><div style="font-size:12px;color:#888;margin-top:4px">承認後にご覧いただけます</div></div>';
-      } else if(isVisitor(mypageCurrentUser.type)){
-        inner.innerHTML='<div onclick="openPremiumOnlyPopup()" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-align:center;cursor:pointer"><div style="font-size:28px;margin-bottom:6px">🔒</div><div style="font-size:15px;font-weight:700;color:#1a1a2e">活動動画を見る</div><div style="font-size:12px;color:#888;margin-top:4px">タップして詳細を見る</div></div>';
-      } else {
-        inner.innerHTML='<a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>';
-      }
+      inner.innerHTML='<a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>';
     }
   }
   loadMypageData(true,true);
@@ -929,7 +924,7 @@ async function loadMypageData(checkNotice,updateRankCache){
     const barStyle=isMaxed?'width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite':'width:'+pct+'%';
     if(mypageCurrentUser.isApplying){
       document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px;margin-bottom:6px">⏳</div><div style="font-size:14px;font-weight:700;color:#888">承認待ちです</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認後にスポログが始まります</div></div>';
+        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認されるとスポログが始まります</div></div>';
     } else {
     document.getElementById('mypage-progress-area').innerHTML=
       '<div style="font-size:13px;color:'+(isMaxed?'#b8860b':'#888')+';margin-bottom:6px;font-weight:'+(isMaxed?'700':'400')+'">'+(isMaxed?'無料チケットあり。タップして使おう！':'次の無料チケットまで')+'</div>'+
@@ -2096,10 +2091,9 @@ const _origUpdateTabVisibility = updateTabVisibility;
 updateTabVisibility = function(){
   _origUpdateTabVisibility();
   const loggedIn = !!mypageCurrentUser;
-  const isApplying = loggedIn && mypageCurrentUser.isApplying;
   ['reserve','referral'].forEach(t=>{
     const el = document.getElementById('btab-'+t);
-    if(el) el.classList.toggle('hidden', !loggedIn||isApplying);
+    if(el) el.classList.toggle('hidden', !loggedIn);
   });
   // ヘッダーログアウトボタン
   const lb = document.getElementById('header-logout-btn');
