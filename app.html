@@ -773,8 +773,9 @@ function showTab(t){
 
 function updateTabVisibility(){
   const loggedIn=!!mypageCurrentUser;
+  const isApplying=loggedIn&&mypageCurrentUser.isApplying;
   ['reserve','referral'].forEach(t=>{
-    document.getElementById('tab-'+t).classList.toggle('hidden',!loggedIn);
+    document.getElementById('tab-'+t).classList.toggle('hidden',!loggedIn||isApplying);
   });
 }
 
@@ -891,7 +892,9 @@ function showMypageMain(){
     vc.style.display='block';
     const inner=document.getElementById('videos-card-inner');
     if(inner){
-      if(isVisitor(mypageCurrentUser.type)){
+      if(mypageCurrentUser.isApplying){
+        inner.innerHTML='<div onclick="checkApplying()" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-align:center;cursor:pointer"><div style="font-size:28px;margin-bottom:6px">⏳</div><div style="font-size:15px;font-weight:700;color:#1a1a2e">活動動画を見る</div><div style="font-size:12px;color:#888;margin-top:4px">承認後にご覧いただけます</div></div>';
+      } else if(isVisitor(mypageCurrentUser.type)){
         inner.innerHTML='<div onclick="openPremiumOnlyPopup()" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-align:center;cursor:pointer"><div style="font-size:28px;margin-bottom:6px">🔒</div><div style="font-size:15px;font-weight:700;color:#1a1a2e">活動動画を見る</div><div style="font-size:12px;color:#888;margin-top:4px">タップして詳細を見る</div></div>';
       } else {
         inner.innerHTML='<a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>';
@@ -924,12 +927,17 @@ async function loadMypageData(checkNotice,updateRankCache){
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
     const pct=Math.round(progress/10*100),remaining=10-progress,isMaxed=tickets>0;
     const barStyle=isMaxed?'width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite':'width:'+pct+'%';
+    if(mypageCurrentUser.isApplying){
+      document.getElementById('mypage-progress-area').innerHTML=
+        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px;margin-bottom:6px">⏳</div><div style="font-size:14px;font-weight:700;color:#888">承認待ちです</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認後にスポログが始まります</div></div>';
+    } else {
     document.getElementById('mypage-progress-area').innerHTML=
       '<div style="font-size:13px;color:'+(isMaxed?'#b8860b':'#888')+';margin-bottom:6px;font-weight:'+(isMaxed?'700':'400')+'">'+(isMaxed?'無料チケットあり。タップして使おう！':'次の無料チケットまで')+'</div>'+
       '<div class="progress-bar-bg" style="'+(isMaxed?'box-shadow:0 0 10px rgba(255,215,0,0.7)':'')+'"><div class="progress-bar-fill" style="'+barStyle+'"></div></div>'+
       '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>'+(isMaxed?'チケット '+tickets+'枚':progress+'/10回')+'</span><span>10回で1枚GET</span></div>'+
       '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:'+(isMaxed?'#b8860b':'#f57c00')+'">'+(isMaxed?'次回参加が無料になります':'あと'+remaining+'回でチケット1枚')+'</div>'+
       '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+    }
     // 未読バナー
     const c=d.unreadCount||0;
     const b=document.getElementById('mypage-message-banner');
@@ -1444,7 +1452,10 @@ async function submitReferral(){
   const btn=document.getElementById('referral-submit-btn');
   if(btn){btn.disabled=true;btn.textContent='送信中...';}
   try{
-    await callGAS('addTempAttendee',fullname,mypageCurrentUser.fullname);
+    const schedParts=sched.split('_');
+    const scheduleDate=schedParts[0]||'';
+    const sport=schedParts[1]||'';
+    await callGAS('addTempAttendee',fullname,mypageCurrentUser.fullname,sport,scheduleDate,exp);
     const ov=document.createElement('div');ov.className='popup-overlay';
     ov.innerHTML='<div class="popup-card"><div style="font-size:28px;font-weight:700;color:#222;margin-bottom:8px">'+lastName+' さん</div><div style="font-size:16px;color:#444;margin-bottom:8px;line-height:1.8">紹介登録が完了しました！</div><div style="font-size:15px;color:#188038;font-weight:700;margin-top:8px;">当日お待ちしています</div><div style="font-family:\'Dancing Script\',cursive;font-size:32px;color:#222;letter-spacing:2px;margin-top:12px;">Thank you!!</div></div>';
     document.body.appendChild(ov);
@@ -2085,9 +2096,10 @@ const _origUpdateTabVisibility = updateTabVisibility;
 updateTabVisibility = function(){
   _origUpdateTabVisibility();
   const loggedIn = !!mypageCurrentUser;
+  const isApplying = loggedIn && mypageCurrentUser.isApplying;
   ['reserve','referral'].forEach(t=>{
     const el = document.getElementById('btab-'+t);
-    if(el) el.classList.toggle('hidden', !loggedIn);
+    if(el) el.classList.toggle('hidden', !loggedIn||isApplying);
   });
   // ヘッダーログアウトボタン
   const lb = document.getElementById('header-logout-btn');
