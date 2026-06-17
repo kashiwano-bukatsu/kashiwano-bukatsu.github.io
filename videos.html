@@ -73,7 +73,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;bac
 
 <div class="header">
   <div class="header-top">
-    <button class="back-btn" onclick="window.location.href='app.html'">戻る</button>
+    <button class="back-btn" onclick="sessionStorage.setItem('bukatsu_skip_splash','true');window.location.href='app.html'">戻る</button>
     <div class="header-title">カシワのBUKATSU</div>
   </div>
   <div class="header-sub">活動記録</div>
@@ -118,7 +118,7 @@ function isNew(dateStr){
   if(parts.length<3||parts.some(isNaN))return false;
   const d=new Date(parts[0],parts[1]-1,parts[2]);
   const diffDays=(new Date()-d)/(1000*60*60*24);
-  return diffDays>=0&&diffDays<=7;
+  return diffDays>=0&&diffDays<=2;
 }
 
 function isVisitor(type){

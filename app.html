@@ -155,6 +155,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 @keyframes bar{from{width:0}to{width:40px}}
 @keyframes splashLogo{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
 @keyframes prepSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes newBlink{0%,100%{opacity:1}50%{opacity:0.35}}
+.new-pulse-badge{display:inline-block;background:linear-gradient(135deg,#ff6b6b,#ee3344);color:#fff;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;vertical-align:middle;animation:newBlink 1.6s ease-in-out infinite}
 .prep-spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#1a3a5c;border-radius:50%;animation:prepSpin 1s linear infinite;margin:0 auto 8px}
 @keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(min-width:600px){.wrapper{box-shadow:0 0 40px rgba(0,0,0,0.1)}}
@@ -313,7 +315,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     </div>
     <!-- 活動記録 -->
     <div id="videos-card" class="card" style="display:none">
-      <div class="card-title"><div class="card-title-dot"></div>活動記録</div>
+      <div class="card-title"><div class="card-title-dot"></div>活動記録<span id="videos-new-badge" class="new-pulse-badge" style="display:none">NEW</span></div>
       <div id="videos-card-inner"></div>
     </div>
 
@@ -741,6 +743,25 @@ function getTypeLabel(type){
 function getMemberRank(n){return n>=50?'プラチナ':n>=30?'ゴールド':n>=10?'シルバー':'ブロンズ';}
 function isVisitor(type){return['ビジター会員','カシワビジター','ビジター','一般'].includes(type);}
 
+function isVideoNew(dateStr){
+  if(!dateStr)return false;
+  const parts=dateStr.split('/').map(s=>parseInt(s,10));
+  if(parts.length<3||parts.some(isNaN))return false;
+  const d=new Date(parts[0],parts[1]-1,parts[2]);
+  const diffDays=(new Date()-d)/(1000*60*60*24);
+  return diffDays>=0&&diffDays<=2;
+}
+
+async function checkVideosNewBadge(){
+  const badge=document.getElementById('videos-new-badge');
+  if(!badge)return;
+  try{
+    const videos=await callGAS('getVideoList');
+    const hasNew=(videos||[]).some(v=>isVideoNew(v[0]));
+    badge.style.display=hasNew?'inline-block':'none';
+  }catch(e){badge.style.display='none';}
+}
+
 window.addEventListener('load',()=>{
   initDobSelects();
   document.getElementById('today-info').textContent=formatDate(new Date());
@@ -748,6 +769,10 @@ window.addEventListener('load',()=>{
   loadHomeNotice();
   loadMonthCalendar();
   const splash=document.getElementById('splash');
+  const skipSplash=sessionStorage.getItem('bukatsu_skip_splash')==='true';
+  sessionStorage.removeItem('bukatsu_skip_splash');
+  const splashDelay=skipSplash?0:1800;
+  const fadeDelay=skipSplash?0:600;
   setTimeout(()=>{
     splash.style.opacity='0';
     setTimeout(()=>{
@@ -759,8 +784,8 @@ window.addEventListener('load',()=>{
         try{mypageCurrentUser=JSON.parse(saved);showMypageMain();}catch(e){}
       }
       loadHomeData();
-    },600);
-  },1800);
+    },fadeDelay);
+  },splashDelay);
 });
 
 function showTab(t){
@@ -893,8 +918,9 @@ function showMypageMain(){
     vc.style.display='block';
     const inner=document.getElementById('videos-card-inner');
     if(inner){
-      inner.innerHTML='<a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画を見る →</a>';
+      inner.innerHTML='<a href="videos.html" style="display:block;background:#f0f4f8;border-radius:12px;padding:16px;text-decoration:none;color:#1a1a2e;text-align:center;font-size:15px;font-weight:700">動画コンテンツはこちら →</a>';
     }
+    checkVideosNewBadge();
   }
   loadMypageData(true,true);
 }
