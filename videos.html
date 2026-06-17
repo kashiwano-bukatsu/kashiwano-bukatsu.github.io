@@ -27,6 +27,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;bac
 .play-circle{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.94);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
 .play-circle::after{content:'';border-style:solid;border-width:7px 0 7px 11px;border-color:transparent transparent transparent #16263d;margin-left:2px}
 .lock-badge{position:absolute;top:6px;right:6px;background:rgba(8,14,24,0.88);color:#ffd54f;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:3px;border:1px solid rgba(255,213,79,0.25)}
+.thumb-locked img{filter:brightness(0.32) saturate(0.7)}
+.lock-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.lock-icon-circle{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:15px;backdrop-filter:blur(2px)}
+.lock-label{font-size:9px;font-weight:700;color:rgba(255,255,255,0.85);letter-spacing:0.5px}
 .new-ribbon{position:absolute;top:0;left:0;width:64px;height:64px;overflow:hidden;pointer-events:none;z-index:2}
 .new-ribbon::before{content:'NEW';position:absolute;top:11px;left:-20px;width:90px;text-align:center;background:linear-gradient(135deg,#ff6b6b,#ee3344);color:#fff;font-size:10px;font-weight:800;letter-spacing:1px;padding:3px 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.35)}
 .video-info{padding:10px 11px}
@@ -65,9 +69,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;bac
 <div class="header">
   <div class="header-top">
     <button class="back-btn" onclick="window.location.href='app.html'">戻る</button>
-    <div class="header-title">活動動画</div>
+    <div class="header-title">カシワのBUKATSU</div>
   </div>
-  <div class="header-sub">過去の活動の様子をチェック！</div>
+  <div class="header-sub">活動記録</div>
 </div>
 
 <div class="filter-tabs" id="filter-tabs"></div>
@@ -191,11 +195,12 @@ function renderVideoList(videos){
     const thumb=ytId?`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`:'';
     return `
       <div class="video-card" onclick="handleVideoClick('${ytId}')">
-        <div class="thumb-wrap">
+        <div class="thumb-wrap${!watchable?' thumb-locked':''}">
           ${thumb?`<img src="${thumb}" alt="${title}">`:''}
-          <div class="play-overlay"><div class="play-circle"></div></div>
+          ${watchable
+            ?'<div class="play-overlay"><div class="play-circle"></div></div>'
+            :'<div class="lock-center"><div class="lock-icon-circle">🔒</div><div class="lock-label">会員限定</div></div>'}
           ${isNew(date)?'<div class="new-ribbon"></div>':''}
-          ${!watchable?'<div class="lock-badge">🔒 会員限定</div>':''}
         </div>
         <div class="video-info">
           <div class="video-title">${title}</div>
