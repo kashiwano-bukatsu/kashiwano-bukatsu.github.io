@@ -573,6 +573,13 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
           <div style="font-size:12px;color:#888;margin-top:2px">八千代でのお支払い済みの方</div>
         </div>
       </div>
+      <div class="plan-radio-item" id="plan-family" onclick="selectPlan('family')">
+        <input type="radio" name="plan" value="family" id="radio-family">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1a1a2e">ファミリー会員</div>
+          <div style="font-size:12px;color:#888;margin-top:2px">入会金 1人目3,300円・2人目1,650円・3人目以降880円</div>
+        </div>
+      </div>
       <!-- 基本情報入力 -->
       <div style="margin-top:16px">
         <div class="label" style="margin-top:0">フルネーム（カタカナ）</div>
@@ -602,6 +609,13 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <select id="reg-area"><option value="">選択してください</option><option value="柏市">柏市</option><option value="流山市">流山市</option><option value="我孫子市">我孫子市</option><option value="松戸市">松戸市</option><option value="野田市">野田市</option><option value="八千代市">八千代市</option><option value="印西市">印西市</option><option value="白井市">白井市</option><option value="佐倉市">佐倉市</option><option value="船橋市">船橋市</option><option value="千葉市">千葉市</option><option value="取手市">取手市</option><option value="守谷市">守谷市</option><option value="つくば市">つくば市</option><option value="その他">その他</option></select>
         <div class="label">参加予定のスポーツ</div>
         <select id="reg-sport"><option value="">選択してください</option><option value="バスケットボール">バスケ</option><option value="バレーボール">バレー</option><option value="バドミントン">バド</option><option value="バスケ＋バレー">バスケ＋バレー</option><option value="バスケ＋バド">バスケ＋バド</option><option value="バレー＋バド">バレー＋バド</option><option value="全て">全て</option></select>
+        <div id="family-members-area" style="display:none;background:#fff8e1;border:1.5px solid #f5d060;border-radius:12px;padding:16px;margin-top:16px">
+          <div style="font-size:14px;font-weight:700;color:#b8860b;margin-bottom:4px">家族メンバーを追加してください</div>
+          <div style="font-size:12px;color:#888;margin-bottom:12px">代表者（あなた）に加えて、一緒に登録する家族の情報を入力してください</div>
+          <div id="reg-family-member-list"></div>
+          <button type="button" onclick="addRegFamilyMember()" style="width:100%;padding:12px;background:#fff;border:1.5px dashed #c8a415;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;color:#8b6508;margin-bottom:10px">＋ 家族を追加</button>
+          <div id="reg-family-fee" style="font-size:13px;color:#444;line-height:2"></div>
+        </div>
         <div id="kashiwa-consent-area" style="display:none">
           <div class="consent-box">
             <div style="font-weight:700;font-size:13px;color:#222;margin-bottom:8px">カシワのBUKATSU会員 規約</div>
@@ -692,7 +706,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
-let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor';
+let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor', familyMembers=[];
 
 const _gasRunning = {};
 async function callGAS(func,...args){
@@ -1215,7 +1229,7 @@ function closeRegisterModal(){document.getElementById('register-modal-overlay').
 
 function selectPlan(plan){
   selectedPlan=plan;
-  ['visitor','kashiwa','minnb'].forEach(p=>{
+  ['visitor','kashiwa','minnb','family'].forEach(p=>{
     const el=document.getElementById('plan-'+p);
     if(el)el.classList.toggle('selected',p===plan);
   });
@@ -1224,6 +1238,49 @@ function selectPlan(plan){
   const ca=document.getElementById('kashiwa-consent-area');
   if(cb)cb.style.display=plan==='kashiwa'?'block':'none';
   if(ca)ca.style.display=plan==='kashiwa'?'block':'none';
+  const fa=document.getElementById('family-members-area');
+  if(fa)fa.style.display=plan==='family'?'block':'none';
+  if(plan==='family'&&familyMembers.length===0)addRegFamilyMember();
+}
+
+// ===== 新規登録：家族メンバー =====
+function addRegFamilyMember(){
+  familyMembers.push({name:'',dob:'',relation:''});
+  renderRegFamilyMembers();
+}
+function removeRegFamilyMember(idx){
+  familyMembers.splice(idx,1);
+  renderRegFamilyMembers();
+}
+function renderRegFamilyMembers(){
+  const list=document.getElementById('reg-family-member-list');
+  if(!list)return;
+  list.innerHTML=familyMembers.map((m,i)=>`
+    <div style="background:#fff;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid #e0e8f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:#555">${i+2}人目</div>
+        <button type="button" onclick="removeRegFamilyMember(${i})" style="background:#fce8e6;border:none;border-radius:6px;padding:4px 10px;font-size:12px;color:#e53935;cursor:pointer">削除</button>
+      </div>
+      <input type="text" placeholder="フルネーム（カタカナ）" value="${m.name}" oninput="familyMembers[${i}].name=this.value" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#f8fafc;color:#1a1a2e;margin-bottom:8px">
+      <input type="text" placeholder="生年月日（例：20150612）" maxlength="8" value="${m.dob}" oninput="familyMembers[${i}].dob=this.value" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#f8fafc;color:#1a1a2e;margin-bottom:8px">
+      <select onchange="familyMembers[${i}].relation=this.value" style="width:100%;padding:10px 12px;border:1.5px solid #e0e8f0;border-radius:10px;font-size:15px;background:#f8fafc;color:#1a1a2e;-webkit-appearance:none">
+        <option value="">代表者との関係</option>
+        <option value="妻" ${m.relation==='妻'?'selected':''}>妻</option>
+        <option value="夫" ${m.relation==='夫'?'selected':''}>夫</option>
+        <option value="子供" ${m.relation==='子供'?'selected':''}>子供</option>
+        <option value="その他" ${m.relation==='その他'?'selected':''}>その他</option>
+      </select>
+    </div>
+  `).join('');
+  renderRegFamilyFee();
+}
+function renderRegFamilyFee(){
+  const el=document.getElementById('reg-family-fee');
+  if(!el)return;
+  const fees=[3300,1650,880];
+  let total=3300,breakdown='代表者：3,300円';
+  familyMembers.forEach((_,i)=>{const fee=fees[i+1]||880;total+=fee;breakdown+=`<br>${i+2}人目：${fee.toLocaleString()}円`;});
+  el.innerHTML=`${breakdown}<br><strong>合計入会金：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span>`;
 }
 
 function openKashiwaInfo(){
@@ -1282,6 +1339,9 @@ function confirmTempMember(){
 function resetRegFlow(){
   document.getElementById('reg-step1').style.display='block';document.getElementById('reg-step2').style.display='none';document.getElementById('reg-step3').style.display='none';
   document.getElementById('reg-search-name').value='';document.getElementById('reg-search-result').innerHTML='';
+  familyMembers=[];
+  const fa=document.getElementById('family-members-area');if(fa)fa.style.display='none';
+  const fl=document.getElementById('reg-family-member-list');if(fl)fl.innerHTML='';
 }
 function selectSuggestion(fullname,sport,referrer){
   document.getElementById('reg-confirm-box').innerHTML='<div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+fullname+' さん</div><div style="font-size:13px;color:#555;line-height:2.2"><span style="color:#aaa;font-size:12px">種目：</span>'+(sport||'未定')+'<br><span style="color:#aaa;font-size:12px">紹介者：</span>'+(referrer||'なし')+'</div>';
@@ -2067,6 +2127,14 @@ registerAttendee = function(){
   if(!document.getElementById('reg-consent').checked) return alert('個人情報の取り扱いへの同意が必要です');
   if(selectedPlan==='kashiwa' && !document.getElementById('reg-kashiwa-consent').checked) return alert('カシワ会員規約への同意が必要です');
   if(isMinor() && !document.getElementById('reg-minor-consent').checked) return alert('18歳未満の方は保護者の同意が必要です');
+  if(selectedPlan==='family'){
+    if(!familyMembers.length) return alert('家族メンバーを1人以上追加してください');
+    for(const m of familyMembers){
+      if(!m.name || !/^[ァ-ヶー]{2,}$/.test(m.name)) return alert('家族の名前をカタカナで入力してください');
+      if(!m.dob || m.dob.length!==8) return alert('家族の生年月日を8桁で入力してください');
+      if(!m.relation) return alert('代表者との関係を選択してください');
+    }
+  }
 
   // 入会金計算
   const planLabel = {'visitor':'ビジター会員','kashiwa':'カシワのBUKATSU会員','minnb':'みんなのBUKATSU会員','family':'ファミリー会員'}[selectedPlan];
