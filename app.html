@@ -190,6 +190,16 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 
 <!-- HOME -->
 <div id="section-home" class="section">
+  <!-- メンテナンス中バナー（一番上、固定） -->
+  <div id="maintenance-banner" class="card" style="display:none;background:linear-gradient(135deg,#fff8e1,#fffde7);border:1.5px solid #f5d060">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="font-size:22px">🛠️</div>
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#7a5c00">ただいまメンテナンス中です</div>
+        <div style="font-size:12.5px;color:#8a7030;margin-top:4px;line-height:1.7" id="maintenance-banner-text"></div>
+      </div>
+    </div>
+  </div>
   <!-- お知らせ（一番上） -->
   <div id="home-notice-card" class="card" style="display:none;border-left:4px solid #1a3a5c">
     <div class="card-title"><div class="card-title-dot"></div>お知らせ</div>
@@ -709,7 +719,26 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 </div>
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+
+// ===== メンテナンスモード =====
+// trueにするとログイン・マイページ操作系をブロックし、HOMEのみ閲覧可能にする
+const MAINTENANCE_MODE = true;
+const MAINTENANCE_UNTIL_TEXT = '本日 13:00頃まで';
+
+function showMaintenancePopup(){
+  const ov=document.createElement('div');
+  ov.className='popup-overlay';
+  ov.innerHTML='<div class="popup-card" style="text-align:center"><div style="font-size:40px;margin-bottom:12px">🛠️</div><div style="font-size:17px;font-weight:700;color:#1a1a2e;margin-bottom:8px">ただいまメンテナンス中です</div><div style="font-size:14px;color:#888;line-height:1.8;margin-bottom:20px">'+MAINTENANCE_UNTIL_TEXT+'はログイン・予約・紹介などの機能を一時停止しています。<br>ご不便をおかけし申し訳ございません。</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">OK</button></div>';
+  document.body.appendChild(ov);
+}
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+
+// ===== ログイン情報の保存を一箇所に集約（重複バグ防止用） =====
+function saveCurrentUser(){
+  if(mypageCurrentUser){
+    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+  }
+}
 let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor', familyMembers=[];
 
 const _gasRunning = {};
@@ -765,6 +794,14 @@ async function checkVideosNewBadge(){
 window.addEventListener('load',()=>{
   initDobSelects();
   document.getElementById('today-info').textContent=formatDate(new Date());
+  // メンテナンスバナー表示
+  if(MAINTENANCE_MODE){
+    const mb=document.getElementById('maintenance-banner');
+    if(mb){
+      mb.style.display='block';
+      document.getElementById('maintenance-banner-text').textContent=MAINTENANCE_UNTIL_TEXT+'はログイン・予約・紹介などの機能を一時停止しています。';
+    }
+  }
   // お知らせとカレンダーをHOME表示時に読み込む
   loadHomeNotice();
   loadMonthCalendar();
@@ -789,6 +826,10 @@ window.addEventListener('load',()=>{
 });
 
 function showTab(t){
+  if(MAINTENANCE_MODE&&!mypageCurrentUser&&(t==='mypage'||t==='reserve'||t==='referral')){
+    showMaintenancePopup();
+    return;
+  }
   ['home','mypage','reserve','referral'].forEach(x=>{
     document.getElementById('tab-'+x).classList.toggle('active',x===t);
     document.getElementById('section-'+x).classList.toggle('active',x===t);
@@ -863,6 +904,7 @@ function toggleAccordionHome(id,arrowId){
 
 // ===== ログインモーダル =====
 function openLoginModal(){
+  if(MAINTENANCE_MODE){showMaintenancePopup();return;}
   document.getElementById('login-modal-overlay').style.display='flex';
   setTimeout(()=>document.getElementById('mypage-fullname').focus(),300);
 }
@@ -881,7 +923,7 @@ async function mypageLogin(){
     const data=await callGAS('loginAttendee',fullname,dob);
     if(!data){document.getElementById('mypage-login-error').style.display='block';return;}
     mypageCurrentUser={fullname:data[1],nickname:data[0],memberSport:data[5]||'全て',memberNumber:(data[9]||'')+(data[10]||''),type:data[2]||'一般',gender:data[14]||'',area:data[6]||'',isApplying:data[16]==='申請中'};
-    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    saveCurrentUser();
     localStorage.setItem('bukatsu_auto_login',remember?'true':'false');
     closeLoginModal();
     document.getElementById('mypage-fullname').value='';
@@ -943,7 +985,7 @@ async function loadMypageData(checkNotice,updateRankCache){
       mypageCurrentUser.area=d.area||'';
       mypageCurrentUser.gender=d.gender||'';
       mypageCurrentUser.memberSport=d.memberSport||'全て';
-      localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+      saveCurrentUser();
     }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
     const pct=Math.round(progress/10*100),remaining=10-progress,isMaxed=tickets>0;
@@ -1164,7 +1206,7 @@ async function saveEditProfile(){
   try{
     await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
     mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
-    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    saveCurrentUser();
     closeEditProfile();document.getElementById('mypage-logged-name').textContent=nickname+' さん';alert('プロフィールを更新しました');
   }catch(e){alert('エラー：'+e.message);}
 }
@@ -1251,6 +1293,7 @@ function applyRankStyle(cardEl,starsId,rank){
 
 // ===== 新規登録 =====
 function openRegisterModal(){
+  if(MAINTENANCE_MODE){showMaintenancePopup();return;}
   resetRegFlow();
   document.getElementById('register-modal-overlay').style.display='flex';
 }
@@ -1347,12 +1390,12 @@ async function searchTempMember(){
     const result=await callGAS('searchTempAttendee',name);
     if(result.exact){
       re.innerHTML='';
-      document.getElementById('reg-confirm-box').innerHTML='<div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+result.exact[1]+' さん</div><div style="font-size:13px;color:#555;line-height:2.2"><span style="color:#aaa;font-size:12px">初参加日：</span>'+result.exact[0]+'<br><span style="color:#aaa;font-size:12px">種目：</span>'+(result.exact[2]||'未定')+'<br><span style="color:#aaa;font-size:12px">紹介者：</span>'+(result.exact[3]||'なし')+'</div>';
-      document.getElementById('reg-confirmed-fullname').value=result.exact[1];document.getElementById('reg-confirmed-referrer').value=result.exact[3]||'';document.getElementById('reg-confirmed-sport').value=result.exact[2]||'';
+      document.getElementById('reg-confirm-box').innerHTML='<div style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:8px">'+result.exact[1]+' さん</div><div style="font-size:13px;color:#555;line-height:2.2"><span style="color:#aaa;font-size:12px">初参加日：</span>'+result.exact[3]+'<br><span style="color:#aaa;font-size:12px">種目：</span>'+(result.exact[2]||'未定')+'<br><span style="color:#aaa;font-size:12px">紹介者：</span>'+(result.exact[4]||'なし')+'</div>';
+      document.getElementById('reg-confirmed-fullname').value=result.exact[1];document.getElementById('reg-confirmed-referrer').value=result.exact[4]||'';document.getElementById('reg-confirmed-sport').value=result.exact[2]||'';
       document.getElementById('reg-step1').style.display='none';document.getElementById('reg-step2').style.display='block';
     }else if(result.suggestions&&result.suggestions.length>0){
       // 部分一致候補表示
-      re.innerHTML='<div style="background:#e8f4fd;border:1.5px solid #90caf9;border-radius:12px;padding:14px;font-size:14px;color:#555;"><div style="font-weight:700;color:#1565c0;margin-bottom:10px">もしかして？</div>'+result.suggestions.map(s=>'<div onclick="selectSuggestion(\''+s[1]+'\',\''+(s[2]||'')+'\',\''+(s[3]||'')+'\')" style="padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:8px;cursor:pointer;border:1.5px solid #e0e8f0;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:15px;font-weight:700;color:#1a1a2e">'+s[1]+'</div><div style="font-size:12px;color:#888;margin-top:2px">'+s[0]+' ／ '+(s[2]||'未定')+'</div></div><div style="font-size:18px;color:#aaa">›</div></div>').join('')+'</div>';
+      re.innerHTML='<div style="background:#e8f4fd;border:1.5px solid #90caf9;border-radius:12px;padding:14px;font-size:14px;color:#555;"><div style="font-weight:700;color:#1565c0;margin-bottom:10px">もしかして？</div>'+result.suggestions.map(s=>'<div onclick="selectSuggestion(\''+s[1]+'\',\''+(s[2]||'')+'\',\''+(s[4]||'')+'\')" style="padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:8px;cursor:pointer;border:1.5px solid #e0e8f0;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:15px;font-weight:700;color:#1a1a2e">'+s[1]+'</div><div style="font-size:12px;color:#888;margin-top:2px">'+s[0]+' ／ '+(s[2]||'未定')+'</div></div><div style="font-size:18px;color:#aaa">›</div></div>').join('')+'</div>';
     }else{
       re.innerHTML='<div style="background:#fff3e0;border:1.5px solid #f57c00;border-radius:12px;padding:14px;font-size:14px;color:#555;line-height:2"><div style="font-weight:700;color:#f57c00;margin-bottom:6px">体験登録が見つかりませんでした</div>当日スタッフに声をかけてください。</div>';
     }
@@ -1402,7 +1445,7 @@ async function registerAttendee(){
     const memberNumber=await callGAS('completeRegistration',fullname,nickname,dob,sport,area,gender,eRel,eTel,referrer,selectedPlan);
     btn.disabled=false;btn.textContent='登録する';
     mypageCurrentUser={fullname,nickname,memberSport:sport,memberNumber,type:memberType};
-    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    saveCurrentUser();
     closeRegisterModal();resetRegFlow();
 
     let successMsg='ようこそカシワのBUKATSUへ！';
@@ -1772,7 +1815,7 @@ async function saveSettingsProfile(){
   try{
     await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
     mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
-    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    saveCurrentUser();
     document.getElementById('mypage-logged-name').textContent=nickname+' さん';
     alert('プロフィールを更新しました');
   }catch(e){alert('エラー：'+e.message);}
@@ -2257,7 +2300,7 @@ async function _execRegister(){
     await callGAS('sendMessage', fullname, welcomeMsg, false).catch(()=>{});
 
     mypageCurrentUser = {fullname, nickname, memberSport:sport, memberNumber, type:memberType};
-    localStorage.setItem('bukatsu_user', JSON.stringify(mypageCurrentUser));
+    saveCurrentUser();
     closeRegisterModal();
     resetRegFlow();
     familyMembers = [];
