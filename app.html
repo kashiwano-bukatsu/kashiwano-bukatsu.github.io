@@ -722,7 +722,7 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WB
 
 // ===== メンテナンスモード =====
 // trueにするとログイン・マイページ操作系をブロックし、HOMEのみ閲覧可能にする
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 const MAINTENANCE_UNTIL_TEXT = '本日 13:00頃まで';
 
 function showMaintenancePopup(){
@@ -738,6 +738,30 @@ function saveCurrentUser(){
   if(mypageCurrentUser){
     localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
   }
+}
+
+// ===== 価格マスタ（GASから取得してキャッシュ、価格変更はスプレッドシート側で完結させる） =====
+let _priceMasterCache=null;
+async function getPrices(){
+  if(_priceMasterCache)return _priceMasterCache;
+  try{
+    _priceMasterCache=await callGAS('getPriceMaster');
+  }catch(e){
+    _priceMasterCache=[];
+  }
+  return _priceMasterCache;
+}
+function findPrice(list,category,type,item){
+  const found=(list||[]).find(p=>p.category===category&&p.type===type&&p.item===item);
+  return found?found.currentPrice:null;
+}
+// ファミリー会員の2人目以降の入会金（フォールバック値は念のため通常価格を残す）
+async function getFamilyMemberFee(index){
+  const list=await getPrices();
+  const item=index===1?'1人目':(index===2?'2人目':'3人目以降');
+  const price=findPrice(list,'入会金','ファミリー会員',item);
+  if(price!==null)return price;
+  return [3300,1650,880][index-1]||880;
 }
 let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor', familyMembers=[];
 
@@ -1346,12 +1370,16 @@ function renderRegFamilyMembers(){
   `).join('');
   renderRegFamilyFee();
 }
-function renderRegFamilyFee(){
+async function renderRegFamilyFee(){
   const el=document.getElementById('reg-family-fee');
   if(!el)return;
-  const fees=[3300,1650,880];
-  let total=3300,breakdown='代表者：3,300円';
-  familyMembers.forEach((_,i)=>{const fee=fees[i+1]||880;total+=fee;breakdown+=`<br>${i+2}人目：${fee.toLocaleString()}円`;});
+  const list=await getPrices();
+  const fee1=findPrice(list,'入会金','ファミリー会員','1人目')??3300;
+  let total=fee1,breakdown=`代表者：${fee1.toLocaleString()}円`;
+  for(let i=0;i<familyMembers.length;i++){
+    const fee=await getFamilyMemberFee(i+2);
+    total+=fee;breakdown+=`<br>${i+2}人目：${fee.toLocaleString()}円`;
+  }
   el.innerHTML=`${breakdown}<br><strong>合計入会金：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span>`;
 }
 
@@ -1942,14 +1970,17 @@ function renderFamilyUpgradeMembers(){
   `).join('');
   renderFamilyUpgradeFee();
 }
-function renderFamilyUpgradeFee(){
-  const fees=[3300,1650,880];
-  let total=3300;
-  _familyMembers.forEach((_,i)=>{total+=fees[i+1]||880;});
+async function renderFamilyUpgradeFee(){
+  const list=await getPrices();
+  const fee1=findPrice(list,'入会金','ファミリー会員','1人目')??3300;
+  let total=fee1;
   const el=document.getElementById('family-upgrade-fee');
   if(!el)return;
-  let breakdown='代表者：3,300円';
-  _familyMembers.forEach((_,i)=>{breakdown+=`／${i+2}人目：${(fees[i+1]||880).toLocaleString()}円`;});
+  let breakdown=`代表者：${fee1.toLocaleString()}円`;
+  for(let i=0;i<_familyMembers.length;i++){
+    const fee=await getFamilyMemberFee(i+2);
+    total+=fee;breakdown+=`／${i+2}人目：${fee.toLocaleString()}円`;
+  }
   el.innerHTML=`<div style="background:#fff8e1;border-radius:10px;padding:10px;border:1px solid #f5d060;font-size:13px;color:#444;line-height:2">${breakdown}<br><strong>合計入会金：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>`;
 }
 async function submitFamilyUpgrade(){
@@ -1957,9 +1988,12 @@ async function submitFamilyUpgrade(){
   if(_familyMembers.length===0)return alert('家族メンバーを1人以上追加してください');
   if(_familyMembers.some(m=>!m.name||!m.relation))return alert('全メンバーの名前と続柄を入力してください');
   const memberInfo=_familyMembers.map(m=>`${m.name}（${m.relation}）`).join('、');
-  const fees=[3300,1650,880];
-  let total=3300;
-  _familyMembers.forEach((_,i)=>{total+=fees[i+1]||880;});
+  const list=await getPrices();
+  const fee1=findPrice(list,'入会金','ファミリー会員','1人目')??3300;
+  let total=fee1;
+  for(let i=0;i<_familyMembers.length;i++){
+    total+=await getFamilyMemberFee(i+2);
+  }
   const memo=`ファミリー会員申請 / 家族：${memberInfo} / 合計入会金：¥${total.toLocaleString()}`;
   try{
     await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,'ファミリー会員',memo);
@@ -2183,7 +2217,7 @@ showMypageMain = function(){
 
 // ===== 登録確認画面 =====
 const _origRegisterAttendee = registerAttendee;
-registerAttendee = function(){
+registerAttendee = async function(){
   // 確認画面を挟む
   if(!selectedPlan) return alert('会員種別を選択してください');
   const fullname = document.getElementById('reg-confirmed-fullname').value.trim();
@@ -2213,14 +2247,20 @@ registerAttendee = function(){
 
   // 入会金計算
   const planLabel = {'visitor':'ビジター会員','kashiwa':'カシワのBUKATSU会員','minnb':'みんなのBUKATSU会員','family':'ファミリー会員'}[selectedPlan];
+  const _priceList = await getPrices();
   let feeHtml = '';
   if(selectedPlan === 'kashiwa'){
-    feeHtml = '<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">入会金：<strong>1,650円</strong>（キャンペーン中）<br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>';
+    const kashiwaFee = findPrice(_priceList,'入会金','カシワのBUKATSU会員','共通') ?? 1650;
+    feeHtml = '<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">入会金：<strong>'+kashiwaFee.toLocaleString()+'円</strong>（キャンペーン中）<br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>';
   } else if(selectedPlan === 'family'){
-    const fees = [3300, 1650, 880];
-    const total = familyMembers.reduce((s,m,i) => s+(fees[i+1]||880), 3300);
-    let bd = '代表者：3,300円';
-    familyMembers.forEach((m,i) => { bd += `<br>${i+2}人目（${m.name||'未入力'}）：${(fees[i+1]||880).toLocaleString()}円`; });
+    const fee1 = findPrice(_priceList,'入会金','ファミリー会員','1人目') ?? 3300;
+    let total = fee1;
+    let bd = '代表者：'+fee1.toLocaleString()+'円';
+    for(let i=0;i<familyMembers.length;i++){
+      const fee = await getFamilyMemberFee(i+2);
+      total += fee;
+      bd += `<br>${i+2}人目（${familyMembers[i].name||'未入力'}）：${fee.toLocaleString()}円`;
+    }
     feeHtml = `<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">${bd}<br><strong>合計：¥${total.toLocaleString()}</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>`;
   }
 
@@ -2289,12 +2329,18 @@ async function _execRegister(){
       }
     }
     // 自動ウェルカムメッセージ送信
+    const _welcomePriceList = await getPrices();
     let welcomeMsg = `ご登録ありがとうございます！\n一緒にスポーツを楽しみましょう！\n\n会員番号：${memberNumber}`;
     if(selectedPlan === 'kashiwa'){
-      welcomeMsg += '\n\n入会金 1,650円を次回ご参加時にスタッフへお支払いください。\n（キャンペーン価格：通常3,300円）';
+      const kashiwaFee = findPrice(_welcomePriceList,'入会金','カシワのBUKATSU会員','共通') ?? 1650;
+      const kashiwaNormal = (_welcomePriceList.find(p=>p.category==='入会金'&&p.type==='カシワのBUKATSU会員')||{}).normalPrice ?? 3300;
+      welcomeMsg += `\n\n入会金 ${kashiwaFee.toLocaleString()}円を次回ご参加時にスタッフへお支払いください。\n（キャンペーン価格：通常${kashiwaNormal.toLocaleString()}円）`;
     } else if(selectedPlan === 'family'){
-      const fees = [3300, 1650, 880];
-      const total = familyMembers.reduce((s,m,i) => s+(fees[i+1]||880), 3300);
+      const fee1 = findPrice(_welcomePriceList,'入会金','ファミリー会員','1人目') ?? 3300;
+      let total = fee1;
+      for(let i=0;i<familyMembers.length;i++){
+        total += await getFamilyMemberFee(i+2);
+      }
       welcomeMsg += `\n\n入会金合計 ¥${total.toLocaleString()} を次回ご参加時にスタッフへお支払いください。`;
     }
     await callGAS('sendMessage', fullname, welcomeMsg, false).catch(()=>{});
