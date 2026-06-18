@@ -18,7 +18,7 @@ body{background:#121212;color:#e0e0e0;font-size:16px}
 .header-right{display:flex;gap:8px;align-items:center}
 .tabs{display:flex;background:#1e1e1e;border-bottom:2px solid #333;position:sticky;top:49px;z-index:10;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:none;min-width:60px;padding:10px 8px;font-size:11px;text-align:center;cursor:pointer;color:#888;border:none;background:none;border-bottom:3px solid transparent;font-weight:600;line-height:1.4}
+.tab{flex:1;min-width:0;padding:10px 4px;font-size:11px;text-align:center;cursor:pointer;color:#888;border:none;background:none;border-bottom:3px solid transparent;font-weight:600;line-height:1.4}
 .tab.active{color:#fff;border-bottom-color:#fff}
 .section{display:none;padding:16px;padding-bottom:40px}
 .section.active{display:block}
@@ -98,6 +98,40 @@ textarea{min-height:80px;resize:vertical}
 <div class="tabs" id="app-tabs"></div>
 
 <!-- HOME -->
+<div id="section-mypage" class="section">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;padding:32px 20px;text-align:center">
+    <!-- ドットのClaudeイラスト（8bitピクセルアート風SVG） -->
+    <svg width="96" height="96" viewBox="0 0 16 16" style="image-rendering:pixelated;width:96px;height:96px;margin-bottom:20px" xmlns="http://www.w3.org/2000/svg">
+      <!-- 顔ベース（オレンジ系のClaudeカラー） -->
+      <rect x="3" y="2" width="10" height="10" fill="#d97706"/>
+      <rect x="2" y="3" width="12" height="8" fill="#d97706"/>
+      <rect x="3" y="1" width="10" height="1" fill="#d97706"/>
+      <rect x="3" y="12" width="10" height="1" fill="#d97706"/>
+      <!-- 目 -->
+      <rect x="5" y="5" width="2" height="2" fill="#1a1a2e"/>
+      <rect x="9" y="5" width="2" height="2" fill="#1a1a2e"/>
+      <!-- 口（笑顔） -->
+      <rect x="5" y="9" width="1" height="1" fill="#1a1a2e"/>
+      <rect x="6" y="10" width="4" height="1" fill="#1a1a2e"/>
+      <rect x="10" y="9" width="1" height="1" fill="#1a1a2e"/>
+      <!-- 頬（ピンク） -->
+      <rect x="4" y="8" width="2" height="1" fill="#f9a8d4"/>
+      <rect x="10" y="8" width="2" height="1" fill="#f9a8d4"/>
+      <!-- 体 -->
+      <rect x="4" y="13" width="8" height="3" fill="#1a3a6b"/>
+      <rect x="2" y="14" width="3" height="2" fill="#1a3a6b"/>
+      <rect x="11" y="14" width="3" height="2" fill="#1a3a6b"/>
+    </svg>
+    <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:2px;margin-bottom:8px">COMING SOON</div>
+    <div style="font-size:13px;color:#aaa;line-height:1.8;margin-bottom:24px">ポイントを貯めて<br>特典をゲットしよう！</div>
+    <div style="background:#1e1e1e;border-radius:16px;padding:16px 24px;border:1.5px solid #333;width:100%;max-width:280px">
+      <div style="font-size:12px;color:#aaa;margin-bottom:6px">現在のポイント</div>
+      <div style="font-size:36px;font-weight:800;color:#f5d060">– <span style="font-size:16px;font-weight:600">pt</span></div>
+      <div style="font-size:11px;color:#555;margin-top:6px">準備中です</div>
+    </div>
+  </div>
+</div>
+
 <div id="section-home" class="section active">
   <div id="home-loading" class="loading">読み込み中...</div>
   <div id="home-content" style="display:none"></div>
@@ -348,6 +382,7 @@ function buildTabs() {
   if (isHonbu) {
     html += `<button class="tab" onclick="showTab('report')">📝<br>レポート</button>`;
   }
+  html += `<button class="tab" onclick="showTab('mypage')">👤<br>マイページ</button>`;
   document.getElementById('app-tabs').innerHTML = html;
 }
 
