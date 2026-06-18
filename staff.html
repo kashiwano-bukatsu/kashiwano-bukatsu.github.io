@@ -118,78 +118,6 @@ textarea{min-height:80px;resize:vertical}
 </div>
 
 <!-- 参加予定 -->
-<div id="section-schedule-list" class="section">
-  <div id="schedule-list-content"><div class="loading">読み込み中...</div></div>
-  <div class="card" style="margin-top:4px">
-    <div class="card-title">📊 予約状況</div>
-    <div id="schedule-list-reservations"><div class="loading">読み込み中...</div></div>
-  </div>
-</div>
-
-<!-- 申請管理 -->
-<div id="section-requests" class="section">
-  <!-- プラン変更申請 -->
-  <div class="card">
-    <div class="card-title">📋 プラン変更申請</div>
-    <div id="upgrade-requests-list"><div class="loading">読み込み中...</div></div>
-  </div>
-  <!-- 承認履歴 -->
-  <div class="card">
-    <div class="accordion-header" onclick="toggleAccordion('upgrade-history')">📂 承認済み履歴</div>
-    <div class="accordion-content" id="upgrade-history"></div>
-  </div>
-  <!-- 回数券受領 -->
-  <div class="card">
-    <div class="card-title">🎟 回数券購入申請</div>
-    <div id="ticket-requests-list"><div class="loading">読み込み中...</div></div>
-  </div>
-</div>
-
-<!-- メッセージ（LINE風チャット） -->
-<div id="section-messages" class="section" style="padding:0">
-  <!-- 会員一覧 -->
-  <div id="chat-member-list-view" style="padding:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:16px;font-weight:700">💬 DM チャット</div>
-      <button onclick="openBroadcastModal()" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">📢 全員送信</button>
-    </div>
-    <div style="margin-bottom:12px">
-      <input type="text" id="chat-search" placeholder="名前で検索" oninput="filterChatList()" style="padding:10px 12px;font-size:14px">
-    </div>
-    <div id="chat-member-list"><div class="loading">読み込み中...</div></div>
-  </div>
-
-  <!-- 個別チャット画面 -->
-  <div id="chat-room-view" style="display:none;position:fixed;inset:0;background:#121212;z-index:5000;display:none;flex-direction:column">
-    <!-- ヘッダー -->
-    <div style="background:#1e1e1e;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #333;flex-shrink:0">
-      <button onclick="closeChatRoom()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0">‹</button>
-      <div style="flex:1">
-        <div style="font-size:16px;font-weight:700" id="chat-room-name"></div>
-        <div style="font-size:12px;color:#aaa" id="chat-room-type"></div>
-      </div>
-    </div>
-    <!-- メッセージ一覧 -->
-    <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px"></div>
-    <!-- 入力フォーム -->
-    <div style="background:#1e1e1e;padding:12px 16px;border-top:1px solid #333;flex-shrink:0;display:flex;gap:8px;align-items:flex-end">
-      <textarea id="chat-input" placeholder="メッセージを入力" rows="1" style="flex:1;padding:10px 12px;font-size:15px;border-radius:20px;border:1.5px solid #444;background:#2c2c2c;color:#fff;resize:none;min-height:44px;max-height:120px" oninput="autoResizeChat(this)"></textarea>
-      <button onclick="sendChatMessage()" style="background:#fff;color:#121212;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0">↑</button>
-    </div>
-  </div>
-</div>
-
-<!-- 全員送信モーダル -->
-<div id="broadcast-modal" style="display:none;position:fixed;inset:0;z-index:6000;align-items:flex-end;justify-content:center">
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,0.6)" onclick="closeBroadcastModal()"></div>
-  <div style="position:relative;z-index:1;width:100%;max-width:500px;background:#1e1e1e;border-radius:20px 20px 0 0;padding:24px">
-    <div style="font-size:16px;font-weight:700;margin-bottom:16px">📢 全員にメッセージを送信</div>
-    <textarea id="broadcast-text" placeholder="全会員に送信するメッセージを入力" style="min-height:120px;margin-bottom:12px"></textarea>
-    <button onclick="sendBroadcast()" style="width:100%;padding:14px;background:#fff;color:#121212;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">送信する</button>
-    <button onclick="closeBroadcastModal()" style="width:100%;padding:14px;background:#333;color:#aaa;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">キャンセル</button>
-  </div>
-</div>
-
 <!-- 新規管理 -->
 <div id="section-recruit" class="section">
   <div class="card">
@@ -276,179 +204,6 @@ textarea{min-height:80px;resize:vertical}
       <textarea id="r-memo" placeholder="良かった点・改善点など"></textarea>
       <button class="btn btn-primary" onclick="saveReport()">レポートを保存</button>
     </div>
-  </div>
-</div>
-
-<!-- サマリー -->
-<div id="section-summary" class="section">
-  <div class="stat-grid">
-    <div class="stat"><div class="stat-label">総収入</div><div class="stat-val plus" id="sum-income">-</div></div>
-    <div class="stat"><div class="stat-label">総支出</div><div class="stat-val minus" id="sum-expense">-</div></div>
-    <div class="stat"><div class="stat-label">損益</div><div class="stat-val" id="sum-pl">-</div></div>
-    <div class="stat"><div class="stat-label">現金残高</div><div class="stat-val" id="sum-cash">-</div></div>
-  </div>
-  <div class="stat-grid">
-    <div class="stat"><div class="stat-label">回数券販売</div><div class="stat-val" id="sum-ticket">-</div></div>
-    <div class="stat"><div class="stat-label">総開催回数</div><div class="stat-val" id="sum-count">-</div></div>
-  </div>
-  <div class="card"><div class="card-title">種目別開催回数</div><div id="sum-sport-counts"><div class="loading">読み込み中...</div></div></div>
-  <div class="card">
-    <div class="card-title">🏸 シャトル在庫</div>
-    <div class="stat-grid">
-      <div class="stat"><div class="stat-label">在庫本数</div><div class="stat-val" id="shuttle-total">-</div></div>
-      <div class="stat"><div class="stat-label">残り個数</div><div class="stat-val" id="shuttle-remaining">-</div></div>
-    </div>
-    <button class="btn btn-secondary" style="margin-top:12px" onclick="showAdjustStock()">在庫を調整</button>
-    <div id="adjust-stock-area" style="display:none;margin-top:8px">
-      <div class="label">調整種別</div>
-      <select id="adjust-type"><option value="plus">追加（＋）</option><option value="minus">減算（−）</option></select>
-      <div class="label">個数</div>
-      <div style="display:flex;gap:8px"><input type="number" id="adjust-count" placeholder="例：12" style="flex:1"><button class="btn btn-primary btn-small" onclick="doAdjustStock()">調整</button></div>
-    </div>
-  </div>
-  <div class="card"><div class="card-title">種目別リピートランキング</div><div id="sum-repeat-rank"><div class="loading">読み込み中...</div></div></div>
-  <div class="card"><div class="card-title">経費履歴</div><div id="sum-expense-list"><div class="loading">読み込み中...</div></div></div>
-</div>
-
-<!-- お金 -->
-<div id="section-cash" class="section">
-  <div class="stat-grid">
-    <div class="stat"><div class="stat-label">現金残高</div><div class="stat-val" id="cash-balance">-</div></div>
-    <div class="stat"><div class="stat-label">累計支出</div><div class="stat-val minus" id="cash-expense">-</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">出入金を記録</div>
-    <div class="label">種別</div><select id="c-type" onchange="updateSubjects()"><option value="収入">収入</option><option value="支出">支出</option><option value="クレカ精算">クレカ精算</option></select>
-    <div class="label">勘定科目</div><select id="c-subject"></select>
-    <div class="label">金額（円）</div><input type="number" id="c-amount" placeholder="例：3000">
-    <div class="label">メモ</div><input type="text" id="c-memo" placeholder="内容を入力">
-    <button class="btn btn-primary" onclick="addCash()">記録する</button>
-  </div>
-  <div class="card"><div class="card-title">出入金履歴</div><div id="cash-list"><div class="loading">読み込み中...</div></div></div>
-  <div class="card">
-    <div class="card-title">🏸 シャトル購入登録</div>
-    <div class="label">仕入本数</div><input type="number" id="new-stock" placeholder="例：10" oninput="calcStockIndividual()">
-    <div class="label">在庫個数（自動）</div><input type="number" id="new-stock-individual" readonly style="background:#2c2c2c;color:#888;border-color:#333">
-    <div class="label">購入金額（円）</div><input type="number" id="new-stock-price" placeholder="例：6000">
-    <div class="label">メモ</div><input type="text" id="new-stock-memo" placeholder="例：ヤフオクで購入">
-    <button class="btn btn-primary" onclick="addStockWithCash()">購入登録する</button>
-  </div>
-  <div class="card">
-    <div class="card-title">🎒 備品購入登録</div>
-    <div class="label">購入日</div><input type="date" id="eq-date">
-    <div class="label">カテゴリ</div><select id="eq-category"><option>バスケットボール</option><option>バレーボール</option><option>ビブス</option><option>その他</option></select>
-    <div class="label">品名</div><input type="text" id="eq-name" placeholder="例：バスケットボール7号">
-    <div class="label">数量</div><input type="number" id="eq-qty" placeholder="例：2">
-    <div class="label">金額（円）</div><input type="number" id="eq-price" placeholder="例：3000">
-    <div class="label">メモ</div><input type="text" id="eq-memo">
-    <button class="btn btn-primary" onclick="addEquipmentWithCash()">購入登録する</button>
-  </div>
-  <div class="card"><div class="card-title">備品購入履歴</div><div id="equipment-list"><div class="loading">読み込み中...</div></div></div>
-</div>
-
-<!-- スケジュール -->
-<div id="section-schedule" class="section">
-  <div class="card">
-    <div class="card-title">開催予定を登録</div>
-    <div class="label">開催日</div><div class="date-row" id="date-selects"></div>
-    <div class="label">場所</div>
-    <div style="display:flex;gap:8px"><select id="s-place" style="flex:1"></select><button class="btn btn-secondary btn-small" onclick="showAddPlace()">＋追加</button></div>
-    <div id="add-place-area" style="display:none;margin-top:8px"><div style="display:flex;gap:8px"><input type="text" id="new-place" placeholder="場所名を入力" style="flex:1"><button class="btn btn-primary btn-small" onclick="addPlace()">追加</button></div></div>
-    <div class="label">コート</div>
-    <select id="s-court" onchange="calcCourtFee()"><option value="A">A面</option><option value="B">B面</option><option value="C">C面</option><option value="D">D面</option><option value="AB">AB面</option><option value="CD">CD面</option></select>
-    <div class="label">体育館使用料（自動）</div><input type="number" id="s-court-fee" readonly style="background:#2c2c2c;color:#888;border-color:#333">
-    <div class="label">予約者名</div><select id="s-member"></select>
-    <div class="label">開催種目</div><select id="s-sport" onchange="checkSport()"><option>バドミントン</option><option>バスケットボール</option><option>バレーボール</option></select>
-    <div class="label">参加費（円/人）</div>
-    <select id="s-fee-select" onchange="feeSelectChange()"><option value="500">500円</option><option value="700">700円</option><option value="other">その他</option></select>
-    <input type="number" id="s-fee-input" placeholder="金額を入力" style="display:none;margin-top:8px">
-    <div id="shuttle-field"><div class="label">シャトル1本の値段（円）</div><input type="number" id="s-shuttle" placeholder="例：600"></div>
-    <div class="label">補足</div><textarea id="s-memo" placeholder="備考など"></textarea>
-    <button class="btn btn-primary" onclick="addScheduleAction()">登録する</button>
-  </div>
-  <div class="card">
-    <div class="card-title">🎯 抽選データ登録</div>
-    <textarea id="lottery-csv" placeholder="2026/07/04,土,バドミントン,C面,0,中澤慶太/清家美築/松田真美" style="min-height:140px;font-size:13px;font-family:monospace;background:#222;color:#68d391;border-color:#444"></textarea>
-    <button class="btn btn-primary" onclick="importLotteryCSV()">登録する</button>
-    <button class="btn btn-secondary" onclick="clearLottery()" style="margin-top:8px">全削除</button>
-  </div>
-  <div class="card"><div class="card-title">抽選データ一覧</div><div id="lottery-list"><div class="loading">読み込み中...</div></div></div>
-  <div class="card"><button class="btn btn-primary" onclick="confirmToSchedule()">✅ 当選枠をスケジュールに反映</button></div>
-</div>
-
-<!-- 設定 -->
-<div id="section-master" class="section">
-  <div class="card">
-    <div class="card-title">📢 HOMEお知らせ編集</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:8px">全員に表示される告知・イベント情報</div>
-    <textarea id="notice-text" placeholder="例：次回は5/25です！" style="min-height:80px"></textarea>
-    <button class="btn btn-primary" onclick="saveNotice()">保存する</button>
-  </div>
-  <div class="card">
-    <div class="card-title">📨 会員向けお知らせ投稿</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:8px">ログイン済み会員のマイページに表示されます</div>
-    <div class="label">タイトル</div>
-    <input type="text" id="mn-title" placeholder="例：7月の開催スケジュール">
-    <div class="label">本文</div>
-    <textarea id="mn-body" placeholder="お知らせの内容を入力" style="min-height:100px"></textarea>
-    <button class="btn btn-primary" onclick="postMemberNoticeAction()">投稿する</button>
-  </div>
-  <div class="card">
-    <div class="card-title">📋 会員向けお知らせ履歴</div>
-    <div id="member-notice-list"><div class="loading">読み込み中...</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">出席者種別変更</div>
-    <div style="display:flex;gap:8px"><input type="text" id="at-search" placeholder="フルネーム（カタカナ）" style="flex:1"><button class="btn btn-secondary btn-small" onclick="searchAttendeeForEdit()">検索</button></div>
-    <div id="at-result" style="display:none;margin-top:10px">
-      <div class="item" style="background:#2c2c2c"><div class="item-title" id="at-name"></div><div class="item-sub" id="at-current-type"></div></div>
-      <div class="label">新しい種別</div>
-      <select id="at-new-type">
-        <option value="ビジター会員">ビジター会員</option>
-        <option value="カシワのBUKATSU会員">カシワのBUKATSU会員</option>
-        <option value="ファミリー会員">ファミリー会員</option>
-        <option value="みんなのBUKATSU会員">みんなのBUKATSU会員</option>
-        <option value="応援団">応援団</option>
-        <option value="運営">運営</option>
-        <option value="部長">部長</option>
-      </select>
-      <button class="btn btn-primary" onclick="changeAttendeeType()">種別を変更する</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">回数券の手動登録</div>
-    <div style="display:flex;gap:8px"><input type="text" id="tk-search" placeholder="フルネーム（カタカナ）" style="flex:1"><button class="btn btn-secondary btn-small" onclick="searchAttendeeForTicket()">検索</button></div>
-    <div id="tk-result" style="display:none;margin-top:10px">
-      <div class="item" style="background:#2c2c2c"><div class="item-title" id="tk-name"></div><div class="item-sub" id="tk-current"></div></div>
-      <div class="label">セット数</div>
-      <input type="number" id="tk-count" placeholder="例：1">
-      <button class="btn btn-primary" onclick="registerTicket()">回数券を登録する</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">運営メンバーを追加（招待制）</div>
-    <div class="row2">
-      <div><div class="label">フルネーム（漢字）</div><input type="text" id="staff-name" placeholder="例：大谷悠樹"></div>
-      <div><div class="label">フルネーム（カタカナ）</div><input type="text" id="staff-kana" placeholder="例：オオタニユウキ"></div>
-    </div>
-    <div class="label">ニックネーム</div>
-    <input type="text" id="staff-nickname" placeholder="例：シュー">
-    <div class="label">役割</div>
-    <select id="staff-role">
-      <option value="代表">代表（全権限）</option>
-      <option value="運営">運営（全権限）</option>
-      <option value="部長">部長（通常権限）</option>
-    </select>
-    <div class="label">生年月日（YYYYMMDD）</div>
-    <input type="text" id="staff-dob" placeholder="例：19950507" maxlength="8">
-    <div class="label">ログインパスワード</div>
-    <input type="text" id="staff-password" placeholder="英数字でパスワードを設定">
-    <button class="btn btn-primary" onclick="addStaffMemberAction()">追加する</button>
-  </div>
-  <div class="card">
-    <div class="card-title">会員マスタ検索</div>
-    <div style="display:flex;gap:8px"><input type="text" id="member-search-input" placeholder="ニックネーム or フルネーム" style="flex:1"><button class="btn btn-secondary btn-small" onclick="searchMember()">検索</button></div>
-    <div id="member-search-result" style="margin-top:10px"></div>
   </div>
 </div>
 
@@ -586,21 +341,13 @@ function showMainApp() {
 }
 
 function buildTabs() {
-  const isRep = currentUser.type === '代表';
   const isHonbu = ['代表', '運営', '本部'].includes(currentUser.type);
   let html = `<button class="tab active" onclick="showTab('home')">🏠<br>HOME</button>`;
   html += `<button class="tab" onclick="showTab('daily')">📋<br>当日</button>`;
-  html += `<button class="tab" onclick="showTab('schedule-list')">👥<br>予定</button>`;
   html += `<button class="tab" onclick="showTab('recruit')">🆕<br>新規</button>`;
-  html += `<button class="tab" onclick="showTab('requests')">📬<br>申請</button>`;
-  html += `<button class="tab" onclick="showTab('messages')">💬<br>メッセージ</button>`;
   if (isHonbu) {
     html += `<button class="tab" onclick="showTab('report')">📝<br>レポート</button>`;
-    html += `<button class="tab" onclick="showTab('cash')">💴<br>お金</button>`;
-    html += `<button class="tab" onclick="showTab('summary')">📊<br>集計</button>`;
   }
-  html += `<button class="tab" onclick="showTab('schedule')">🗓<br>予定登録</button>`;
-  if (isRep) html += `<button class="tab" onclick="showTab('master')">⚙️<br>設定</button>`;
   document.getElementById('app-tabs').innerHTML = html;
 }
 
@@ -1014,11 +761,6 @@ async function openChatRoom(fullname, nickname, type) {
     const member = _allChatMembers.find(m => m.fullname === fullname);
     if (member) { member.unread = 0; renderChatMemberList(_allChatMembers); }
   } catch(e) { document.getElementById('chat-messages').innerHTML = '<div class="empty">エラー</div>'; }
-}
-
-function openChatFromRequest(fullname, nickname) {
-  showTab('messages');
-  setTimeout(() => openChatRoom(fullname, nickname, ''), 300);
 }
 
 function renderChatMessages(msgs) {
