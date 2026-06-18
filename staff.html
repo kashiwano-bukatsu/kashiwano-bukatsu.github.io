@@ -197,13 +197,18 @@ textarea{min-height:80px;resize:vertical}
     <div class="label">フルネーム（カタカナ）</div>
     <input type="text" id="rec-fullname" placeholder="例：ヤマダタロウ">
     <div class="label">流入元</div>
-    <select id="rec-source">
+    <select id="rec-source" onchange="toggleReferrerSearch()">
       <option value="">選択してください</option>
       <option value="Threads">Threads</option>
       <option value="ジモティ">ジモティ</option>
       <option value="紹介">紹介</option>
       <option value="その他">その他</option>
     </select>
+    <div id="rec-referrer-area" style="display:none">
+      <div class="label">紹介してくれた会員（カタカナで検索）</div>
+      <input type="text" id="rec-referrer-search" placeholder="例：ヤマダタロウ" oninput="searchReferrerCandidate()">
+      <div id="rec-referrer-result" style="font-size:12px;color:#888;margin-top:4px"></div>
+    </div>
     <div class="label">スポーツ経験</div>
     <select id="rec-exp">
       <option value="">選択してください</option>
@@ -549,13 +554,12 @@ async function doLogin() {
   try {
     const data = await callGAS('loginAttendee', name, pass);
     if (!data) { document.getElementById('login-error').style.display = 'block'; return; }
-    const type = String(data[2]).trim();
+    const type = String(data.type).trim();
     const allowedTypes = ['代表', '運営', '部長', '本部'];
     if (!allowedTypes.includes(type)) { document.getElementById('login-error').style.display = 'block'; return; }
-    // N列（index13）にパスワードが設定されていない場合は弾く（誕生日ログイン防止）
-    const passwordValue = String(data[13] || '').trim();
-    if (!passwordValue) { document.getElementById('login-error').style.display = 'block'; return; }
-    currentUser = { fullname: data[1], nickname: data[0], type, memberNumber: (data[9] || '') + (data[10] || '') };
+    // パスワードが設定されていない場合は弾く（誕生日ログイン防止）
+    if (!data.hasPassword) { document.getElementById('login-error').style.display = 'block'; return; }
+    currentUser = { internalId: data.internalId, fullname: data.fullname, nickname: data.nickname, type, memberNumber: data.memberNumber || '' };
     localStorage.setItem('bukatsu_staff_user', JSON.stringify(currentUser));
     showMainApp();
   } catch(e) { alert('エラー：' + e.message); }
@@ -676,14 +680,9 @@ function renderDailyListFromData(d) {
     const master = masterMap[r[4]] || {};
     allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', isNew: false });
   });
-  const tempUsers = (d.attendees || []).filter(r => r[10] === '仮登録');
-  (d.tempAttendees || []).forEach(t => {
-    if (!(d.attendees || []).find(a => a[1] === t[1])) {
-      (d.attendees || []).push([t[1], t[1], '体験', '', '', '', '', '', '', '', '仮登録']);
-    }
-  });
+  const tempUsers = (d.tempAttendees || []).filter(t => !(d.attendees || []).find(a => a[1] === t[1]));
   tempUsers.forEach(u => {
-    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[0], type: '体験', isNew: true, isNovice: u[2] === '初心者' });
+    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', isNew: true });
   });
   if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
   allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
@@ -745,12 +744,9 @@ async function renderDailyList() {
       const type = master[2] || '一般';
       allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, isNew: false });
     });
-    const tempUsers = attendees.filter(r => r[10] === '仮登録');
-    tempList.forEach(t => {
-      if (!attendees.find(a => a[1] === t[1])) attendees.push([t[1], t[1], '体験', '', '', '', '', '', '', '', '仮登録']);
-    });
+    const tempUsers = tempList.filter(t => !attendees.find(a => a[1] === t[1]));
     tempUsers.forEach(u => {
-      if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[0], type: '体験', isNew: true, isNovice: u[2] === '初心者' });
+      if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', isNew: true });
     });
     if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
     allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
@@ -871,7 +867,7 @@ async function addNewModalMember() {
   const todayFmt = window._todayFmt || getTodayStr();
   const sport = window._todaySport || '';
   try {
-    await callGAS('addTempAttendee', name, '', '');
+    await callGAS('addTempAttendee', name, '', sport, todayFmt, '');
     await callGAS('addAttendanceLog', [todayFmt, '沼南体育館', sport, name, name, '体験', fee]);
     showToast('🆕 ' + name + ' チェックイン！');
     document.getElementById('modal-new-lastname').value = '';
@@ -1093,6 +1089,37 @@ async function loadRecruitTab() {
   } catch(e) {}
 }
 
+// 「紹介」選択時のみ紹介者検索欄を表示
+function toggleReferrerSearch() {
+  const source = document.getElementById('rec-source').value;
+  const area = document.getElementById('rec-referrer-area');
+  area.style.display = (source === '紹介') ? 'block' : 'none';
+  if (source !== '紹介') {
+    document.getElementById('rec-referrer-search').value = '';
+    document.getElementById('rec-referrer-result').textContent = '';
+    document.getElementById('rec-referrer-search').dataset.internalId = '';
+  }
+}
+
+// 紹介者をニックネーム/フルネームで検索し、内部IDを確定する
+async function searchReferrerCandidate() {
+  const val = document.getElementById('rec-referrer-search').value.trim();
+  const resultEl = document.getElementById('rec-referrer-result');
+  document.getElementById('rec-referrer-search').dataset.internalId = '';
+  if (!val) { resultEl.textContent = ''; return; }
+  try {
+    const all = await callGAS('getPersonMasterAll');
+    const found = all.filter(p => (p.status === '会員' || p.status === '会員(申請中)') && ((p.nickname||'').includes(val) || (p.fullname||'').includes(val)));
+    if (!found.length) { resultEl.innerHTML = '<span style="color:#e53935">該当する会員が見つかりません</span>'; return; }
+    if (found.length === 1) {
+      document.getElementById('rec-referrer-search').dataset.internalId = found[0].internalId;
+      resultEl.innerHTML = '<span style="color:#48bb78">✓ ' + found[0].nickname + '（' + found[0].fullname + '）に確定</span>';
+    } else {
+      resultEl.innerHTML = '候補が複数あります。フルネームをもう少し詳しく入力してください：' + found.map(f => f.nickname).join('、');
+    }
+  } catch(e) { resultEl.textContent = '検索エラー：' + e.message; }
+}
+
 async function submitRecruit() {
   const fullname = document.getElementById('rec-fullname').value.trim();
   const source = document.getElementById('rec-source').value;
@@ -1101,10 +1128,16 @@ async function submitRecruit() {
   if (!/^[ァ-ヶー]+$/.test(fullname)) return alert('カタカナで入力してください');
   if (!source) return alert('流入元を選択してください');
   if (!exp) return alert('スポーツ経験を選択してください');
+  let referrerValue = source;
+  if (source === '紹介') {
+    const internalId = document.getElementById('rec-referrer-search').dataset.internalId;
+    if (!internalId) return alert('紹介してくれた会員を検索して確定してください');
+    referrerValue = internalId;
+  }
   const schedVal = document.getElementById('rec-schedule').value;
   const schedParts = schedVal.split('_');
   try {
-    await callGAS('addTempAttendee', fullname, currentUser.nickname, schedParts[1] || '', schedParts[0] || '', exp);
+    await callGAS('addTempAttendee', fullname, referrerValue, schedParts[1] || '', schedParts[0] || '', exp);
     showToast('登録しました！✨');
     document.getElementById('rec-fullname').value = '';
     document.getElementById('rec-source').value = '';
@@ -1441,7 +1474,9 @@ async function searchMember() {
   try {
     const results = await callGAS('searchMemberProfile', keyword);
     if (!results || !results.length) { el.innerHTML = '<div class="empty">見つかりませんでした</div>'; return; }
-    el.innerHTML = results.map(r => `<div class="item"><div style="font-size:16px;font-weight:700">${r.nickname} <span style="font-size:12px;color:#aaa">（${r.fullname}）</span></div><div style="font-size:13px;color:#aaa;margin-top:4px;line-height:2">種別：${r.type}<br>初回参加日：${r.joinDate}<br>スポーツ：${r.sport}<br>紹介者：${r.referredBy || 'なし'}</div>${r.referrals.length ? `<div style="margin-top:10px;background:#2c2c2c;border-radius:10px;padding:10px"><div style="font-size:12px;color:#aaa;margin-bottom:6px">紹介した人（${r.referrals.length}名）</div>${r.referrals.map(ref => `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid #444">${ref.nickname} <span style="font-size:11px;color:#aaa">${ref.joinDate}</span></div>`).join('')}</div>` : ''}</div>`).join('');
+    const allPersons = await callGAS('getPersonMasterAll');
+    const idToName = {}; allPersons.forEach(p => { idToName[p.internalId] = p.nickname || p.fullname; });
+    el.innerHTML = results.map(r => `<div class="item"><div style="font-size:16px;font-weight:700">${r.nickname} <span style="font-size:12px;color:#aaa">（${r.fullname}）</span></div><div style="font-size:13px;color:#aaa;margin-top:4px;line-height:2">種別：${r.type}<br>初回参加日：${r.joinDate}<br>スポーツ：${r.sport}<br>紹介者：${r.referredBy ? (idToName[r.referredBy] || r.referredBy) : 'なし'}</div>${r.referrals.length ? `<div style="margin-top:10px;background:#2c2c2c;border-radius:10px;padding:10px"><div style="font-size:12px;color:#aaa;margin-bottom:6px">紹介した人（${r.referrals.length}名）</div>${r.referrals.map(ref => `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid #444">${ref.nickname} <span style="font-size:11px;color:#aaa">${ref.joinDate}</span></div>`).join('')}</div>` : ''}</div>`).join('');
   } catch(e) { el.innerHTML = '<div class="empty">エラー</div>'; }
 }
 
