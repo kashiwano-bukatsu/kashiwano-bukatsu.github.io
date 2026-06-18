@@ -191,6 +191,20 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 
 <!-- HOME -->
 <div id="section-home" class="section">
+  <!-- テストユーザー切り替えパネル（TEST版専用） -->
+  <div class="card" style="background:linear-gradient(135deg,#fff3e8,#fffaf3);border:1.5px solid #ff6b35">
+    <div class="card-title"><div class="card-title-dot" style="background:#ff6b35"></div>テストユーザー切り替え</div>
+    <div style="font-size:11.5px;color:#a85a30;margin-bottom:10px">タップした種別でログイン済み状態になります（ダミーデータ）</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="loadTestUser('visitor')" style="padding:10px;border:1.5px solid #ff6b35;border-radius:10px;background:#fff;color:#a85a30;font-size:13px;font-weight:700;cursor:pointer">ビジター会員</button>
+      <button onclick="loadTestUser('kashiwa')" style="padding:10px;border:1.5px solid #ff6b35;border-radius:10px;background:#fff;color:#a85a30;font-size:13px;font-weight:700;cursor:pointer">カシワ会員</button>
+      <button onclick="loadTestUser('minnb')" style="padding:10px;border:1.5px solid #ff6b35;border-radius:10px;background:#fff;color:#a85a30;font-size:13px;font-weight:700;cursor:pointer">みんなのBUKATSU会員</button>
+      <button onclick="loadTestUser('family')" style="padding:10px;border:1.5px solid #ff6b35;border-radius:10px;background:#fff;color:#a85a30;font-size:13px;font-weight:700;cursor:pointer">ファミリー会員</button>
+      <button onclick="loadTestUser('ouendan')" style="padding:10px;border:1.5px solid #ff6b35;border-radius:10px;background:#fff;color:#a85a30;font-size:13px;font-weight:700;cursor:pointer">応援団会員</button>
+      <button onclick="loadTestUser('applying')" style="padding:10px;border:1.5px solid #ff6b35;border-radius:10px;background:#fff;color:#a85a30;font-size:13px;font-weight:700;cursor:pointer">申請中（承認待ち）</button>
+    </div>
+    <button onclick="testLogout()" style="width:100%;margin-top:8px;padding:8px;border:none;border-radius:10px;background:#f0f4f8;color:#888;font-size:12px;cursor:pointer">ログアウト（未ログイン状態に戻す）</button>
+  </div>
   <!-- メンテナンス中バナー（一番上、固定） -->
   <div id="maintenance-banner" class="card" style="display:none;background:linear-gradient(135deg,#fff8e1,#fffde7);border:1.5px solid #f5d060">
     <div style="display:flex;align-items:flex-start;gap:10px">
@@ -741,6 +755,32 @@ function saveCurrentUser(){
   }
 }
 
+// ===== TEST版専用：テストユーザー切り替え =====
+const TEST_USERS={
+  visitor:{fullname:'テストビジター',nickname:'テストビジター',memberSport:'全て',memberNumber:'B999901',type:'ビジター会員',gender:'男性',area:'柏市',isApplying:false},
+  kashiwa:{fullname:'テストカシワ',nickname:'テストカシワ',memberSport:'全て',memberNumber:'B999902',type:'カシワのBUKATSU会員',gender:'女性',area:'柏市',isApplying:false},
+  minnb:{fullname:'テストミンビ',nickname:'テストミンビ',memberSport:'バドミントン',memberNumber:'B999903',type:'みんなのBUKATSU会員',gender:'男性',area:'柏市',isApplying:false},
+  family:{fullname:'テストファミリー',nickname:'テストファミリー',memberSport:'全て',memberNumber:'B999904',type:'ファミリー会員',gender:'女性',area:'柏市',isApplying:false},
+  ouendan:{fullname:'テスト応援団',nickname:'テスト応援団',memberSport:'全て',memberNumber:'B999905',type:'応援団会員',gender:'男性',area:'柏市',isApplying:false},
+  applying:{fullname:'テスト申請中',nickname:'テスト申請中',memberSport:'バスケットボール',memberNumber:'B999906',type:'ビジター会員',gender:'女性',area:'柏市',isApplying:true},
+};
+function loadTestUser(key){
+  const u=TEST_USERS[key];
+  if(!u)return;
+  mypageCurrentUser={...u};
+  saveCurrentUser();
+  localStorage.setItem('bukatsu_auto_login','true');
+  showTab('mypage');
+  showMypageMain();
+}
+function testLogout(){
+  mypageCurrentUser=null;
+  localStorage.removeItem('bukatsu_user');
+  localStorage.setItem('bukatsu_auto_login','false');
+  showTab('home');
+  location.reload();
+}
+
 // ===== 価格マスタ（GASから取得してキャッシュ、価格変更はスプレッドシート側で完結させる） =====
 let _priceMasterCache=null;
 async function getPrices(){
@@ -831,7 +871,7 @@ window.addEventListener('load',()=>{
   loadHomeNotice();
   loadMonthCalendar();
   const splash=document.getElementById('splash');
-  const skipSplash=sessionStorage.getItem('bukatsu_skip_splash')==='true';
+  const skipSplash=true; // TEST版は常にスプラッシュ省略
   sessionStorage.removeItem('bukatsu_skip_splash');
   const splashDelay=skipSplash?0:1800;
   const fadeDelay=skipSplash?0:600;
