@@ -549,6 +549,11 @@ async function doLogin() {
   const name = document.getElementById('login-name').value.trim();
   const pass = document.getElementById('login-pass').value.trim();
   if (!name || !pass) return alert('入力してください');
+  // 運営ログインは誕生日（8桁数字）での認証を禁止
+  if (/^\d{8}$/.test(pass)) {
+    document.getElementById('login-error').style.display = 'block';
+    return;
+  }
   const btn = document.querySelector('#login-screen .btn-primary');
   btn.disabled = true; btn.textContent = 'ログイン中...';
   try {
