@@ -685,7 +685,7 @@ function renderDailyListFromData(d) {
     const master = masterMap[r[4]] || {};
     allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', isNew: false });
   });
-  const tempUsers = (d.tempAttendees || []).filter(t => !(d.attendees || []).find(a => a[1] === t[1]));
+  const tempUsers = (d.tempAttendees || []).filter(t => t[0] === d.today && !(d.attendees || []).find(a => a[1] === t[1]));
   tempUsers.forEach(u => {
     if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', isNew: true });
   });
@@ -749,7 +749,7 @@ async function renderDailyList() {
       const type = master[2] || '一般';
       allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, isNew: false });
     });
-    const tempUsers = tempList.filter(t => !attendees.find(a => a[1] === t[1]));
+    const tempUsers = tempList.filter(t => t[0] === todayFmt && !attendees.find(a => a[1] === t[1]));
     tempUsers.forEach(u => {
       if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', isNew: true });
     });
