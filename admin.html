@@ -227,6 +227,7 @@ body{
 
 /* ===== テーブル ===== */
 table{width:100%;border-collapse:collapse;font-size:13px;}
+.actions-cell{display:flex;gap:6px;}
 th{
   text-align:left;
   font-size:11.5px;
@@ -408,6 +409,11 @@ tr:hover td{background:var(--card-soft);}
       <div class="card">
         <div class="card-title"><div class="dot"></div>回数券購入申請</div>
         <div id="ticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>回数券モード設定</div>
+        <input id="mode-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderModeSearch()">
+        <div id="mode-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
       </div>
     </div>
 
@@ -591,7 +597,12 @@ async function renderTempList(){
   try{
     const persons = await getPersonMaster();
     const nameMap = buildNameMap(persons);
-    let list = persons.filter(p => p.status === '体験予定');
+    const today = new Date(); today.setHours(0,0,0,0);
+    let list = persons.filter(p => {
+      if (p.status !== '体験予定') return false;
+      const d = extractScheduleDate(p.note);
+      return !d || d >= today; // 予定日が分からない場合は表示、予定日が今日以降のみ表示
+    });
     if (keyword) list = list.filter(p => (p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword));
     if (!list.length){
       wrap.innerHTML = '<div class="empty-state">該当する体験予定の方はいません</div>';
@@ -612,6 +623,13 @@ async function renderTempList(){
   }catch(e){
     wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
   }
+}
+
+// 備考列「初参加予定日:yyyy/MM/dd」からDateを取り出す（見つからなければnull）
+function extractScheduleDate(note){
+  const m = (note||'').match(/初参加予定日:(\d{4})\/(\d{2})\/(\d{2})/);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
 function escapeHtml(s){
@@ -642,7 +660,10 @@ async function renderUpgradeList(){
           <td>${escapeHtml(r[2]||r[1])}</td>
           <td><span class="badge badge-gold">${escapeHtml(r[3])}</span></td>
           <td>${escapeHtml(r[4])}</td>
-          <td><button class="btn btn-primary btn-sm" onclick="approveUpgrade('${escapeHtml(r[1])}','${escapeHtml(r[3])}')">承認する</button></td>
+          <td class="actions-cell">
+            <button class="btn btn-primary btn-sm" onclick="approveUpgrade('${escapeHtml(r[1])}','${escapeHtml(r[3])}')">承認する</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectUpgrade('${escapeHtml(r[1])}','${escapeHtml(r[3])}')">却下する</button>
+          </td>
         </tr>`).join('')}</tbody>
     </table>`;
   }catch(e){
@@ -658,6 +679,18 @@ async function approveUpgrade(fullname, plan){
     loadDashboard();
   }catch(e){
     alert('承認に失敗しました：' + e.message);
+  }
+}
+
+async function rejectUpgrade(fullname, plan){
+  if (!confirm(fullname + ' さんの「' + plan + '」へのプラン変更申請を却下します。よろしいですか？')) return;
+  const reason = prompt('却下理由（任意・本人に通知されます。空欄でも構いません）', '') || '';
+  try{
+    await callGAS('rejectUpgradeRequest', fullname, plan, reason);
+    await renderUpgradeList();
+    loadDashboard();
+  }catch(e){
+    alert('却下処理に失敗しました：' + e.message);
   }
 }
 
@@ -680,7 +713,10 @@ async function renderTicketRequestList(){
           <td><span class="badge badge-accent">${escapeHtml(r[3])}</span></td>
           <td>${escapeHtml(r[4])}セット</td>
           <td>${escapeHtml(r[5])}円</td>
-          <td><button class="btn btn-primary btn-sm" onclick="receiveTicket('${escapeHtml(r[1])}',${Number(r[4])})">受領する</button></td>
+          <td class="actions-cell">
+            <button class="btn btn-primary btn-sm" onclick="receiveTicket('${escapeHtml(r[1])}',${Number(r[4])})">受領する</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectTicket('${escapeHtml(r[1])}',${Number(r[4])})">却下する</button>
+          </td>
         </tr>`).join('')}</tbody>
     </table>`;
   }catch(e){
@@ -696,6 +732,63 @@ async function receiveTicket(fullname, sets){
     loadDashboard();
   }catch(e){
     alert('処理に失敗しました：' + e.message);
+  }
+}
+
+async function rejectTicket(fullname, sets){
+  if (!confirm(fullname + ' さんの回数券購入申請（' + sets + 'セット）を却下します。よろしいですか？')) return;
+  const reason = prompt('却下理由（任意・本人に通知されます。空欄でも構いません）', '') || '';
+  try{
+    await callGAS('rejectTicketRequest', fullname, sets, reason);
+    await renderTicketRequestList();
+    loadDashboard();
+  }catch(e){
+    alert('却下処理に失敗しました：' + e.message);
+  }
+}
+
+// ===== 回数券モード設定（スポログ／回数券） =====
+async function renderModeSearch(){
+  const wrap = document.getElementById('mode-search-wrap');
+  const keyword = (document.getElementById('mode-search-input').value || '').trim();
+  if (!keyword){
+    wrap.innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+    return;
+  }
+  try{
+    const persons = await getPersonMaster();
+    const list = persons.filter(p => (p.status === '会員' || p.status === '会員(申請中)') &&
+      ((p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword)));
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">該当する会員がいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>お名前</th><th>種別</th><th>現在のモード</th><th></th></tr></thead>
+      <tbody>${list.map(p => {
+        const mode = p.usageMode || 'スポログ';
+        const next = mode === '回数券' ? 'スポログ' : '回数券';
+        return `<tr>
+          <td>${escapeHtml(p.nickname||p.fullname)}</td>
+          <td><span class="badge badge-gold">${escapeHtml(p.type||'')}</span></td>
+          <td><span class="badge ${mode === '回数券' ? 'badge-accent' : ''}">${escapeHtml(mode)}</span></td>
+          <td><button class="btn btn-primary btn-sm" onclick="toggleUsageMode('${escapeHtml(p.fullname)}','${next}')">${escapeHtml(next)}に切替</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function toggleUsageMode(fullname, newMode){
+  if (!confirm(fullname + ' さんの利用モードを「' + newMode + '」に切り替えます。よろしいですか？')) return;
+  try{
+    await callGAS('updateUsageMode', fullname, newMode);
+    await getPersonMaster(true);
+    await renderModeSearch();
+  }catch(e){
+    alert('切替に失敗しました：' + e.message);
   }
 }
 
