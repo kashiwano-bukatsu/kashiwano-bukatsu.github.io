@@ -459,6 +459,11 @@ tr:hover td{background:var(--card-soft);}
         <div id="halfticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
+        <div class="card-title"><div class="dot"></div>無料チケットを手動付与</div>
+        <input id="freegrant-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderFreeGrantSearch()">
+        <div id="freegrant-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>回数券を手動付与</div>
         <input id="grant-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderGrantSearch()">
         <div id="grant-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
@@ -856,6 +861,48 @@ async function renderTicketView(){
   renderFreeTicketList();
   renderHalfTicketList();
   document.getElementById('grant-search-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+  document.getElementById('freegrant-search-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+}
+
+async function renderFreeGrantSearch(){
+  const wrap = document.getElementById('freegrant-search-wrap');
+  const keyword = (document.getElementById('freegrant-search-input').value || '').trim();
+  if (!keyword){
+    wrap.innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+    return;
+  }
+  try{
+    const persons = await getPersonMaster();
+    const list = persons.filter(p => (p.status === '会員' || p.status === '会員(申請中)') &&
+      ((p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword)));
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">該当する会員がいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>お名前</th><th>種別</th><th>付与理由（任意）</th><th></th></tr></thead>
+      <tbody>${list.map((p, i) => `
+        <tr>
+          <td>${escapeHtml(p.nickname||p.fullname)}</td>
+          <td><span class="badge badge-gold">${escapeHtml(p.type||'')}</span></td>
+          <td><input type="text" id="freegrant-reason-${i}" placeholder="事務局より付与" style="width:160px;padding:6px 8px;border:1.5px solid var(--line);border-radius:7px"></td>
+          <td><button class="btn btn-primary btn-sm" onclick="grantFreeTicket('${escapeHtml(p.fullname).replace(/'/g,"\\'")}', ${i})">付与する</button></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function grantFreeTicket(fullname, i){
+  const reason = (document.getElementById('freegrant-reason-' + i).value || '').trim() || '事務局より付与';
+  if (!confirm(fullname + ' さんに無料チケットを1枚付与します。よろしいですか？')) return;
+  try{
+    await callGAS('grantFreeTicketManual', fullname, reason);
+    showToastAdmin('付与しました！');
+  }catch(e){
+    alert('付与に失敗しました：' + e.message);
+  }
 }
 
 async function renderGrantSearch(){
