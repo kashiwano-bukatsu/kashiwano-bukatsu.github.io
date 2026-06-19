@@ -394,6 +394,10 @@ tr:hover td{background:var(--card-soft);}
         <div class="card-title"><div class="dot"></div>承認待ちの会員</div>
         <div id="approval-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>プラン変更申請</div>
+        <div id="upgrade-table-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
     </div>
 
     <!-- ===== 体験者管理 ===== -->
@@ -443,12 +447,12 @@ tr:hover td{background:var(--card-soft);}
     <!-- ===== チケット管理 ===== -->
     <div class="view" id="view-ticket">
       <div class="card">
-        <div class="card-title"><div class="dot"></div>プラン変更申請</div>
-        <div id="upgrade-table-wrap"><div class="loading-text">読み込み中...</div></div>
-      </div>
-      <div class="card">
         <div class="card-title"><div class="dot"></div>回数券購入申請</div>
         <div id="ticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>無料チケット（スポログ）保持者</div>
+        <div id="freeticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>回数券モード設定</div>
@@ -637,7 +641,7 @@ function switchView(view){
   document.getElementById('topbar-title').textContent = title;
   document.getElementById('topbar-sub').textContent = sub;
 
-  if (view === 'approval') renderApprovalList();
+  if (view === 'approval') { renderApprovalList(); renderUpgradeList(); }
   if (view === 'temp') renderTempList();
   if (view === 'member') { /* 検索待ち、何もしない */ }
   if (view === 'schedule') renderScheduleView();
@@ -685,27 +689,40 @@ async function loadDashboard(){
     setBadge('badge-temp', tempCount);
 
     // タイムライン：体験予定（期限切れ・予定日無し除く）・申請中の人を登録日が新しい順に並べて表示（簡易版）
-    const recent = persons.filter(p => {
+    let recent = persons.filter(p => {
       if (p.status === '会員(申請中)') return true;
       if (p.status === '体験予定') {
         const d = extractScheduleDate(p.note);
         return !!d && d >= today0;
       }
       return false;
-    })
-      .sort((a,b) => (b.joinDate||'') > (a.joinDate||'') ? 1 : -1)
-      .slice(0, 8);
+    }).map(p => ({ kind: p.status === '会員(申請中)' ? 'approval' : 'temp', name: p.nickname || p.fullname, sub: p.type || '', date: p.joinDate || '' }));
+
+    // 直近の開催予定への参加予約も合わせて表示
+    try{
+      const schedules = await callGAS('getUpcomingSchedules', '全て');
+      if (schedules && schedules.length){
+        const s = schedules[0];
+        const reservations = await callGAS('getReservations', s[0], s[4]);
+        reservations.filter(r => (r[7] || '⭕') !== '❌').slice(-6).reverse().forEach(r => {
+          recent.push({ kind: 'reserve', name: r[5] || r[4], sub: s[4] + '（' + s[0] + '）', date: s[0] });
+        });
+      }
+    }catch(e){}
+
+    recent = recent.sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1).slice(0, 8);
     const tl = document.getElementById('dashboard-timeline');
     if (!recent.length){
       tl.innerHTML = '<div class="empty-state">対応待ちの動きはありません</div>';
     } else {
       tl.innerHTML = recent.map(p => {
-        const isApproval = p.status === '会員(申請中)';
+        const isApproval = p.kind === 'approval';
+        const verb = p.kind === 'approval' ? '会員登録を申請' : p.kind === 'reserve' ? '参加を予約' : '体験を予約';
         return `<div class="timeline-item">
           <div class="timeline-dot ${isApproval?'warn':''}"></div>
           <div>
-            <div class="timeline-text"><b>${escapeHtml(p.nickname||p.fullname)}</b>さんが${isApproval?'会員登録を申請':'体験を予約'}（${escapeHtml(p.type||'')}）</div>
-            <div class="timeline-time">${escapeHtml(p.joinDate||'')}</div>
+            <div class="timeline-text"><b>${escapeHtml(p.name)}</b>さんが${verb}（${escapeHtml(p.sub)}）</div>
+            <div class="timeline-time">${escapeHtml(p.date)}</div>
           </div>
         </div>`;
       }).join('');
@@ -824,10 +841,41 @@ function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ===== チケット管理（プラン変更申請・回数券購入申請） =====
+// ===== チケット管理（回数券購入申請・無料チケット保持者） =====
 async function renderTicketView(){
-  renderUpgradeList();
   renderTicketRequestList();
+  renderFreeTicketList();
+}
+
+async function renderFreeTicketList(){
+  const wrap = document.getElementById('freeticket-table-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const rows = await callGAS('getAllFreeTickets');
+    // フルネームごとに集約（複数枚持っている人がいるため）
+    const grouped = {};
+    rows.forEach(r => {
+      if (!grouped[r[1]]) grouped[r[1]] = { count: 0, reasons: [] };
+      grouped[r[1]].count++;
+      grouped[r[1]].reasons.push(r[2]);
+    });
+    const names = Object.keys(grouped);
+    if (!names.length){
+      wrap.innerHTML = '<div class="empty-state">無料チケットを保持している方はいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>お名前</th><th>枚数</th><th>付与理由</th></tr></thead>
+      <tbody>${names.map(name => `
+        <tr>
+          <td>${escapeHtml(name)}</td>
+          <td><span class="badge badge-accent">${grouped[name].count}枚</span></td>
+          <td style="font-size:12px;color:var(--ink-faint)">${escapeHtml(grouped[name].reasons.join('／'))}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
 }
 
 async function renderUpgradeList(){
