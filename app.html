@@ -845,10 +845,10 @@ window.addEventListener('load',()=>{
     splash.style.opacity='0';
     setTimeout(()=>{
       splash.style.display='none';
-      // 自動ログインチェック
+      // 自動ログインチェック（「記憶する」設定がオフでも、videos.html等から戻ってきた場合は復元する）
       const autoLogin=localStorage.getItem('bukatsu_auto_login');
       const saved=localStorage.getItem('bukatsu_user');
-      if(autoLogin==='true'&&saved){
+      if((autoLogin==='true'||skipSplash)&&saved){
         try{mypageCurrentUser=JSON.parse(saved);showMypageMain();}catch(e){}
       }
       loadHomeData();
