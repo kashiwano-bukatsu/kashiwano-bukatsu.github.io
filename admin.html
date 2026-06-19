@@ -673,14 +673,26 @@ async function loadDashboard(){
   try{
     const persons = await getPersonMaster();
     const approvalCount = persons.filter(p => p.status === '会員(申請中)').length;
-    const tempCount = persons.filter(p => p.status === '体験予定').length;
+    const today0 = new Date(); today0.setHours(0,0,0,0);
+    const tempCount = persons.filter(p => {
+      if (p.status !== '体験予定') return false;
+      const d = extractScheduleDate(p.note);
+      return !d || d >= today0;
+    }).length;
     document.getElementById('stat-approval').innerHTML = approvalCount + '<span class="unit">件</span>';
     document.getElementById('stat-temp').innerHTML = tempCount + '<span class="unit">件</span>';
     setBadge('badge-approval', approvalCount);
     setBadge('badge-temp', tempCount);
 
-    // タイムライン：体験予定・申請中の人を登録日が新しい順に並べて表示（簡易版）
-    const recent = persons.filter(p => p.status === '体験予定' || p.status === '会員(申請中)')
+    // タイムライン：体験予定（期限切れ除く）・申請中の人を登録日が新しい順に並べて表示（簡易版）
+    const recent = persons.filter(p => {
+      if (p.status === '会員(申請中)') return true;
+      if (p.status === '体験予定') {
+        const d = extractScheduleDate(p.note);
+        return !d || d >= today0;
+      }
+      return false;
+    })
       .sort((a,b) => (b.joinDate||'') > (a.joinDate||'') ? 1 : -1)
       .slice(0, 8);
     const tl = document.getElementById('dashboard-timeline');
