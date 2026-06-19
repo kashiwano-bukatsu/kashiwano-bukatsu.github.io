@@ -908,13 +908,13 @@ async function loadRecruitTab() {
     const today = new Date(), thirtyAgo = new Date(today); thirtyAgo.setDate(today.getDate() - 30);
     const recent = data.filter(r => { const d = new Date(r[0].replace(/\//g, '-')); return d >= thirtyAgo; }).sort((a, b) => b[0] > a[0] ? 1 : -1);
     const latestEl = document.getElementById('rec-latest');
-    latestEl.innerHTML = !recent.length ? '<div class="empty">登録がありません</div>' : recent.slice(0, 3).map(r => `<div class="item"><div class="item-title">${r[1]}</div><div class="item-sub">${r[0]} ／ ${r[4] || '流入元不明'} ／ ${r[2] || '経験不明'}</div></div>`).join('');
+    latestEl.innerHTML = !recent.length ? '<div class="empty">登録がありません</div>' : recent.slice(0, 3).map(r => `<div class="item"><div class="item-title">${r[1]}</div><div class="item-sub">${r[0]} ／ ${r[5] || '不明'} ／ ${r[2] || '経験不明'}</div></div>`).join('');
     const listEl = document.getElementById('rec-list');
     if (!recent.length) { listEl.innerHTML = '<div class="empty">30日以内の登録がありません</div>'; }
     else {
-      const src = {}; recent.forEach(r => { const s = r[4] || '不明'; src[s] = (src[s] || 0) + 1; });
+      const src = {}; recent.forEach(r => { const s = r[5] || '不明'; src[s] = (src[s] || 0) + 1; });
       const summHtml = Object.entries(src).map(([s, c]) => `<span style="background:#2c2c2c;border-radius:20px;padding:4px 12px;font-size:12px;margin-right:6px;margin-bottom:6px;display:inline-block">${s}：${c}人</span>`).join('');
-      listEl.innerHTML = `<div style="flex-wrap:wrap;display:flex;margin-bottom:12px">${summHtml}</div>` + recent.map(r => `<div class="item"><div class="item-title">${r[1]}</div><div class="item-sub">${r[0]} ／ <span style="color:#48bb78">${r[4]||'不明'}</span> ／ ${r[2]||'経験不明'}</div></div>`).join('');
+      listEl.innerHTML = `<div style="flex-wrap:wrap;display:flex;margin-bottom:12px">${summHtml}</div>` + recent.map(r => `<div class="item"><div class="item-title">${r[1]}</div><div class="item-sub">${r[0]} ／ <span style="color:#48bb78">${r[5]||'不明'}</span> ／ ${r[2]||'経験不明'}</div></div>`).join('');
     }
   } catch(e) {}
 }
