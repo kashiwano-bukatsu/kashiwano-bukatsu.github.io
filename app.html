@@ -509,7 +509,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
   <div class="ticket-blur-bg" onclick="closeLoginModal()"></div>
   <div class="ticket-modal" style="text-align:left;">
     <div style="font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:20px;text-align:center">ログイン</div>
-    <div class="label" style="margin-top:0">フルネーム（カタカナ）</div>
+    <form id="mypage-login-form" onsubmit="event.preventDefault();mypageLogin();">
+    <div class="label" style="margin-top:0">ニックネームまたはフルネーム（カタカナ）</div>
     <input type="text" id="mypage-fullname" placeholder="例：カシワタロウ" autocomplete="username">
     <div class="label">生年月日（YYYYMMDD）</div>
     <input type="password" id="mypage-dob" placeholder="例：20100506" maxlength="8" autocomplete="current-password">
@@ -517,9 +518,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <input type="checkbox" id="login-remember" style="width:20px;height:20px;accent-color:#1a3a5c">
       <label for="login-remember" style="font-size:14px;color:#555;cursor:pointer">次回からログインを省略する</label>
     </div>
-    <button class="btn btn-primary" onclick="mypageLogin()">ログイン</button>
-    <div id="mypage-login-error" style="display:none;color:#e53935;font-size:14px;margin-top:8px;text-align:center">フルネームまたは生年月日が正しくありません</div>
-    <button class="btn btn-secondary" style="margin-top:8px" onclick="closeLoginModal()">キャンセル</button>
+    <button type="submit" class="btn btn-primary">ログイン</button>
+    <div id="mypage-login-error" style="display:none;color:#e53935;font-size:14px;margin-top:8px;text-align:center">ニックネーム・フルネームまたは生年月日が正しくありません</div>
+    <button type="button" class="btn btn-secondary" style="margin-top:8px" onclick="closeLoginModal()">キャンセル</button>
+    </form>
   </div>
 </div>
 
@@ -946,7 +948,7 @@ async function mypageLogin(){
   const dob=document.getElementById('mypage-dob').value.trim();
   const remember=document.getElementById('login-remember').checked;
   document.getElementById('mypage-login-error').style.display='none';
-  if(!fullname)return alert('フルネームを入力してください');
+  if(!fullname)return alert('ニックネームまたはフルネームを入力してください');
   if(dob.length!==8)return alert('生年月日は8桁で入力してください');
   const btn=document.querySelector('#login-modal-overlay .btn-primary');
   btn.textContent='ログイン中...';btn.disabled=true;
