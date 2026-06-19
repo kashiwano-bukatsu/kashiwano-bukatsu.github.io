@@ -677,19 +677,19 @@ async function loadDashboard(){
     const tempCount = persons.filter(p => {
       if (p.status !== '体験予定') return false;
       const d = extractScheduleDate(p.note);
-      return !d || d >= today0;
+      return !!d && d >= today0;
     }).length;
     document.getElementById('stat-approval').innerHTML = approvalCount + '<span class="unit">件</span>';
     document.getElementById('stat-temp').innerHTML = tempCount + '<span class="unit">件</span>';
     setBadge('badge-approval', approvalCount);
     setBadge('badge-temp', tempCount);
 
-    // タイムライン：体験予定（期限切れ除く）・申請中の人を登録日が新しい順に並べて表示（簡易版）
+    // タイムライン：体験予定（期限切れ・予定日無し除く）・申請中の人を登録日が新しい順に並べて表示（簡易版）
     const recent = persons.filter(p => {
       if (p.status === '会員(申請中)') return true;
       if (p.status === '体験予定') {
         const d = extractScheduleDate(p.note);
-        return !d || d >= today0;
+        return !!d && d >= today0;
       }
       return false;
     })
@@ -788,9 +788,10 @@ async function renderTempList(){
     let list = persons.filter(p => {
       if (p.status !== '体験予定') return false;
       const d = extractScheduleDate(p.note);
-      return !d || d >= today; // 予定日が分からない場合は表示、予定日が今日以降のみ表示
+      return !!d && d >= today; // 予定日が無い（移行データ等）・期限切れは非表示
     });
     if (keyword) list = list.filter(p => (p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword));
+    list = list.slice().sort((a,b) => (b.internalId||'') > (a.internalId||'') ? 1 : -1); // 新しい登録が上に来るように
     if (!list.length){
       wrap.innerHTML = '<div class="empty-state">該当する体験予定の方はいません</div>';
       return;
@@ -1000,7 +1001,7 @@ async function renderPriceView(){
           <td><input type="number" id="price-normal-${i}" value="${p.normalPrice}" style="width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
           <td><input type="number" id="price-campaign-${i}" value="${p.campaignPrice != null ? p.campaignPrice : ''}" placeholder="-" style="width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
           <td><input type="checkbox" id="price-active-${i}" ${p.campaignActive ? 'checked' : ''}></td>
-          <td><input type="date" id="price-enddate-${i}" value="${(p.campaignEndDate||'').replace(/\\//g,'-')}" style="padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
+          <td><input type="date" id="price-enddate-${i}" value="${(p.campaignEndDate||'').replace(/\//g,'-')}" style="padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
           <td><button class="btn btn-primary btn-sm" onclick="savePriceRow(${i})">保存</button></td>
         </tr>`).join('')}</tbody>
     </table>`;
