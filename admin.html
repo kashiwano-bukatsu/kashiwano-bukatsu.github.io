@@ -392,11 +392,11 @@ tr:hover td{background:var(--card-soft);}
       </div>
     </div>
 
-    <!-- ===== 価格・キャンペーン管理（次フェーズで実装） ===== -->
+    <!-- ===== 価格・キャンペーン管理 ===== -->
     <div class="view" id="view-price">
-      <div class="placeholder">
-        <div class="placeholder-title">価格・キャンペーン管理は次のフェーズで実装します</div>
-        <div class="placeholder-sub">価格マスタシートの内容をこの画面から直接編集できるようにする予定です</div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>価格マスタ</div>
+        <div id="price-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
     </div>
 
@@ -417,19 +417,25 @@ tr:hover td{background:var(--card-soft);}
       </div>
     </div>
 
-    <!-- ===== お知らせ管理（次フェーズで実装） ===== -->
+    <!-- ===== お知らせ管理 ===== -->
     <div class="view" id="view-notice">
-      <div class="placeholder">
-        <div class="placeholder-title">お知らせ管理は次のフェーズで実装します</div>
-        <div class="placeholder-sub">会員向けお知らせの投稿・非公開化をこの画面から行えるようにする予定です</div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>新規投稿</div>
+        <input id="notice-title-input" type="text" placeholder="タイトル" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;display:block">
+        <textarea id="notice-body-input" placeholder="本文" rows="4" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;display:block;font-family:inherit"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="postNotice()">投稿する</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>投稿済み一覧</div>
+        <div id="notice-list-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
     </div>
 
-    <!-- ===== 操作ログ（将来用） ===== -->
+    <!-- ===== 操作ログ ===== -->
     <div class="view" id="view-log">
-      <div class="placeholder">
-        <div class="placeholder-title">操作ログは将来のフェーズで実装します</div>
-        <div class="placeholder-sub">誰が・いつ・何を承認/変更したかを記録する予定です</div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>出席ログ（直近100件）</div>
+        <div id="log-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
     </div>
 
@@ -472,6 +478,9 @@ function switchView(view){
   if (view === 'approval') renderApprovalList();
   if (view === 'temp') renderTempList();
   if (view === 'ticket') renderTicketView();
+  if (view === 'price') renderPriceView();
+  if (view === 'notice') renderNoticeView();
+  if (view === 'log') renderLogView();
 }
 
 // ===== データキャッシュ（人マスタ全件を1回だけ取得して各画面で使う） =====
@@ -789,6 +798,136 @@ async function toggleUsageMode(fullname, newMode){
     await renderModeSearch();
   }catch(e){
     alert('切替に失敗しました：' + e.message);
+  }
+}
+
+// ===== 価格・キャンペーン管理 =====
+let _priceCache = [];
+async function renderPriceView(){
+  const wrap = document.getElementById('price-table-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    _priceCache = await callGAS('getPriceMaster');
+    if (!_priceCache.length){
+      wrap.innerHTML = '<div class="empty-state">価格マスタにデータがありません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>カテゴリ</th><th>種別</th><th>項目</th><th>通常価格</th><th>キャンペーン価格</th><th>キャンペーン中</th><th>終了日</th><th></th></tr></thead>
+      <tbody>${_priceCache.map((p, i) => `
+        <tr id="price-row-${i}">
+          <td>${escapeHtml(p.category)}</td>
+          <td>${escapeHtml(p.type)}</td>
+          <td>${escapeHtml(p.item)}</td>
+          <td><input type="number" id="price-normal-${i}" value="${p.normalPrice}" style="width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
+          <td><input type="number" id="price-campaign-${i}" value="${p.campaignPrice != null ? p.campaignPrice : ''}" placeholder="-" style="width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
+          <td><input type="checkbox" id="price-active-${i}" ${p.campaignActive ? 'checked' : ''}></td>
+          <td><input type="date" id="price-enddate-${i}" value="${(p.campaignEndDate||'').replace(/\\//g,'-')}" style="padding:4px 6px;border:1px solid var(--line);border-radius:6px"></td>
+          <td><button class="btn btn-primary btn-sm" onclick="savePriceRow(${i})">保存</button></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function savePriceRow(i){
+  const p = _priceCache[i];
+  if (!p) return;
+  const normalPrice = parseInt(document.getElementById('price-normal-' + i).value) || 0;
+  const campaignVal = document.getElementById('price-campaign-' + i).value;
+  const campaignPrice = campaignVal === '' ? '' : parseInt(campaignVal);
+  const campaignActive = document.getElementById('price-active-' + i).checked;
+  const campaignEndDateRaw = document.getElementById('price-enddate-' + i).value; // yyyy-MM-dd
+  const campaignEndDate = campaignEndDateRaw ? campaignEndDateRaw.replace(/-/g, '/') : '';
+  try{
+    await callGAS('updatePriceRow', p.category, p.type, p.item, normalPrice, campaignPrice, campaignActive, campaignEndDate, p.note || '');
+    showSavedFlash(i);
+  }catch(e){
+    alert('保存に失敗しました：' + e.message);
+  }
+}
+
+function showSavedFlash(i){
+  const row = document.getElementById('price-row-' + i);
+  if (!row) return;
+  row.style.background = '#eafbea';
+  setTimeout(() => { row.style.background = ''; }, 800);
+}
+
+// ===== お知らせ管理 =====
+async function postNotice(){
+  const title = document.getElementById('notice-title-input').value.trim();
+  const body = document.getElementById('notice-body-input').value.trim();
+  if (!title || !body) return alert('タイトルと本文を入力してください');
+  try{
+    await callGAS('postMemberNotice', title, body, '事務局');
+    document.getElementById('notice-title-input').value = '';
+    document.getElementById('notice-body-input').value = '';
+    await renderNoticeView();
+  }catch(e){
+    alert('投稿に失敗しました：' + e.message);
+  }
+}
+
+async function renderNoticeView(){
+  const wrap = document.getElementById('notice-list-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const list = await callGAS('getMemberNotices', 20);
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">投稿がありません</div>';
+      return;
+    }
+    wrap.innerHTML = list.map((r, i) => `
+      <div style="padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:11.5px;color:var(--ink-faint);margin-bottom:4px">${escapeHtml(r[0])}／${escapeHtml(r[3])}</div>
+          <div style="font-weight:700;font-size:14px">${escapeHtml(r[1])}</div>
+          <div style="font-size:13px;color:var(--ink-soft);margin-top:4px;white-space:pre-line">${escapeHtml(r[2])}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="unpublishNoticeRow(${list.length - i})">非公開</button>
+      </div>`).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function unpublishNoticeRow(rowIndex){
+  if (!confirm('このお知らせを非公開にしますか？')) return;
+  try{
+    await callGAS('unpublishMemberNotice', rowIndex);
+    await renderNoticeView();
+  }catch(e){
+    alert('処理に失敗しました：' + e.message);
+  }
+}
+
+// ===== 操作ログ（出席ログの直近表示） =====
+async function renderLogView(){
+  const wrap = document.getElementById('log-table-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const logs = await callGAS('getAttendanceLog');
+    const recent = (logs||[]).slice().reverse().slice(0, 100);
+    if (!recent.length){
+      wrap.innerHTML = '<div class="empty-state">出席ログがありません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>日付</th><th>場所</th><th>種目</th><th>お名前</th><th>種別</th><th>金額</th></tr></thead>
+      <tbody>${recent.map(r => `
+        <tr>
+          <td>${escapeHtml(r[0])}</td>
+          <td>${escapeHtml(r[1])}</td>
+          <td>${escapeHtml(r[2])}</td>
+          <td>${escapeHtml(r[3])}</td>
+          <td>${escapeHtml(r[5])}</td>
+          <td>${escapeHtml(r[6])}円</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
   }
 }
 
