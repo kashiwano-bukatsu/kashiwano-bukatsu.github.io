@@ -318,6 +318,19 @@ tr:hover td{background:var(--card-soft);}
       <div class="nav-left"><span class="nav-icon">○</span>体験者管理</div>
       <span class="nav-badge zero" id="badge-temp">0</span>
     </div>
+    <div class="nav-item" data-view="member" onclick="switchView('member')">
+      <div class="nav-left"><span class="nav-icon">⚙</span>会員管理</div>
+    </div>
+    <div class="nav-item" data-view="schedule" onclick="switchView('schedule')">
+      <div class="nav-left"><span class="nav-icon">▤</span>予定・抽選</div>
+    </div>
+    <div class="nav-item" data-view="ops" onclick="switchView('ops')">
+      <div class="nav-left"><span class="nav-icon">$</span>運営記録</div>
+    </div>
+    <div class="nav-item" data-view="messages" onclick="switchView('messages')">
+      <div class="nav-left"><span class="nav-icon">✉</span>メッセージ</div>
+      <span class="nav-badge zero" id="badge-messages">0</span>
+    </div>
     <div class="nav-item" data-view="price" onclick="switchView('price')">
       <div class="nav-left"><span class="nav-icon">¥</span>価格・キャンペーン管理</div>
     </div>
@@ -400,6 +413,33 @@ tr:hover td{background:var(--card-soft);}
       </div>
     </div>
 
+    <!-- ===== 会員管理（検索・種別変更） ===== -->
+    <div class="view" id="view-member">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>会員検索</div>
+        <input id="member-search-input" type="text" placeholder="ニックネーム・フルネームで検索" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" onkeydown="if(event.key==='Enter')searchMemberAdmin()">
+        <button class="btn btn-primary btn-sm" onclick="searchMemberAdmin()" style="margin-bottom:14px;margin-left:8px">検索</button>
+        <div id="member-search-wrap"><div class="empty-state">名前を入力して検索してください</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>運営メンバー追加</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:600px">
+          <input id="staff-name" type="text" placeholder="氏名（漢字）" style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="staff-kana" type="text" placeholder="フリガナ" style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="staff-nickname" type="text" placeholder="ニックネーム" style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <select id="staff-role" style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="運営">運営</option>
+            <option value="代表">代表</option>
+            <option value="部長">部長</option>
+            <option value="本部">本部</option>
+          </select>
+          <input id="staff-dob" type="text" placeholder="生年月日（8桁・例20000101）" style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="staff-password" type="text" placeholder="パスワード" style="flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addStaffMemberAdmin()" style="margin-top:12px">登録する</button>
+      </div>
+    </div>
+
     <!-- ===== チケット管理 ===== -->
     <div class="view" id="view-ticket">
       <div class="card">
@@ -428,6 +468,128 @@ tr:hover td{background:var(--card-soft);}
       <div class="card">
         <div class="card-title"><div class="dot"></div>投稿済み一覧</div>
         <div id="notice-list-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 予定・抽選 ===== -->
+    <div class="view" id="view-schedule">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>直近の開催予定（種目別）</div>
+        <div id="schedule-list-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>新規開催登録</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;max-width:680px">
+          <div id="sch-date-selects" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:680px;margin-top:10px">
+          <select id="sch-sport" onchange="checkScheduleShuttle()" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="バスケットボール">バスケットボール</option>
+            <option value="バドミントン">バドミントン</option>
+            <option value="バレーボール">バレーボール</option>
+          </select>
+          <select id="sch-place" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px"></select>
+          <select id="sch-court" onchange="calcScheduleCourtFee()" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="">面（任意）</option>
+            <option value="AB">AB面</option>
+            <option value="CD">CD面</option>
+          </select>
+          <input id="sch-court-fee" type="number" placeholder="施設利用料" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="sch-fee" type="number" placeholder="参加費（通常）" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <div id="sch-shuttle-field" style="display:none;flex:1;min-width:120px"><input id="sch-shuttle" type="number" placeholder="シャトル単価" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;box-sizing:border-box"></div>
+          <select id="sch-responsible" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px"></select>
+          <input id="sch-memo" type="text" placeholder="メモ（任意）" style="flex:2;min-width:200px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addScheduleAdmin()" style="margin-top:12px">登録する</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>抽選データ</div>
+        <textarea id="lottery-csv-input" placeholder="CSV貼り付け（日付,時間,種目,面,ライバル数,参加者（/区切り））" rows="3" style="width:100%;max-width:680px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;margin-bottom:8px;box-sizing:border-box;font-family:monospace"></textarea>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-primary btn-sm" onclick="importLotteryCSVAdmin()">CSVを登録</button>
+          <button class="btn btn-primary btn-sm" onclick="confirmLotteryToScheduleAdmin()">当選枠をスケジュールに反映</button>
+          <button class="btn btn-danger btn-sm" onclick="clearLotteryAdmin()">全削除</button>
+        </div>
+        <div id="lottery-list-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 運営記録 ===== -->
+    <div class="view" id="view-ops">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>サマリー</div>
+        <div id="ops-summary-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>現金出納</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:600px;margin-bottom:10px">
+          <select id="ops-cash-type" onchange="updateOpsSubjects()" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="収入">収入</option>
+            <option value="支出">支出</option>
+            <option value="クレカ精算">クレカ精算</option>
+          </select>
+          <select id="ops-cash-subject" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px"></select>
+          <input id="ops-cash-amount" type="number" placeholder="金額" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-cash-memo" type="text" placeholder="メモ" style="flex:2;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <button class="btn btn-primary btn-sm" onclick="addCashAdmin()">記録する</button>
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:14px">
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">現金残高</div><div id="ops-cash-balance" style="font-size:20px;font-weight:800">¥0</div></div>
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">支出合計</div><div id="ops-cash-expense" style="font-size:20px;font-weight:800">¥0</div></div>
+        </div>
+        <div id="ops-cash-list-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>シャトル在庫</div>
+        <div style="display:flex;gap:24px;margin-bottom:14px">
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">在庫（箱）</div><div id="ops-shuttle-total" style="font-size:20px;font-weight:800">-</div></div>
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">在庫（個）</div><div id="ops-shuttle-remaining" style="font-size:20px;font-weight:800">-</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:600px;margin-bottom:8px">
+          <input id="ops-stock-count" type="number" placeholder="購入本数" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-stock-price" type="number" placeholder="購入金額" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-stock-memo" type="text" placeholder="メモ" style="flex:2;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <button class="btn btn-primary btn-sm" onclick="addStockWithCashAdmin()">購入登録（現金出納にも記録）</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:600px">
+          <select id="ops-adjust-type" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="plus">追加</option>
+            <option value="minus">減算</option>
+          </select>
+          <input id="ops-adjust-count" type="number" placeholder="個数" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <button class="btn btn-primary btn-sm" onclick="doAdjustStockAdmin()">在庫を調整</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>備品管理</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:680px;margin-bottom:10px">
+          <input id="ops-eq-date" type="date" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-eq-category" type="text" placeholder="カテゴリ" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-eq-name" type="text" placeholder="品名" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-eq-qty" type="number" placeholder="数量" style="flex:1;min-width:80px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-eq-price" type="number" placeholder="金額" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <input id="ops-eq-memo" type="text" placeholder="メモ" style="flex:2;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <button class="btn btn-primary btn-sm" onclick="addEquipmentWithCashAdmin()">登録する（現金出納にも記録）</button>
+        </div>
+        <div id="ops-equipment-list-wrap"><div class="empty-state">読み込み中...</div></div>
+      </div>
+    </div>
+
+    <!-- ===== メッセージ ===== -->
+    <div class="view" id="view-messages">
+      <div class="card" style="display:flex;gap:0;padding:0;overflow:hidden">
+        <div style="width:280px;border-right:1px solid var(--line);flex-shrink:0;max-height:640px;overflow-y:auto">
+          <div style="padding:14px"><input id="msg-filter-input" type="text" placeholder="名前で検索" oninput="filterMsgList()" style="width:100%;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;box-sizing:border-box"></div>
+          <div id="msg-member-list"><div class="loading-text" style="padding:0 14px">読み込み中...</div></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;min-height:500px">
+          <div id="msg-chat-header" style="padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:14.5px">会員を選択してください</div>
+          <div id="msg-chat-body" style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:8px"></div>
+          <div id="msg-chat-input-area" style="display:none;padding:12px 14px;border-top:1px solid var(--line);gap:8px">
+            <textarea id="msg-chat-input" rows="1" placeholder="メッセージを入力" style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;resize:none;box-sizing:border-box"></textarea>
+            <button class="btn btn-primary btn-sm" onclick="sendChatMessageAdmin()">送信</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -477,6 +639,10 @@ function switchView(view){
 
   if (view === 'approval') renderApprovalList();
   if (view === 'temp') renderTempList();
+  if (view === 'member') { /* 検索待ち、何もしない */ }
+  if (view === 'schedule') renderScheduleView();
+  if (view === 'ops') renderOpsView();
+  if (view === 'messages') renderMessagesView();
   if (view === 'ticket') renderTicketView();
   if (view === 'price') renderPriceView();
   if (view === 'notice') renderNoticeView();
@@ -928,6 +1094,475 @@ async function renderLogView(){
     </table>`;
   }catch(e){
     wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+window.addEventListener('load', () => {
+  loadDashboard();
+});
+
+// ===== 会員管理（検索・種別変更） =====
+const MEMBER_TYPE_OPTIONS = ['カシワのBUKATSU会員', 'ファミリー会員', 'みんなのBUKATSU会員', 'ビジター会員', '応援団', '運営', '代表', '部長', '本部'];
+
+async function searchMemberAdmin(){
+  const keyword = (document.getElementById('member-search-input').value || '').trim();
+  const wrap = document.getElementById('member-search-wrap');
+  if (!keyword){
+    wrap.innerHTML = '<div class="empty-state">名前を入力して検索してください</div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="loading-text">検索中...</div>';
+  try{
+    const [results, persons] = await Promise.all([
+      callGAS('searchMemberProfile', keyword),
+      getPersonMaster()
+    ]);
+    if (!results || !results.length){
+      wrap.innerHTML = '<div class="empty-state">見つかりませんでした</div>';
+      return;
+    }
+    const nameMap = buildNameMap(persons);
+    wrap.innerHTML = results.map(r => {
+      const typeOptHtml = MEMBER_TYPE_OPTIONS.map(t => `<option value="${escapeHtml(t)}" ${t === r.type ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
+      const referredBy = r.referredBy ? (nameMap[r.referredBy] || r.referredBy) : 'なし';
+      const safeFullname = escapeHtml(r.fullname).replace(/'/g, "\\'");
+      return `<div style="padding:14px 0;border-bottom:1px solid var(--line)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:15px;font-weight:700">${escapeHtml(r.nickname)} <span style="font-size:12px;color:var(--ink-faint);font-weight:400">（${escapeHtml(r.fullname)}）</span></div>
+            <div style="font-size:12.5px;color:var(--ink-faint);margin-top:4px;line-height:1.8">
+              現在の種別：<span class="badge badge-gold">${escapeHtml(r.type)}</span>　
+              初回参加日：${escapeHtml(r.joinDate)}　スポーツ：${escapeHtml(r.sport||'-')}　紹介者：${escapeHtml(referredBy)}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="member-type-${escapeHtml(r.internalId)}" style="padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:13px">${typeOptHtml}</select>
+            <button class="btn btn-primary btn-sm" onclick="changeMemberType('${safeFullname}','${escapeHtml(r.internalId)}')">種別を変更</button>
+          </div>
+        </div>
+        ${r.referrals && r.referrals.length ? `<div style="margin-top:10px;background:var(--bg-soft);border-radius:10px;padding:10px 12px">
+          <div style="font-size:12px;color:var(--ink-faint);margin-bottom:6px">紹介した人（${r.referrals.length}名）</div>
+          ${r.referrals.map(ref => `<div style="font-size:13px;padding:3px 0">${escapeHtml(ref.nickname)} <span style="font-size:11px;color:var(--ink-faint)">${escapeHtml(ref.joinDate)}</span></div>`).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function changeMemberType(fullname, internalId){
+  const sel = document.getElementById('member-type-' + internalId);
+  const newType = sel ? sel.value : '';
+  if (!newType) return;
+  if (!confirm(fullname + ' さんの種別を「' + newType + '」に変更します。よろしいですか？')) return;
+  try{
+    await callGAS('updateAttendeeType', fullname, newType);
+    await getPersonMaster(true);
+    showToastAdmin('種別を変更しました');
+    await searchMemberAdmin();
+  }catch(e){
+    alert('変更に失敗しました：' + e.message);
+  }
+}
+
+function showToastAdmin(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0.95';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+
+const SPORT_ICON_ADMIN = {'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+
+// ===== 運営メンバー追加 =====
+async function addStaffMemberAdmin(){
+  const name = document.getElementById('staff-name').value.trim();
+  const kana = document.getElementById('staff-kana').value.trim();
+  const nickname = document.getElementById('staff-nickname').value.trim();
+  const role = document.getElementById('staff-role').value;
+  const dob = document.getElementById('staff-dob').value.trim();
+  const password = document.getElementById('staff-password').value.trim();
+  if (!name || !kana || !nickname || !password) return alert('名前（漢字・カナ・ニックネーム）とパスワードをすべて入力してください');
+  if (dob.length !== 8) return alert('生年月日は8桁で入力してください');
+  try{
+    const memberNumber = await callGAS('addStaffMember', name, kana, nickname, role, password, dob);
+    ['staff-name','staff-kana','staff-nickname','staff-dob','staff-password'].forEach(id => document.getElementById(id).value = '');
+    showToastAdmin(nickname + ' さんを登録しました（会員番号：' + memberNumber + '）');
+  }catch(e){
+    alert('登録に失敗しました：' + e.message);
+  }
+}
+
+// ===== 予定・抽選 =====
+async function renderScheduleView(){
+  buildScheduleDateSelects();
+  loadSchedulePlaces();
+  loadScheduleResponsibles();
+  renderScheduleList();
+  renderLotteryList();
+}
+
+async function renderScheduleList(){
+  const wrap = document.getElementById('schedule-list-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const schedules = await callGAS('getUpcomingSchedules', '全て');
+    const SPORTS = ['バスケットボール', 'バドミントン', 'バレーボール'];
+    const targetSch = SPORTS.map(sp => schedules.find(s => s[4] === sp)).filter(Boolean);
+    if (!targetSch.length){
+      wrap.innerHTML = '<div class="empty-state">直近の開催予定がありません</div>';
+      return;
+    }
+    const tempAttendees = await callGAS('getTempAttendees');
+    const results = {};
+    await Promise.all(targetSch.map(async s => {
+      const reservations = await callGAS('getReservations', s[0], s[4]);
+      const active = reservations.filter(r => (r[7] || '⭕') !== '❌');
+      const reservedNames = new Set(active.map(r => r[4]));
+      const tempMembers = tempAttendees.filter(t => t[2] === s[4] && t[3] === s[0] && !reservedNames.has(t[1])).map(t => t[1]);
+      results[s[4]] = { date: s[0], place: s[2], members: [...active.map(r => r[5] || r[4]), ...tempMembers] };
+    }));
+    wrap.innerHTML = SPORTS.map(sp => {
+      const data = results[sp]; if (!data) return '';
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">${SPORT_ICON_ADMIN[sp]||''}</span>
+            <div><div style="font-weight:700;font-size:14px">${escapeHtml(sp)}</div><div style="font-size:11.5px;color:var(--ink-faint)">${escapeHtml(data.date)} ／ ${escapeHtml(data.place)}</div></div>
+          </div>
+          <div style="font-size:18px;font-weight:800">${data.members.length}<span style="font-size:11.5px;color:var(--ink-faint)">人</span></div>
+        </div>
+        <div style="margin-top:6px;font-size:12.5px;color:var(--ink-soft)">${data.members.map(escapeHtml).join('、') || '予約者がいません'}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function buildScheduleDateSelects(){
+  const now = new Date(), y = now.getFullYear();
+  let html = '<select id="sch-y">'; for (let i = y; i <= y + 2; i++) html += `<option value="${i}">${i}年</option>`; html += '</select>';
+  html += '<select id="sch-m">'; for (let i = 1; i <= 12; i++) html += `<option value="${i}" ${i === now.getMonth() + 1 ? 'selected' : ''}>${i}月</option>`; html += '</select>';
+  html += '<select id="sch-d">'; for (let i = 1; i <= 31; i++) html += `<option value="${i}" ${i === now.getDate() ? 'selected' : ''}>${i}日</option>`; html += '</select>';
+  html += '<select id="sch-h">'; for (let i = 6; i <= 22; i++) html += `<option value="${i}" ${i === 19 ? 'selected' : ''}>${i}時</option>`; html += '</select>';
+  html += '<select id="sch-min">'; ['00','15','30','45'].forEach(m => html += `<option value="${m}">${m}分</option>`); html += '</select>';
+  document.getElementById('sch-date-selects').innerHTML = html;
+}
+function getScheduleSelectedDate(){ const y=document.getElementById('sch-y').value, m=String(document.getElementById('sch-m').value).padStart(2,'0'), d=String(document.getElementById('sch-d').value).padStart(2,'0'); return `${y}/${m}/${d}`; }
+function getScheduleSelectedTime(){ const h=String(document.getElementById('sch-h').value).padStart(2,'0'), min=document.getElementById('sch-min').value; return `${h}:${min}`; }
+async function loadSchedulePlaces(){ try{ const data = await callGAS('getPlaces'); document.getElementById('sch-place').innerHTML = data.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join(''); }catch(e){} }
+async function loadScheduleResponsibles(){ try{ const data = await callGAS('getStaffMembers'); document.getElementById('sch-responsible').innerHTML = '<option value="">担当者（任意）</option>' + data.map(s => `<option value="${escapeHtml(s[0])}">${escapeHtml(s[0])}</option>`).join(''); }catch(e){} }
+function checkScheduleShuttle(){ document.getElementById('sch-shuttle-field').style.display = document.getElementById('sch-sport').value === 'バドミントン' ? 'block' : 'none'; }
+function calcScheduleCourtFee(){ const court = document.getElementById('sch-court').value; if (court) document.getElementById('sch-court-fee').value = (court === 'AB' || court === 'CD') ? 2650 : 1320; }
+
+async function addScheduleAdmin(){
+  const date = getScheduleSelectedDate(), time = getScheduleSelectedTime();
+  const place = document.getElementById('sch-place').value;
+  const court = document.getElementById('sch-court').value;
+  const courtFee = parseInt(document.getElementById('sch-court-fee').value) || 0;
+  const sport = document.getElementById('sch-sport').value;
+  const fee = document.getElementById('sch-fee').value;
+  const shuttle = sport === 'バドミントン' ? document.getElementById('sch-shuttle').value : '';
+  const responsible = document.getElementById('sch-responsible').value;
+  const memo = document.getElementById('sch-memo').value;
+  if (!place) return alert('場所を選択してください');
+  try{
+    await callGAS('addSchedule', [date, time, place, responsible, sport, fee, shuttle, memo, court, courtFee]);
+    showToastAdmin('スケジュールを登録しました！');
+    document.getElementById('sch-fee').value = ''; document.getElementById('sch-memo').value = '';
+    renderScheduleList();
+  }catch(e){
+    alert('登録に失敗しました：' + e.message);
+  }
+}
+
+async function renderLotteryList(){
+  const wrap = document.getElementById('lottery-list-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const data = await callGAS('getLotteryData');
+    if (!data || !data.length){
+      wrap.innerHTML = '<div class="empty-state">抽選データがありません</div>';
+      return;
+    }
+    const sports = ['バドミントン', 'バスケットボール', 'バレーボール'];
+    let html = '';
+    sports.forEach(sport => {
+      const rows = data.filter(r => r[2] === sport);
+      if (!rows.length) return;
+      html += `<div style="font-size:12.5px;font-weight:700;color:var(--ink-faint);margin:14px 0 6px">${SPORT_ICON_ADMIN[sport]||''} ${escapeHtml(sport)}</div>`;
+      rows.forEach(r => {
+        const sheetIndex = data.indexOf(r) + 1;
+        const rival = parseInt(r[4]) || 0;
+        const members = r[5].split('/').filter(m => m);
+        const winRate = Math.round(members.length / (members.length + rival) * 100) || 0;
+        const result = r[6] || '';
+        html += `<div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:700;font-size:13.5px">${escapeHtml(r[0])}（${escapeHtml(r[1])}）${escapeHtml(r[3])}</div>
+            <div style="font-size:11.5px;color:var(--ink-faint)">ライバル${rival}人／勝率${winRate}% ／ ${escapeHtml(members.join('・'))}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <select onchange="updateRivalAdmin(${sheetIndex},this.value)" style="padding:6px 8px;border:1.5px solid var(--line);border-radius:7px;font-size:12.5px">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${n===rival?'selected':''}>${n}人</option>`).join('')}</select>
+            <select onchange="updateResultAdmin(${sheetIndex},this.value)" style="padding:6px 8px;border:1.5px solid var(--line);border-radius:7px;font-size:12.5px">
+              <option value="">未定</option>
+              <option value="当選" ${result==='当選'?'selected':''}>当選</option>
+              <option value="落選" ${result==='落選'?'selected':''}>落選</option>
+            </select>
+          </div>
+        </div>`;
+      });
+    });
+    wrap.innerHTML = html || '<div class="empty-state">抽選データがありません</div>';
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+async function importLotteryCSVAdmin(){
+  const raw = document.getElementById('lottery-csv-input').value.trim();
+  if (!raw) return alert('CSVを貼り付けてください');
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l), rows = [];
+  lines.forEach(line => {
+    const cols = line.split(/[,，]/);
+    if (cols.length < 6) return;
+    const members = cols[5].trim();
+    const memberCount = members.split('/').filter(m => m).length;
+    const rival = parseInt(cols[4].trim()) || 0;
+    const winRate = Math.round(memberCount / (memberCount + rival) * 100) || 0;
+    rows.push([cols[0].trim(), cols[1].trim(), cols[2].trim(), cols[3].trim(), rival, members, '', memberCount, winRate]);
+  });
+  try{
+    await callGAS('setLotteryData', rows);
+    document.getElementById('lottery-csv-input').value = '';
+    showToastAdmin('抽選データを登録しました！');
+    renderLotteryList();
+  }catch(e){ alert('登録に失敗しました：' + e.message); }
+}
+async function clearLotteryAdmin(){
+  if (!confirm('抽選データを全削除しますか？')) return;
+  try{ await callGAS('clearLotteryData'); showToastAdmin('削除しました'); renderLotteryList(); }catch(e){ alert('エラー：' + e.message); }
+}
+async function confirmLotteryToScheduleAdmin(){
+  if (!confirm('当選枠をスケジュールに反映しますか？')) return;
+  try{ await callGAS('confirmLotteryToSchedule'); showToastAdmin('反映しました！'); renderScheduleList(); }catch(e){ alert('エラー：' + e.message); }
+}
+async function updateRivalAdmin(idx, val){ try{ await callGAS('updateLotteryRival', idx, parseInt(val)); renderLotteryList(); }catch(e){} }
+async function updateResultAdmin(idx, val){ try{ await callGAS('updateLotteryResult', idx, val); renderLotteryList(); }catch(e){} }
+
+// ===== 運営記録（サマリー・現金出納・シャトル在庫・備品） =====
+const OPS_SUBJECTS = { '収入': ['参加費', '補助金', '寄付', 'その他収入'], '支出': ['会場費', '交通費', '備品費', 'シャトル購入', 'その他支出'], 'クレカ精算': ['会場費', '交通費', '備品費', 'シャトル購入', 'その他'] };
+function updateOpsSubjects(){ document.getElementById('ops-cash-subject').innerHTML = OPS_SUBJECTS[document.getElementById('ops-cash-type').value].map(s => `<option>${escapeHtml(s)}</option>`).join(''); }
+
+async function renderOpsView(){
+  updateOpsSubjects();
+  renderOpsSummary();
+  renderOpsCash();
+  renderOpsEquipment();
+}
+
+async function renderOpsSummary(){
+  const wrap = document.getElementById('ops-summary-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const d = await callGAS('getStaffSummaryData');
+    const reports = d.reports || [], cashData = d.cashLedger || [];
+    const counts = {};
+    (d.sessionCounts || []).forEach(r => { counts[r[0]] = Number(r[1]); });
+    reports.forEach(r => { counts[r[3]] = (counts[r[3]] || 0) + 1; });
+    let totInc = 0, totExp = 0;
+    reports.forEach(r => { totInc += Number(r[5] || 0); });
+    cashData.forEach(r => { const amt = Number(r[2] || 0); if (r[1] === '収入') totInc += amt; else totExp += amt; });
+    const pl = totInc - totExp;
+    wrap.innerHTML = `
+      <div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:14px">
+        <div><div style="font-size:11.5px;color:var(--ink-faint)">総収入</div><div style="font-size:20px;font-weight:800">¥${totInc.toLocaleString()}</div></div>
+        <div><div style="font-size:11.5px;color:var(--ink-faint)">総支出</div><div style="font-size:20px;font-weight:800">¥${totExp.toLocaleString()}</div></div>
+        <div><div style="font-size:11.5px;color:var(--ink-faint)">損益</div><div style="font-size:20px;font-weight:800;color:${pl>=0?'#2e7d32':'#c0392b'}">¥${pl.toLocaleString()}</div></div>
+        <div><div style="font-size:11.5px;color:var(--ink-faint)">回数券販売</div><div style="font-size:20px;font-weight:800">${Math.round(d.ticketSales/11)}セット</div></div>
+      </div>
+      <div>${Object.entries(counts).map(([sport, count]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px"><div>${escapeHtml(sport)}</div><div style="font-weight:700">第${count}回</div></div>`).join('') || ''}</div>
+    `;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function renderOpsCash(){
+  const listWrap = document.getElementById('ops-cash-list-wrap');
+  try{
+    const [cashData, shuttle] = await Promise.all([callGAS('getCashLedger'), callGAS('getShuttleStock')]);
+    document.getElementById('ops-shuttle-total').textContent = shuttle.total + '箱';
+    document.getElementById('ops-shuttle-remaining').textContent = shuttle.individual + '個';
+    if (!cashData || !cashData.length || !cashData[0][0]){
+      listWrap.innerHTML = '<div class="empty-state">記録がありません</div>';
+      document.getElementById('ops-cash-balance').textContent = '¥0';
+      document.getElementById('ops-cash-expense').textContent = '¥0';
+      return;
+    }
+    let balance = 0, expense = 0;
+    cashData.forEach(r => { const amt = Number(r[2] || 0); if (r[1] === '収入') balance += amt; else { balance -= amt; expense += amt; } });
+    document.getElementById('ops-cash-balance').textContent = '¥' + balance.toLocaleString();
+    document.getElementById('ops-cash-expense').textContent = '¥' + expense.toLocaleString();
+    listWrap.innerHTML = cashData.slice().reverse().slice(0, 50).map(r => {
+      const amt = Number(r[2] || 0), isIn = r[1] === '収入';
+      return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <div><div style="color:var(--ink-faint);font-size:11.5px">${escapeHtml(r[0])}／${escapeHtml(r[1])}／${escapeHtml(r[3]||'')}</div><div>${escapeHtml(r[4]||'')}</div></div>
+        <div style="font-weight:700;color:${isIn?'#2e7d32':'#c0392b'}">${isIn?'+':'-'}¥${amt.toLocaleString()}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    listWrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function addCashAdmin(){
+  const type = document.getElementById('ops-cash-type').value;
+  const subject = document.getElementById('ops-cash-subject').value;
+  const amount = parseInt(document.getElementById('ops-cash-amount').value) || 0;
+  const memo = document.getElementById('ops-cash-memo').value;
+  if (!amount) return alert('金額を入力してください');
+  try{
+    await callGAS('addCashEntry', [new Date().toLocaleDateString('ja-JP'), type, amount, subject, memo]);
+    document.getElementById('ops-cash-amount').value = ''; document.getElementById('ops-cash-memo').value = '';
+    showToastAdmin('記録しました！');
+    renderOpsCash();
+  }catch(e){ alert('記録に失敗しました：' + e.message); }
+}
+
+async function doAdjustStockAdmin(){
+  const type = document.getElementById('ops-adjust-type').value;
+  const count = parseInt(document.getElementById('ops-adjust-count').value) || 0;
+  if (!count) return alert('個数を入力してください');
+  try{
+    await callGAS('addShuttleStock', '', type === 'minus' ? -count : count, type === 'minus' ? '手動減算' : '手動追加');
+    document.getElementById('ops-adjust-count').value = '';
+    showToastAdmin('調整しました！');
+    renderOpsCash();
+  }catch(e){ alert('調整に失敗しました：' + e.message); }
+}
+
+async function addStockWithCashAdmin(){
+  const count = parseInt(document.getElementById('ops-stock-count').value) || 0;
+  const price = parseInt(document.getElementById('ops-stock-price').value) || 0;
+  const memo = document.getElementById('ops-stock-memo').value || 'シャトル購入';
+  if (!count || !price) return alert('本数と金額を入力してください');
+  try{
+    await callGAS('addShuttleStock', count, count * 12, memo);
+    await callGAS('addCashEntry', [new Date().toLocaleDateString('ja-JP'), '支出', price, 'シャトル購入', memo]);
+    document.getElementById('ops-stock-count').value = ''; document.getElementById('ops-stock-price').value = ''; document.getElementById('ops-stock-memo').value = '';
+    showToastAdmin('シャトル購入登録完了！');
+    renderOpsCash();
+  }catch(e){ alert('登録に失敗しました：' + e.message); }
+}
+
+async function renderOpsEquipment(){
+  const wrap = document.getElementById('ops-equipment-list-wrap');
+  try{
+    const data = await callGAS('getEquipment');
+    wrap.innerHTML = !data || !data.length ? '<div class="empty-state">備品記録がありません</div>' : data.slice().reverse().slice(0, 50).map(r => `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <div><div style="color:var(--ink-faint);font-size:11.5px">${escapeHtml(r[0])}／${escapeHtml(r[1])}</div><div>${escapeHtml(r[2])} × ${escapeHtml(r[3])}${r[5] ? '　📌'+escapeHtml(r[5]) : ''}</div></div>
+        <div style="font-weight:700">¥${Number(r[4]||0).toLocaleString()}</div>
+      </div>`).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function addEquipmentWithCashAdmin(){
+  const date = document.getElementById('ops-eq-date').value;
+  const category = document.getElementById('ops-eq-category').value;
+  const name = document.getElementById('ops-eq-name').value.trim();
+  const qty = parseInt(document.getElementById('ops-eq-qty').value) || 0;
+  const price = parseInt(document.getElementById('ops-eq-price').value) || 0;
+  const memo = document.getElementById('ops-eq-memo').value;
+  if (!date || !name || !price) return alert('日付・品名・金額を入力してください');
+  try{
+    await callGAS('addEquipment', [date, category, name, qty, price, memo]);
+    await callGAS('addCashEntry', [new Date().toLocaleDateString('ja-JP'), '支出', price, '備品費', name + (memo ? '（' + memo + '）' : '')]);
+    ['ops-eq-date','ops-eq-category','ops-eq-name','ops-eq-qty','ops-eq-price','ops-eq-memo'].forEach(id => document.getElementById(id).value = '');
+    showToastAdmin('備品購入登録完了！');
+    renderOpsEquipment();
+    renderOpsCash();
+  }catch(e){ alert('登録に失敗しました：' + e.message); }
+}
+
+// ===== メッセージ（DMチャット） =====
+let _msgMembers = [];
+let _msgCurrentFullname = null;
+async function renderMessagesView(){
+  const listEl = document.getElementById('msg-member-list');
+  listEl.innerHTML = '<div class="loading-text" style="padding:0 14px">読み込み中...</div>';
+  try{
+    _msgMembers = await callGAS('getMembersWithUnread');
+    const totalUnread = _msgMembers.reduce((s, m) => s + (m.unread || 0), 0);
+    setBadge('badge-messages', totalUnread);
+    renderMsgMemberList(_msgMembers);
+  }catch(e){
+    listEl.innerHTML = '<div class="empty-state" style="padding:0 14px">読み込みエラー</div>';
+  }
+}
+function filterMsgList(){
+  const q = (document.getElementById('msg-filter-input').value || '').trim();
+  const filtered = q ? _msgMembers.filter(m => (m.nickname||'').includes(q) || (m.fullname||'').includes(q)) : _msgMembers;
+  renderMsgMemberList(filtered);
+}
+function renderMsgMemberList(members){
+  const listEl = document.getElementById('msg-member-list');
+  if (!members.length){ listEl.innerHTML = '<div class="empty-state" style="padding:0 14px">該当する会員がいません</div>'; return; }
+  listEl.innerHTML = members.map(m => `
+    <div onclick="openChatRoomAdmin('${escapeHtml(m.fullname).replace(/'/g,"\\'")}','${escapeHtml(m.nickname).replace(/'/g,"\\'")}')" style="padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center;${_msgCurrentFullname===m.fullname?'background:var(--bg-soft)':''}">
+      <div style="min-width:0">
+        <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.nickname||m.fullname)}</div>
+        <div style="font-size:11px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.lastMsg ? escapeHtml(m.lastMsg.message) : ''}</div>
+      </div>
+      ${m.unread ? `<span class="nav-badge" style="position:static">${m.unread}</span>` : ''}
+    </div>`).join('');
+}
+
+async function openChatRoomAdmin(fullname, nickname){
+  _msgCurrentFullname = fullname;
+  document.getElementById('msg-chat-header').textContent = nickname;
+  document.getElementById('msg-chat-input-area').style.display = 'flex';
+  const body = document.getElementById('msg-chat-body');
+  body.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    await callGAS('markConversationAsRead', fullname);
+    const msgs = await callGAS('getConversation', fullname);
+    renderChatMessagesAdmin(msgs);
+    renderMsgMemberList(_msgMembers);
+  }catch(e){
+    body.innerHTML = '<div class="empty-state">読み込みエラー</div>';
+  }
+}
+
+function renderChatMessagesAdmin(msgs){
+  const body = document.getElementById('msg-chat-body');
+  if (!msgs.length){ body.innerHTML = '<div class="empty-state">まだメッセージがありません</div>'; return; }
+  body.innerHTML = msgs.map(m => {
+    const isFromMember = m.direction === 'member→staff';
+    return `<div style="align-self:${isFromMember?'flex-start':'flex-end'};max-width:75%">
+      <div style="background:${isFromMember?'var(--bg-soft)':'var(--accent)'};color:${isFromMember?'var(--ink)':'#fff'};padding:9px 13px;border-radius:12px;font-size:13.5px;white-space:pre-line">${escapeHtml(m.message)}</div>
+      <div style="font-size:10.5px;color:var(--ink-faint);margin-top:2px;text-align:${isFromMember?'left':'right'}">${escapeHtml(m.datetime)}</div>
+    </div>`;
+  }).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+async function sendChatMessageAdmin(){
+  const input = document.getElementById('msg-chat-input');
+  const text = input.value.trim();
+  if (!text || !_msgCurrentFullname) return;
+  try{
+    await callGAS('sendMessage', _msgCurrentFullname, text, false);
+    input.value = '';
+    const msgs = await callGAS('getConversation', _msgCurrentFullname);
+    renderChatMessagesAdmin(msgs);
+  }catch(e){
+    alert('送信に失敗しました：' + e.message);
   }
 }
 
