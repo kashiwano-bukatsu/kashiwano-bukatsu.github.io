@@ -816,20 +816,23 @@ async function renderTempList(){
     const persons = await getPersonMaster();
     const nameMap = buildNameMap(persons);
     const today = new Date(); today.setHours(0,0,0,0);
-    let list = persons.filter(p => {
-      if (p.status !== '体験予定') return false;
+    const tempAll = persons.filter(p => p.status === '体験予定');
+    let list = tempAll.filter(p => {
       const d = extractScheduleDate(p.note);
-      return !!d && d >= today; // 予定日が無い（移行データ等）・期限切れは非表示
+      return !!d && d >= today; // 予定日が無い（移行データ等）・期限切れは下のアコーディオンへ
     });
-    if (keyword) list = list.filter(p => (p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword));
-    list = list.slice().sort((a,b) => (b.internalId||'') > (a.internalId||'') ? 1 : -1); // 新しい登録が上に来るように
-    if (!list.length){
-      wrap.innerHTML = '<div class="empty-state">該当する体験予定の方はいません</div>';
-      return;
+    let pastList = tempAll.filter(p => {
+      const d = extractScheduleDate(p.note);
+      return !d || d < today; // 体験済みだが会員・ビジターにもならなかった人
+    });
+    if (keyword){
+      list = list.filter(p => (p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword));
+      pastList = pastList.filter(p => (p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword));
     }
-    wrap.innerHTML = `<table>
-      <thead><tr><th>内部ID</th><th>お名前</th><th>種目</th><th>登録日</th><th>紹介者</th><th>備考</th></tr></thead>
-      <tbody>${list.map(p => `
+    list = list.slice().sort((a,b) => (b.internalId||'') > (a.internalId||'') ? 1 : -1); // 新しい登録が上に来るように
+    pastList = pastList.slice().sort((a,b) => (b.internalId||'') > (a.internalId||'') ? 1 : -1);
+
+    const buildRows = (arr) => arr.map(p => `
         <tr>
           <td>${escapeHtml(p.internalId)}</td>
           <td>${escapeHtml(p.fullname)}</td>
@@ -837,8 +840,27 @@ async function renderTempList(){
           <td>${escapeHtml(p.joinDate||'')}</td>
           <td>${escapeHtml(referrerLabel(p.referrerId, nameMap))}</td>
           <td style="font-size:11.5px;color:var(--ink-faint)">${escapeHtml((p.note||'').slice(0,40))}</td>
-        </tr>`).join('')}</tbody>
-    </table>`;
+        </tr>`).join('');
+
+    const mainHtml = !list.length
+      ? '<div class="empty-state">該当する体験予定の方はいません</div>'
+      : `<table>
+          <thead><tr><th>内部ID</th><th>お名前</th><th>種目</th><th>登録日</th><th>紹介者</th><th>備考</th></tr></thead>
+          <tbody>${buildRows(list)}</tbody>
+        </table>`;
+
+    const pastHtml = `
+      <details style="margin-top:18px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-soft);padding:8px 0">体験済み（会員・ビジターにならなかった人）：${pastList.length}件</summary>
+        ${!pastList.length
+          ? '<div class="empty-state">該当する方はいません</div>'
+          : `<table>
+              <thead><tr><th>内部ID</th><th>お名前</th><th>種目</th><th>登録日</th><th>紹介者</th><th>備考</th></tr></thead>
+              <tbody>${buildRows(pastList)}</tbody>
+            </table>`}
+      </details>`;
+
+    wrap.innerHTML = mainHtml + pastHtml;
   }catch(e){
     wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
   }
