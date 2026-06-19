@@ -455,6 +455,10 @@ tr:hover td{background:var(--card-soft);}
         <div id="freeticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
+        <div class="card-title"><div class="dot"></div>半額クーポン保持者</div>
+        <div id="halfticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>回数券モード設定</div>
         <input id="mode-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderModeSearch()">
         <div id="mode-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
@@ -841,10 +845,41 @@ function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ===== チケット管理（回数券購入申請・無料チケット保持者） =====
+// ===== チケット管理（回数券購入申請・無料チケット保持者・半額クーポン保持者） =====
 async function renderTicketView(){
   renderTicketRequestList();
   renderFreeTicketList();
+  renderHalfTicketList();
+}
+
+async function renderHalfTicketList(){
+  const wrap = document.getElementById('halfticket-table-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const rows = await callGAS('getAllHalfPriceTickets');
+    const grouped = {};
+    rows.forEach(r => {
+      if (!grouped[r[1]]) grouped[r[1]] = { count: 0, reasons: [] };
+      grouped[r[1]].count++;
+      grouped[r[1]].reasons.push(r[2]);
+    });
+    const names = Object.keys(grouped);
+    if (!names.length){
+      wrap.innerHTML = '<div class="empty-state">半額クーポンを保持している方はいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>お名前</th><th>枚数</th><th>付与理由</th></tr></thead>
+      <tbody>${names.map(name => `
+        <tr>
+          <td>${escapeHtml(name)}</td>
+          <td><span class="badge badge-gold">${grouped[name].count}枚</span></td>
+          <td style="font-size:12px;color:var(--ink-faint)">${escapeHtml(grouped[name].reasons.join('／'))}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
 }
 
 async function renderFreeTicketList(){
