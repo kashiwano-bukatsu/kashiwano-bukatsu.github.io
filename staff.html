@@ -439,17 +439,70 @@ function renderHome(d) {
 // ===== 当日 =====
 async function loadDailyTab() {
   try {
-    const d = await callGAS('getStaffDailyData');
+    const [d, ticketRows] = await Promise.all([
+      callGAS('getStaffDailyData'),
+      callGAS('getAllTickets')
+    ]);
     // レポート用スケジュール
     pendingSchedules = d.pendingSchedules || [];
     const rSel = document.getElementById('r-staff-select');
     if (rSel) rSel.innerHTML = '<option value="">-- 選択 --</option>' + (d.staffMembers||[]).map(s => `<option value="${s[0]}">${s[0]}</option>`).join('');
+    window._ticketMap = {};
+    (ticketRows||[]).forEach(r => { window._ticketMap[r[0]] = Number(r[3] || 0); });
     renderDailyListFromData(d);
   } catch(e) { document.getElementById('daily-unified-list').innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
 }
 
 const TYPE_ORDER = {'代表':0,'運営':1,'部長':2,'応援団':3,'応援団会員':3,'カシワのBUKATSU会員':4,'カシワ会員':4,'みんなのBUKATSU会員':5,'みんB会員':5,'ビジター会員':6,'体験':7};
 function getTypeOrder(type){ for(const k of Object.keys(TYPE_ORDER)){ if(type&&type.includes(k)) return TYPE_ORDER[k]; } return 8; }
+
+// 種別・利用モードから料金プルダウンの選択肢を組み立てる（チェックイン3画面共通）
+function buildPayOptions(type, isBad, usageMode, ticketRemain){
+  const isFree = ['運営', '代表', '部長', '本部', '特別会員'].includes(type);
+  if (isFree) return [{ label: '¥0（運営）', value: 0 }];
+  if (usageMode === '回数券'){
+    const remainLabel = '（残り' + (ticketRemain != null ? ticketRemain : '-') + '枚）';
+    if (isBad) return [
+      { label: '回数券+¥200' + remainLabel, value: 200, useTicket: true },
+      { label: '回数券のみ' + remainLabel, value: 0, useTicket: true },
+      { label: 'その他（金額を入力）', value: 'custom' }
+    ];
+    return [
+      { label: '回数券を使う' + remainLabel, value: 0, useTicket: true },
+      { label: 'その他（金額を入力）', value: 'custom' }
+    ];
+  }
+  if (['みんB会員', 'みんなのBUKATSU会員'].includes(type)){
+    const base = isBad ? [{ label: '¥400', value: 400 }, { label: '¥200', value: 200 }] : [{ label: '¥200', value: 200 }];
+    return base.concat([{ label: 'その他（金額を入力）', value: 'custom' }]);
+  }
+  if (type === '応援団' || type === '応援団会員') return [{ label: '¥0（応援団）', value: 0 }, { label: 'その他（金額を入力）', value: 'custom' }];
+  const base = isBad
+    ? [{ label: '¥700', value: 700 }, { label: '¥500', value: 500 }, { label: '¥0', value: 0 }]
+    : [{ label: '¥500', value: 500 }, { label: '¥700', value: 700 }, { label: '¥0', value: 0 }];
+  return base.concat([{ label: 'その他（金額を入力）', value: 'custom' }]);
+}
+
+// プルダウンHTML＋「その他」選択時に出すカスタム金額入力欄をまとめて生成
+function buildPaySelectHtml(safeId, options){
+  const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
+  return `<select id="pay-sel-${safeId}" onchange="onPaySelChange('${safeId}')" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>
+    <input type="number" id="pay-custom-${safeId}" placeholder="金額" style="display:none;width:64px;padding:6px;font-size:12px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">`;
+}
+
+// 「その他（金額を入力）」が選ばれたらカスタム金額の入力欄を表示する
+function onPaySelChange(safeId){
+  const sel = document.getElementById('pay-sel-' + safeId);
+  const input = document.getElementById('pay-custom-' + safeId);
+  const box = document.querySelector('#daily-item-' + safeId + ' .daily-checkin-box');
+  if (!sel || !input || !box) return;
+  let isCustom = false;
+  try {
+    const opts = JSON.parse(box.dataset.opts || '[]');
+    isCustom = opts[parseInt(sel.value)] && opts[parseInt(sel.value)].value === 'custom';
+  } catch(e) {}
+  input.style.display = isCustom ? 'inline-block' : 'none';
+}
 
 function renderDailyListFromData(d) {
   const el = document.getElementById('daily-unified-list');
@@ -459,32 +512,27 @@ function renderDailyListFromData(d) {
   window._todaySport = sport;
   const isBad = sport === 'バドミントン';
   const checkedInNames = new Set(d.checkedInNames || []);
+  const ticketMap = window._ticketMap || {};
   const masterMap = {};
   (d.attendees || []).forEach(a => { masterMap[a[1]] = a; });
   const allItems = [];
   (d.reservations || []).forEach(r => {
     if ((r[7] || '⭕') === '❌') return;
     const master = masterMap[r[4]] || {};
-    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', isNew: false });
+    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', usageMode: master[14] || 'スポログ', isNew: false });
   });
   const tempUsers = (d.tempAttendees || []).filter(t => t[0] === d.today && !(d.attendees || []).find(a => a[1] === t[1]));
   tempUsers.forEach(u => {
-    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', isNew: true });
+    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', usageMode: 'スポログ', isNew: true });
   });
   if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
   allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
   el.innerHTML = allItems.map(item => {
     const isChecked = checkedInNames.has(item.fullname);
     const type = item.type;
-    const isFree = ['運営', '代表', '部長', '本部', '特別会員'].includes(type);
-    let options = [];
-    if (isFree) options = [{ label: '¥0（運営）', value: 0 }];
-    else if (['みんB会員', 'みんなのBUKATSU会員'].includes(type)) options = isBad ? [{ label: '¥400', value: 400 }, { label: '¥200', value: 200 }] : [{ label: '¥200', value: 200 }];
-    else if (type === '応援団' || type === '応援団会員') options = [{ label: '¥0（応援団）', value: 0 }];
-    else if (type.includes('回数券')) options = isBad ? [{ label: '回数券+¥200', value: 200, useTicket: true }, { label: '回数券¥0', value: 0, useTicket: true }] : [{ label: '回数券¥0', value: 0, useTicket: true }];
-    else options = isBad ? [{ label: '¥700', value: 700 }, { label: '¥500', value: 500 }, { label: '¥0', value: 0 }] : [{ label: '¥500', value: 500 }, { label: '¥700', value: 700 }, { label: '¥0', value: 0 }];
+    const remain = ticketMap[item.fullname];
+    const options = buildPayOptions(type, isBad, item.usageMode, remain);
     const optData = JSON.stringify(options);
-    const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
     const safeId = item.fullname.replace(/[^a-zA-Z0-9]/g, '');
     if (isChecked) return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a;opacity:0.4"><div style="flex:1;font-size:14px;color:#aaa">${item.nickname}</div><div style="font-size:11px;color:#666">済</div></div>`;
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a" id="daily-item-${safeId}">
@@ -493,7 +541,7 @@ function renderDailyListFromData(d) {
         <div style="font-size:14px;font-weight:600;color:#fff">${item.isNew ? '<span style="font-size:10px;color:#68d391;border:1px solid #68d391;border-radius:4px;padding:1px 4px;margin-right:4px">NEW</span>' : ''}${item.nickname}</div>
         <div style="font-size:11px;color:#aaa">${type}</div>
       </div>
-      <select id="pay-sel-${safeId}" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>
+      ${buildPaySelectHtml(safeId, options)}
     </div>`;
   }).join('');
   document.querySelectorAll('.daily-checkin-box').forEach(cb => {
@@ -506,12 +554,16 @@ async function renderDailyList() {
   const el = document.getElementById('daily-unified-list');
   el.innerHTML = '<div class="loading">読み込み中...</div>';
   try {
-    const [logs, schedules, attendees, tempList] = await Promise.all([
+    const [logs, schedules, attendees, tempList, ticketRows] = await Promise.all([
       callGAS('getAttendanceLog'),
       callGAS('getSchedules'),
       callGAS('getAttendees'),
-      callGAS('getTempAttendees')
+      callGAS('getTempAttendees'),
+      callGAS('getAllTickets')
     ]);
+    const ticketMap = {};
+    (ticketRows||[]).forEach(r => { ticketMap[r[0]] = Number(r[3] || 0); });
+    window._ticketMap = ticketMap;
     const checkedInNames = new Set(logs.filter(l => l[0] === todayFmt).map(l => l[4]));
     const todaySchedules = schedules.filter(s => s[0] === todayFmt);
     const sport = todaySchedules.length ? todaySchedules[0][4] : '';
@@ -529,26 +581,20 @@ async function renderDailyList() {
       if ((r[7] || '⭕') === '❌') return;
       const master = masterMap[r[4]] || {};
       const type = master[2] || '一般';
-      allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, isNew: false });
+      allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, usageMode: master[14] || 'スポログ', isNew: false });
     });
     const tempUsers = tempList.filter(t => t[0] === todayFmt && !attendees.find(a => a[1] === t[1]));
     tempUsers.forEach(u => {
-      if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', isNew: true });
+      if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', usageMode: 'スポログ', isNew: true });
     });
     if (!allItems.length) { el.innerHTML = '<div class="empty">本日の参加予定者がいません</div>'; return; }
     allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
     el.innerHTML = allItems.map(item => {
       const isChecked = checkedInNames.has(item.fullname);
       const type = item.type;
-      const isFree = ['運営', '代表', '部長', '本部', '特別会員'].includes(type);
-      let options = [];
-      if (isFree) options = [{ label: '¥0（運営）', value: 0 }];
-      else if (['みんB会員', 'みんなのBUKATSU会員'].includes(type)) options = isBad ? [{ label: '¥400', value: 400 }, { label: '¥200', value: 200 }] : [{ label: '¥200', value: 200 }];
-      else if (type === '応援団' || type === '応援団会員') options = [{ label: '¥0（応援団）', value: 0 }];
-      else if (type.includes('回数券')) options = isBad ? [{ label: '回数券+¥200', value: 200, useTicket: true }, { label: '回数券¥0', value: 0, useTicket: true }] : [{ label: '回数券¥0', value: 0, useTicket: true }];
-      else options = isBad ? [{ label: '¥700', value: 700 }, { label: '¥500', value: 500 }, { label: '¥0', value: 0 }] : [{ label: '¥500', value: 500 }, { label: '¥700', value: 700 }, { label: '¥0', value: 0 }];
+      const remain = ticketMap[item.fullname];
+      const options = buildPayOptions(type, isBad, item.usageMode, remain);
       const optData = JSON.stringify(options);
-      const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
       const safeId = item.fullname.replace(/[^a-zA-Z0-9]/g, '');
       if (isChecked) return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a;opacity:0.4"><div style="flex:1;font-size:14px;color:#aaa">${item.nickname}</div><div style="font-size:11px;color:#666">済</div></div>`;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a" id="daily-item-${safeId}">
@@ -557,7 +603,7 @@ async function renderDailyList() {
           <div style="font-size:14px;font-weight:600;color:#fff">${item.isNew ? '<span style="font-size:10px;color:#68d391;border:1px solid #68d391;border-radius:4px;padding:1px 4px;margin-right:4px">NEW</span>' : ''}${item.nickname}</div>
           <div style="font-size:11px;color:#aaa">${type}</div>
         </div>
-        <select id="pay-sel-${safeId}" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>
+        ${buildPaySelectHtml(safeId, options)}
       </div>`;
     }).join('');
     document.querySelectorAll('.daily-checkin-box').forEach(cb => {
@@ -580,7 +626,11 @@ async function saveDailyCheckins() {
     const safeId = fullname.replace(/[^a-zA-Z0-9]/g, '');
     const sel = document.getElementById('pay-sel-' + safeId);
     const selected = options[parseInt(sel ? sel.value : 0)];
-    const amount = selected ? selected.value : 0;
+    let amount = selected ? selected.value : 0;
+    if (amount === 'custom') {
+      const customInput = document.getElementById('pay-custom-' + safeId);
+      amount = parseInt(customInput ? customInput.value : 0) || 0;
+    }
     const useTicket = selected ? (selected.useTicket || false) : false;
     const logRow = [todayFmt, '沼南体育館', sport, nickname, fullname, type, amount];
     try {
@@ -615,31 +665,29 @@ async function searchModalMember() {
     const attendees = await callGAS('getAttendees');
     const found = attendees.filter(r => r[1].includes(name) || r[0].includes(name));
     if (found.length) {
-      resultEl.innerHTML = found.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #333"><div><div style="font-size:14px;font-weight:700">${f[0]}</div><div style="font-size:11px;color:#aaa">${f[2]}</div></div><button onclick="addExistingDailyMember('${f[1]}','${f[0]}','${f[2]}');closeAddMemberModal()" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">追加</button></div>`).join('');
+      resultEl.innerHTML = found.map(f => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #333"><div><div style="font-size:14px;font-weight:700">${f[0]}</div><div style="font-size:11px;color:#aaa">${f[2]}</div></div><button onclick="addExistingDailyMember('${f[1]}','${f[0]}','${f[2]}','${f[14]||'スポログ'}');closeAddMemberModal()" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">追加</button></div>`).join('');
     } else {
       resultEl.innerHTML = `<div style="font-size:13px;color:#aaa;padding:8px">「${name}」は見つかりませんでした</div>`;
     }
   } catch(e) {}
 }
 
-function addExistingDailyMember(fullname, nickname, type) {
+async function addExistingDailyMember(fullname, nickname, type, usageMode) {
   const safeId = fullname.replace(/[^a-zA-Z0-9]/g, '');
   if (document.getElementById('daily-item-' + safeId)) { showToast('すでにリストにいます'); return; }
   const sport = window._todaySport || '';
   const isBad = sport === 'バドミントン';
-  const isFree = ['運営', '本部', '代表', '部長', '特別会員'].includes(type);
-  let options = [];
-  if (isFree) options = [{ label: '¥0（運営）', value: 0 }];
-  else if (['みんB会員', 'みんなのBUKATSU会員'].includes(type)) options = isBad ? [{ label: '¥400', value: 400 }, { label: '¥200', value: 200 }] : [{ label: '¥200', value: 200 }];
-  else if (type === '応援団' || type === '応援団会員') options = [{ label: '¥0（応援団）', value: 0 }];
-  else options = isBad ? [{ label: '¥700', value: 700 }, { label: '¥500', value: 500 }, { label: '¥0', value: 0 }] : [{ label: '¥500', value: 500 }, { label: '¥700', value: 700 }, { label: '¥0', value: 0 }];
+  let remain = (window._ticketMap || {})[fullname];
+  if (usageMode === '回数券' && remain === undefined) {
+    try { const ticket = await callGAS('getTicket', fullname); remain = ticket ? Number(ticket[3] || 0) : 0; } catch(e) { remain = 0; }
+  }
+  const options = buildPayOptions(type, isBad, usageMode || 'スポログ', remain);
   const optData = JSON.stringify(options);
-  const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
   const el = document.getElementById('daily-unified-list');
   const div = document.createElement('div');
   div.id = 'daily-item-' + safeId;
   div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a';
-  div.innerHTML = `<input type="checkbox" class="daily-checkin-box" data-fullname="${fullname}" data-nickname="${nickname}" data-type="${type}" data-opts='${optData}' style="width:20px;height:20px;flex-shrink:0;accent-color:#48bb78"><div style="flex:1"><div style="font-size:14px;font-weight:600">${nickname}</div><div style="font-size:11px;color:#aaa">${type}</div></div><select id="pay-sel-${safeId}" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>`;
+  div.innerHTML = `<input type="checkbox" class="daily-checkin-box" data-fullname="${fullname}" data-nickname="${nickname}" data-type="${type}" data-opts='${optData}' style="width:20px;height:20px;flex-shrink:0;accent-color:#48bb78"><div style="flex:1"><div style="font-size:14px;font-weight:600">${nickname}</div><div style="font-size:11px;color:#aaa">${type}</div></div>${buildPaySelectHtml(safeId, options)}`;
   el.appendChild(div);
   showToast(nickname + ' を追加しました！');
 }
