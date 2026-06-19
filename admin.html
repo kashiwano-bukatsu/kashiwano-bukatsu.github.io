@@ -293,20 +293,6 @@ tr:hover td{background:var(--card-soft);}
 .placeholder-title{font-size:15px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
 .placeholder-sub{font-size:12.5px;}
 
-/* ===== TEST版ラベル ===== */
-.test-label{
-  display:inline-block;
-  background:var(--warn);
-  color:#fff;
-  font-size:10px;
-  font-weight:800;
-  padding:2px 9px;
-  border-radius:8px;
-  letter-spacing:1px;
-  margin-left:8px;
-  vertical-align:middle;
-}
-
 /* ===== ローディング ===== */
 .loading-text{color:var(--ink-faint);font-size:13px;padding:20px 0;}
 </style>
@@ -316,7 +302,7 @@ tr:hover td{background:var(--card-soft);}
 <div class="sidebar">
   <div class="sidebar-brand">
     <div class="sidebar-brand-en">KASHIWA NO BUKATSU</div>
-    <div class="sidebar-brand-ja">事務局<span class="test-label">TEST</span></div>
+    <div class="sidebar-brand-ja">事務局</div>
     <div class="sidebar-brand-sub">管理コンソール</div>
   </div>
   <div class="sidebar-nav" id="sidebar-nav">
@@ -345,7 +331,7 @@ tr:hover td{background:var(--card-soft);}
       <div class="nav-left"><span class="nav-icon">≡</span>操作ログ</div>
     </div>
   </div>
-  <div class="sidebar-footer">人マスタ連携版（テスト中）</div>
+  <div class="sidebar-footer">人マスタ連携版</div>
 </div>
 
 <div class="main">
@@ -486,7 +472,7 @@ function switchView(view){
 let _personMasterCache = null;
 async function getPersonMaster(force){
   if (_personMasterCache && !force) return _personMasterCache;
-  _personMasterCache = await callGAS('getPersonMasterAll_v2');
+  _personMasterCache = await callGAS('getPersonMasterAll');
   return _personMasterCache;
 }
 
@@ -589,7 +575,7 @@ async function renderApprovalList(){
 async function approvePerson(internalId){
   if (!confirm(internalId + ' を会員として承認します。よろしいですか？')) return;
   try{
-    await callGAS('approveRegistration_v2', internalId);
+    await callGAS('approveRegistration', internalId);
     await renderApprovalList();
     loadDashboard();
   }catch(e){
