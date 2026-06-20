@@ -1000,11 +1000,43 @@ function showMypageMain(){
   loadMypageData(true,true);
 }
 
+// すごろく風ジグザグ表示でスポログの進捗を組み立てる（1〜10コマ、5コマ目=割引、10コマ目=無料）
+function buildSporlogBoard(progress, lap){
+  const topRow=[1,2,3,4,5];
+  const bottomRow=[6,7,8,9,10];
+  const squareHtml=(n)=>{
+    const done = n <= progress;
+    const isNext = n === progress + 1;
+    const isDiscount = n === 5;
+    const isFree = n === 10;
+    let bg = '#eef1f6', border = '1.5px solid #dde3ec', color = '#a9b2bf';
+    if (done){ bg = 'linear-gradient(135deg,#4CAF50,#2e7d32)'; border='1.5px solid #2e7d32'; color = '#fff'; }
+    if (isNext){ border = '2px dashed #f57c00'; color = '#f57c00'; }
+    let glyph = n;
+    let badge = '';
+    if (isDiscount) badge = '<div style="position:absolute;top:-9px;right:-6px;background:#ff9800;color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;white-space:nowrap">200円引</div>';
+    if (isFree) badge = '<div style="position:absolute;top:-9px;right:-6px;background:#1a3a5c;color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;white-space:nowrap">🎟️無料</div>';
+    return '<div style="position:relative;width:38px;height:38px;border-radius:10px;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:'+color+';flex-shrink:0">'+glyph+badge+'</div>';
+  };
+  const rowHtml=(arr,reverse)=>'<div style="display:flex;gap:8px;'+(reverse?'flex-direction:row-reverse':'')+'">'+arr.map(squareHtml).join('')+'</div>';
+  const remaining = 10 - progress;
+  const lapLabel = lap > 1 ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
+  return ''+
+    '<div style="text-align:center">'+lapLabel+'</div>'+
+    '<div style="font-size:13px;color:#888;margin-bottom:10px">次の無料チケットまで</div>'+
+    '<div style="display:flex;flex-direction:column;gap:8px;align-items:center;padding:6px 0">'+
+      rowHtml(topRow,false)+
+      rowHtml(bottomRow,true)+
+    '</div>'+
+    '<div style="font-size:14px;font-weight:700;margin-top:12px;text-align:center;color:#f57c00">あと'+remaining+'回でチケット1枚</div>'+
+    '<div style="display:flex;justify-content:center;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+}
+
 async function loadMypageData(checkNotice,updateRankCache){
   try{
     const d=await callGAS('getMemberDashboard',mypageCurrentUser.internalId);
     if(checkNotice&&d.referralNotice)showReferralNoticePopup(d.referralNotice);
-    let progress=d.ticketProgress||0,tickets=d.ticketCount||0;
+    let progress=d.ticketProgress||0,tickets=d.ticketCount||0,lap=d.lap||1;
     document.getElementById('mypage-total-count').textContent=d.totalCount;
     document.getElementById('mypage-month-count').textContent=d.monthCount;
     currentTicketCount=tickets;
@@ -1024,18 +1056,19 @@ async function loadMypageData(checkNotice,updateRankCache){
       saveCurrentUser();
     }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
-    const pct=Math.round(progress/10*100),remaining=10-progress,isMaxed=tickets>0;
-    const barStyle=isMaxed?'width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite':'width:'+pct+'%';
+    const isMaxed=tickets>0;
     if(mypageCurrentUser.isApplying){
       document.getElementById('mypage-progress-area').innerHTML=
         '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認されるとスポログが始まります</div></div>';
+    } else if(isMaxed){
+      document.getElementById('mypage-progress-area').innerHTML=
+        '<div style="font-size:13px;color:#b8860b;margin-bottom:6px;font-weight:700">無料チケットあり。タップして使おう！</div>'+
+        '<div class="progress-bar-bg" style="box-shadow:0 0 10px rgba(255,215,0,0.7)"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite"></div></div>'+
+        '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>チケット '+tickets+'枚</span><span>10回で1枚GET</span></div>'+
+        '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:#b8860b">次回参加が無料になります</div>'+
+        '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
     } else {
-    document.getElementById('mypage-progress-area').innerHTML=
-      '<div style="font-size:13px;color:'+(isMaxed?'#b8860b':'#888')+';margin-bottom:6px;font-weight:'+(isMaxed?'700':'400')+'">'+(isMaxed?'無料チケットあり。タップして使おう！':'次の無料チケットまで')+'</div>'+
-      '<div class="progress-bar-bg" style="'+(isMaxed?'box-shadow:0 0 10px rgba(255,215,0,0.7)':'')+'"><div class="progress-bar-fill" style="'+barStyle+'"></div></div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>'+(isMaxed?'チケット '+tickets+'枚':progress+'/10回')+'</span><span>10回で1枚GET</span></div>'+
-      '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:'+(isMaxed?'#b8860b':'#f57c00')+'">'+(isMaxed?'次回参加が無料になります':'あと'+remaining+'回でチケット1枚')+'</div>'+
-      '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+      document.getElementById('mypage-progress-area').innerHTML = buildSporlogBoard(progress, lap);
     }
     // 未読バナー
     const c=d.unreadCount||0;
