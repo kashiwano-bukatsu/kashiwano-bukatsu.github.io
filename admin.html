@@ -300,6 +300,25 @@ tr:hover td{background:var(--card-soft);}
 </head>
 <body>
 
+<!-- ===== 運営ログイン画面 ===== -->
+<div id="admin-login-screen" style="display:none;position:fixed;inset:0;z-index:9000;background:#1c1812;display:flex;align-items:center;justify-content:center">
+  <div style="width:88%;max-width:340px;background:#262019;border-radius:20px;padding:32px 24px;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:13px;color:#9c8d6e;letter-spacing:2px;margin-bottom:4px">Kashiwa no</div>
+      <div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#fff">BUKATSU</div>
+      <div style="font-size:12px;color:#6b6258;margin-top:4px;letter-spacing:1px">事務局</div>
+    </div>
+    <div style="font-size:13px;color:#9c8d6e;margin-bottom:6px">ニックネーム または フルネーム</div>
+    <input type="text" id="admin-login-name" placeholder="入力してください" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #444;background:#1c1812;color:#fff;margin-bottom:12px;box-sizing:border-box;font-size:14px">
+    <div style="font-size:13px;color:#9c8d6e;margin-bottom:6px">パスワード</div>
+    <input type="password" id="admin-login-pass" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')doAdminLogin()" style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid #444;background:#1c1812;color:#fff;box-sizing:border-box;font-size:14px">
+    <div id="admin-login-error" style="display:none;color:#f56565;font-size:13px;margin-top:8px;text-align:center">ログイン情報が正しくありません</div>
+    <button class="btn btn-primary" style="margin-top:16px;width:100%" onclick="doAdminLogin()">ログイン</button>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none">
+
 <div class="sidebar">
   <div class="sidebar-brand">
     <div class="sidebar-brand-en">KASHIWA NO BUKATSU</div>
@@ -345,7 +364,10 @@ tr:hover td{background:var(--card-soft);}
       <div class="nav-left"><span class="nav-icon">≡</span>操作ログ</div>
     </div>
   </div>
-  <div class="sidebar-footer">人マスタ連携版</div>
+  <div class="sidebar-footer">
+    <span id="admin-current-user"></span>
+    <button onclick="doAdminLogout()" style="background:none;border:none;color:var(--ink-faint);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;margin-left:8px">ログアウト</button>
+  </div>
 </div>
 
 <div class="main">
@@ -614,12 +636,14 @@ tr:hover td{background:var(--card-soft);}
     <!-- ===== 操作ログ ===== -->
     <div class="view" id="view-log">
       <div class="card">
-        <div class="card-title"><div class="dot"></div>出席ログ（直近100件）</div>
+        <div class="card-title"><div class="dot"></div>操作ログ（直近10件）</div>
         <div id="log-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
     </div>
 
   </div>
+</div>
+
 </div>
 
 <script>
@@ -800,6 +824,7 @@ async function approvePerson(internalId){
   if (!confirm(internalId + ' を会員として承認します。よろしいですか？')) return;
   try{
     await callGAS('approveRegistration', internalId);
+    logOp('会員承認', internalId);
     await renderApprovalList();
     loadDashboard();
   }catch(e){
@@ -921,6 +946,7 @@ async function grantFreeTicket(fullname, i){
   if (!confirm(fullname + ' さんに無料チケットを1枚付与します。よろしいですか？')) return;
   try{
     await callGAS('grantFreeTicketManual', fullname, reason);
+    logOp('無料チケット付与', fullname + '／' + reason);
     showToastAdmin('付与しました！');
   }catch(e){
     alert('付与に失敗しました：' + e.message);
@@ -963,6 +989,7 @@ async function grantTicket(fullname, i){
   if (!confirm(fullname + ' さんに回数券を' + sets + 'セット付与します。よろしいですか？')) return;
   try{
     await callGAS('grantTicketManual', fullname, sets);
+    logOp('回数券付与', fullname + '／' + sets + 'セット');
     showToastAdmin('付与しました！');
   }catch(e){
     alert('付与に失敗しました：' + e.message);
@@ -1063,6 +1090,7 @@ async function approveUpgrade(fullname, plan){
   if (!confirm(fullname + ' さんを「' + plan + '」へのプラン変更で承認します。よろしいですか？')) return;
   try{
     await callGAS('approveUpgradeRequest', fullname, plan);
+    logOp('プラン変更承認', fullname + '／' + plan);
     await renderUpgradeList();
     loadDashboard();
   }catch(e){
@@ -1075,6 +1103,7 @@ async function rejectUpgrade(fullname, plan){
   const reason = prompt('却下理由（任意・本人に通知されます。空欄でも構いません）', '') || '';
   try{
     await callGAS('rejectUpgradeRequest', fullname, plan, reason);
+    logOp('プラン変更却下', fullname + '／' + plan);
     await renderUpgradeList();
     loadDashboard();
   }catch(e){
@@ -1116,6 +1145,7 @@ async function receiveTicket(fullname, sets){
   if (!confirm(fullname + ' さんの回数券（' + sets + 'セット）受領を確定します。よろしいですか？')) return;
   try{
     await callGAS('receiveTicketRequest', fullname, sets);
+    logOp('回数券受領承認', fullname + '／' + sets + 'セット');
     await renderTicketRequestList();
     loadDashboard();
   }catch(e){
@@ -1128,6 +1158,7 @@ async function rejectTicket(fullname, sets){
   const reason = prompt('却下理由（任意・本人に通知されます。空欄でも構いません）', '') || '';
   try{
     await callGAS('rejectTicketRequest', fullname, sets, reason);
+    logOp('回数券購入却下', fullname + '／' + sets + 'セット');
     await renderTicketRequestList();
     loadDashboard();
   }catch(e){
@@ -1173,6 +1204,7 @@ async function toggleUsageMode(fullname, newMode){
   if (!confirm(fullname + ' さんの利用モードを「' + newMode + '」に切り替えます。よろしいですか？')) return;
   try{
     await callGAS('updateUsageMode', fullname, newMode);
+    logOp('利用モード切替', fullname + '／' + newMode);
     await getPersonMaster(true);
     await renderModeSearch();
   }catch(e){
@@ -1221,6 +1253,7 @@ async function savePriceRow(i){
   const campaignEndDate = campaignEndDateRaw ? campaignEndDateRaw.replace(/-/g, '/') : '';
   try{
     await callGAS('updatePriceRow', p.category, p.type, p.item, normalPrice, campaignPrice, campaignActive, campaignEndDate, p.note || '');
+    logOp('価格マスタ更新', p.category + '／' + p.type + '／' + p.item);
     showSavedFlash(i);
   }catch(e){
     alert('保存に失敗しました：' + e.message);
@@ -1240,7 +1273,8 @@ async function postNotice(){
   const body = document.getElementById('notice-body-input').value.trim();
   if (!title || !body) return alert('タイトルと本文を入力してください');
   try{
-    await callGAS('postMemberNotice', title, body, '事務局');
+    await callGAS('postMemberNotice', title, body, (currentAdminUser&&(currentAdminUser.nickname||currentAdminUser.fullname))||'事務局');
+    logOp('お知らせ投稿', title);
     document.getElementById('notice-title-input').value = '';
     document.getElementById('notice-body-input').value = '';
     await renderNoticeView();
@@ -1287,22 +1321,19 @@ async function renderLogView(){
   const wrap = document.getElementById('log-table-wrap');
   wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
   try{
-    const logs = await callGAS('getAttendanceLog');
-    const recent = (logs||[]).slice().reverse().slice(0, 100);
-    if (!recent.length){
-      wrap.innerHTML = '<div class="empty-state">出席ログがありません</div>';
+    const logs = await callGAS('getOperationLog');
+    if (!logs || !logs.length){
+      wrap.innerHTML = '<div class="empty-state">操作ログがありません</div>';
       return;
     }
     wrap.innerHTML = `<table>
-      <thead><tr><th>日付</th><th>場所</th><th>種目</th><th>お名前</th><th>種別</th><th>金額</th></tr></thead>
-      <tbody>${recent.map(r => `
+      <thead><tr><th>日時</th><th>操作者</th><th>操作種別</th><th>詳細</th></tr></thead>
+      <tbody>${logs.map(r => `
         <tr>
           <td>${escapeHtml(r[0])}</td>
           <td>${escapeHtml(r[1])}</td>
-          <td>${escapeHtml(r[2])}</td>
-          <td>${escapeHtml(r[3])}</td>
-          <td>${escapeHtml(r[5])}</td>
-          <td>${escapeHtml(r[6])}円</td>
+          <td><span class="badge badge-accent">${escapeHtml(r[2])}</span></td>
+          <td style="font-size:12px;color:var(--ink-faint)">${escapeHtml(r[3])}</td>
         </tr>`).join('')}</tbody>
     </table>`;
   }catch(e){
@@ -1310,9 +1341,61 @@ async function renderLogView(){
   }
 }
 
+// ===== 運営ログイン =====
+let currentAdminUser = null;
+
 window.addEventListener('load', () => {
-  loadDashboard();
+  const saved = localStorage.getItem('bukatsu_staff_user');
+  if (saved) {
+    try {
+      currentAdminUser = JSON.parse(saved);
+      showAdminApp();
+      return;
+    } catch(e) {}
+  }
+  document.getElementById('admin-login-screen').style.display = 'flex';
 });
+
+async function doAdminLogin(){
+  const name = document.getElementById('admin-login-name').value.trim();
+  const pass = document.getElementById('admin-login-pass').value.trim();
+  const errEl = document.getElementById('admin-login-error');
+  errEl.style.display = 'none';
+  if (!name || !pass) return alert('入力してください');
+  if (/^\d{8}$/.test(pass)) { errEl.style.display = 'block'; return; }
+  try{
+    const data = await callGAS('loginAttendee', name, pass);
+    if (!data) { errEl.style.display = 'block'; return; }
+    const type = String(data.type).trim();
+    const allowedTypes = ['代表', '運営', '部長', '本部'];
+    if (!allowedTypes.includes(type)) { errEl.style.display = 'block'; return; }
+    if (!data.hasPassword) { errEl.style.display = 'block'; return; }
+    currentAdminUser = { internalId: data.internalId, fullname: data.fullname, nickname: data.nickname, type };
+    localStorage.setItem('bukatsu_staff_user', JSON.stringify(currentAdminUser));
+    showAdminApp();
+  }catch(e){
+    alert('エラー：' + e.message);
+  }
+}
+
+function doAdminLogout(){
+  localStorage.removeItem('bukatsu_staff_user');
+  currentAdminUser = null;
+  location.reload();
+}
+
+function showAdminApp(){
+  document.getElementById('admin-login-screen').style.display = 'none';
+  document.getElementById('admin-app').style.display = 'block';
+  document.getElementById('admin-current-user').textContent = (currentAdminUser.nickname || currentAdminUser.fullname) + 'さん';
+  loadDashboard();
+}
+
+// 各操作の後に呼ぶ：誰が何をしたかを操作ログに記録（失敗しても画面操作は止めない）
+function logOp(action, detail){
+  const operator = currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明';
+  callGAS('addOperationLog', operator, action, detail || '').catch(() => {});
+}
 
 // ===== 会員管理（検索・種別変更） =====
 const MEMBER_TYPE_OPTIONS = ['カシワのBUKATSU会員', 'ファミリー会員', 'みんなのBUKATSU会員', 'ビジター会員', '応援団', '運営', '代表', '部長', '本部'];
@@ -1371,6 +1454,7 @@ async function changeMemberType(fullname, internalId){
   if (!confirm(fullname + ' さんの種別を「' + newType + '」に変更します。よろしいですか？')) return;
   try{
     await callGAS('updateAttendeeType', fullname, newType);
+    logOp('会員種別変更', fullname + '／' + newType);
     await getPersonMaster(true);
     showToastAdmin('種別を変更しました');
     await searchMemberAdmin();
@@ -1401,6 +1485,7 @@ async function addStaffMemberAdmin(){
   if (dob.length !== 8) return alert('生年月日は8桁で入力してください');
   try{
     const memberNumber = await callGAS('addStaffMember', name, kana, nickname, role, password, dob);
+    logOp('運営メンバー追加', nickname + '（' + role + '）');
     ['staff-name','staff-kana','staff-nickname','staff-dob','staff-password'].forEach(id => document.getElementById(id).value = '');
     showToastAdmin(nickname + ' さんを登録しました（会員番号：' + memberNumber + '）');
   }catch(e){
@@ -1484,6 +1569,7 @@ async function addScheduleAdmin(){
   if (!place) return alert('場所を選択してください');
   try{
     await callGAS('addSchedule', [date, time, place, responsible, sport, fee, shuttle, memo, court, courtFee]);
+    logOp('開催予定登録', sport + '／' + date + ' ' + time + '／' + place);
     showToastAdmin('スケジュールを登録しました！');
     document.getElementById('sch-fee').value = ''; document.getElementById('sch-memo').value = '';
     renderScheduleList();
@@ -1771,6 +1857,7 @@ async function sendChatMessageAdmin(){
   if (!text || !_msgCurrentFullname) return;
   try{
     await callGAS('sendMessage', _msgCurrentFullname, text, false);
+    logOp('メッセージ送信', _msgCurrentFullname + '：' + text.slice(0, 30));
     input.value = '';
     const msgs = await callGAS('getConversation', _msgCurrentFullname);
     renderChatMessagesAdmin(msgs);
@@ -1778,10 +1865,6 @@ async function sendChatMessageAdmin(){
     alert('送信に失敗しました：' + e.message);
   }
 }
-
-window.addEventListener('load', () => {
-  loadDashboard();
-});
 </script>
 </body>
 </html>
