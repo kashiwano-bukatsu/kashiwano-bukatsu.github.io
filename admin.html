@@ -1386,7 +1386,7 @@ function doAdminLogout(){
 
 function showAdminApp(){
   document.getElementById('admin-login-screen').style.display = 'none';
-  document.getElementById('admin-app').style.display = 'block';
+  document.getElementById('admin-app').style.display = 'contents';
   document.getElementById('admin-current-user').textContent = (currentAdminUser.nickname || currentAdminUser.fullname) + 'さん';
   loadDashboard();
 }
