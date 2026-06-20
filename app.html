@@ -1001,20 +1001,42 @@ function showMypageMain(){
 }
 
 // スタンプカード風に進捗を表示（丸を線でつなぎ、現在地にマスコットを配置）
+// 進捗の色を「緑→黄緑→アンバー→ゴールド」へ滑らかに補間する
+const SPOROLOG_COLOR_STOPS = [[56,142,60],[124,179,66],[251,192,45],[255,193,7],[255,215,0]];
+function sporologColorAt(t){
+  t = Math.max(0, Math.min(1, t));
+  const segs = SPOROLOG_COLOR_STOPS.length - 1;
+  const segT = t * segs;
+  const i = Math.min(Math.floor(segT), segs - 1);
+  const localT = segT - i;
+  const c1 = SPOROLOG_COLOR_STOPS[i], c2 = SPOROLOG_COLOR_STOPS[i + 1];
+  const r = Math.round(c1[0] + (c2[0] - c1[0]) * localT);
+  const g = Math.round(c1[1] + (c2[1] - c1[1]) * localT);
+  const b = Math.round(c1[2] + (c2[2] - c1[2]) * localT);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
 function buildSporlogBoard(progress, lap){
   const MASCOT = '<img src="konpei.gif" style="width:24px;height:30px;object-fit:contain;display:block">'; // コンペイ歩行GIF
   const squares = [1,2,3,4,5,6,7,8,9,10];
   const pct = Math.max(0, Math.min(100, (progress/10*100)));
+  const lineGradient = SPOROLOG_COLOR_STOPS.map(c => 'rgb(' + c.join(',') + ')').join(',');
   const circleHtml = squares.map(n=>{
     const done = n <= progress;
-    const bg = done ? 'linear-gradient(135deg,#4CAF50,#2e7d32)' : '#fff';
-    const border = done ? '2px solid #2e7d32' : '2px solid #dde3ec';
+    const isMilestone = (n === 5 || n === 10);
+    const size = isMilestone ? 34 : 26;
+    const fontSize = isMilestone ? 13 : 11;
+    const stepColor = sporologColorAt(n/10);
+    const prevColor = sporologColorAt((n-1)/10);
+    const bg = done ? 'linear-gradient(135deg,' + prevColor + ',' + stepColor + ')' : '#fff';
+    const border = done ? '2px solid ' + stepColor : '2px solid #dde3ec';
     const color = done ? '#fff' : '#a9b2bf';
+    const glow = (done && n === 10) ? 'box-shadow:0 0 10px rgba(255,215,0,0.8);' : '';
     let badge='';
-    if(n===5) badge='<div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);background:#ff9800;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">200円引</div>';
-    if(n===10) badge='<div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">🎟️無料</div>';
-    const mascotHtml = (n===progress && progress>0) ? '<div style="position:absolute;z-index:3;top:-38px;left:50%;transform:translateX(-50%);width:26px;line-height:1">'+MASCOT+'</div>' : '';
-    return '<div style="position:relative;z-index:2;width:26px;height:26px;border-radius:50%;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:'+color+';flex-shrink:0">'+mascotHtml+n+badge+'</div>';
+    if(n===5) badge='<div style="position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);background:#ff9800;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">200円引</div>';
+    if(n===10) badge='<div style="position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">🎟️無料</div>';
+    const mascotHtml = (n===progress && progress>0) ? '<div style="position:absolute;z-index:3;top:-'+(size+12)+'px;left:50%;transform:translateX(-50%);width:26px;line-height:1">'+MASCOT+'</div>' : '';
+    return '<div style="position:relative;z-index:2;width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:'+fontSize+'px;font-weight:800;color:'+color+';flex-shrink:0;'+glow+'">'+mascotHtml+n+badge+'</div>';
   }).join('');
   const startMascot = progress===0 ? '<div style="position:absolute;z-index:3;top:-38px;left:13px;width:26px;line-height:1">'+MASCOT+'</div>' : '';
   const remaining = 10 - progress;
@@ -1025,7 +1047,7 @@ function buildSporlogBoard(progress, lap){
     '<div style="position:relative;display:flex;justify-content:space-between;align-items:center;padding:46px 13px 20px;overflow-x:auto">'+
       startMascot+
       '<div style="position:absolute;left:13px;right:13px;top:59px;height:3px;background:#e4e8ee;border-radius:2px;z-index:1"></div>'+
-      '<div style="position:absolute;left:13px;top:59px;height:3px;background:linear-gradient(90deg,#4CAF50,#2e7d32);border-radius:2px;z-index:1;width:'+pct+'%;max-width:calc(100% - 26px)"></div>'+
+      '<div style="position:absolute;left:13px;top:59px;height:3px;background:linear-gradient(90deg,'+lineGradient+');border-radius:2px;z-index:1;width:'+pct+'%;max-width:calc(100% - 26px)"></div>'+
       circleHtml+
     '</div>'+
     '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remaining+'回でチケット1枚</div>'+
