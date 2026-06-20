@@ -1002,7 +1002,7 @@ function showMypageMain(){
 
 // スタンプカード風に進捗を表示（丸を線でつなぎ、現在地にマスコットを配置）
 function buildSporlogBoard(progress, lap){
-  const MASCOT = '<img src="konpei.png" style="width:30px;height:auto;display:block">'; // コンペイ画像
+  const MASCOT = '<img src="konpei.gif" style="width:30px;height:auto;display:block">'; // コンペイ歩行GIF
   const squares = [1,2,3,4,5,6,7,8,9,10];
   const pct = Math.max(0, Math.min(100, (progress/10*100)));
   const circleHtml = squares.map(n=>{
