@@ -1851,10 +1851,15 @@ function renderChatMessagesAdmin(msgs){
   body.scrollTop = body.scrollHeight;
 }
 
+let _msgSending = false;
 async function sendChatMessageAdmin(){
+  if (_msgSending) return; // 送信中は二重送信を防止
   const input = document.getElementById('msg-chat-input');
   const text = input.value.trim();
   if (!text || !_msgCurrentFullname) return;
+  _msgSending = true;
+  const btn = document.querySelector('#msg-chat-input-area button');
+  if (btn) btn.disabled = true;
   try{
     await callGAS('sendMessage', _msgCurrentFullname, text, false);
     logOp('メッセージ送信', _msgCurrentFullname + '：' + text.slice(0, 30));
@@ -1863,6 +1868,9 @@ async function sendChatMessageAdmin(){
     renderChatMessagesAdmin(msgs);
   }catch(e){
     alert('送信に失敗しました：' + e.message);
+  }finally{
+    _msgSending = false;
+    if (btn) btn.disabled = false;
   }
 }
 </script>
