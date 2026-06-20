@@ -1000,35 +1000,35 @@ function showMypageMain(){
   loadMypageData(true,true);
 }
 
-// すごろく風ジグザグ表示でスポログの進捗を組み立てる（1〜10コマ、5コマ目=割引、10コマ目=無料）
+// スタンプカード風に進捗を表示（丸を線でつなぎ、現在地にマスコットを配置）
 function buildSporlogBoard(progress, lap){
-  const topRow=[1,2,3,4,5];
-  const bottomRow=[6,7,8,9,10];
-  const squareHtml=(n)=>{
+  const MASCOT = '🐹'; // コンペイの仮絵文字（画像が決まったら差し替え）
+  const squares = [1,2,3,4,5,6,7,8,9,10];
+  const pct = Math.max(0, Math.min(100, (progress/10*100)));
+  const circleHtml = squares.map(n=>{
     const done = n <= progress;
-    const isNext = n === progress + 1;
-    const isDiscount = n === 5;
-    const isFree = n === 10;
-    let bg = '#eef1f6', border = '1.5px solid #dde3ec', color = '#a9b2bf';
-    if (done){ bg = 'linear-gradient(135deg,#4CAF50,#2e7d32)'; border='1.5px solid #2e7d32'; color = '#fff'; }
-    if (isNext){ border = '2px dashed #f57c00'; color = '#f57c00'; }
-    let glyph = n;
-    let badge = '';
-    if (isDiscount) badge = '<div style="position:absolute;top:-9px;right:-6px;background:#ff9800;color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;white-space:nowrap">200円引</div>';
-    if (isFree) badge = '<div style="position:absolute;top:-9px;right:-6px;background:#1a3a5c;color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;white-space:nowrap">🎟️無料</div>';
-    return '<div style="position:relative;width:38px;height:38px;border-radius:10px;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:'+color+';flex-shrink:0">'+glyph+badge+'</div>';
-  };
-  const rowHtml=(arr,reverse)=>'<div style="display:flex;gap:8px;'+(reverse?'flex-direction:row-reverse':'')+'">'+arr.map(squareHtml).join('')+'</div>';
+    const bg = done ? 'linear-gradient(135deg,#4CAF50,#2e7d32)' : '#fff';
+    const border = done ? '2px solid #2e7d32' : '2px solid #dde3ec';
+    const color = done ? '#fff' : '#a9b2bf';
+    let badge='';
+    if(n===5) badge='<div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);background:#ff9800;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">200円引</div>';
+    if(n===10) badge='<div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">🎟️無料</div>';
+    const mascotHtml = (n===progress && progress>0) ? '<div style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:22px;line-height:1">'+MASCOT+'</div>' : '';
+    return '<div style="position:relative;z-index:2;width:26px;height:26px;border-radius:50%;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:'+color+';flex-shrink:0">'+mascotHtml+n+badge+'</div>';
+  }).join('');
+  const startMascot = progress===0 ? '<div style="position:absolute;top:-26px;left:13px;font-size:22px;line-height:1">'+MASCOT+'</div>' : '';
   const remaining = 10 - progress;
   const lapLabel = lap > 1 ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
   return ''+
     '<div style="text-align:center">'+lapLabel+'</div>'+
-    '<div style="font-size:13px;color:#888;margin-bottom:10px">次の無料チケットまで</div>'+
-    '<div style="display:flex;flex-direction:column;gap:8px;align-items:center;padding:6px 0">'+
-      rowHtml(topRow,false)+
-      rowHtml(bottomRow,true)+
+    '<div style="font-size:13px;color:#888;margin-bottom:4px">次の無料チケットまで</div>'+
+    '<div style="position:relative;display:flex;justify-content:space-between;align-items:center;padding:28px 13px 20px;overflow-x:auto">'+
+      startMascot+
+      '<div style="position:absolute;left:13px;right:13px;top:38px;height:3px;background:#e4e8ee;border-radius:2px;z-index:1"></div>'+
+      '<div style="position:absolute;left:13px;top:38px;height:3px;background:linear-gradient(90deg,#4CAF50,#2e7d32);border-radius:2px;z-index:1;width:'+pct+'%;max-width:calc(100% - 26px)"></div>'+
+      circleHtml+
     '</div>'+
-    '<div style="font-size:14px;font-weight:700;margin-top:12px;text-align:center;color:#f57c00">あと'+remaining+'回でチケット1枚</div>'+
+    '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remaining+'回でチケット1枚</div>'+
     '<div style="display:flex;justify-content:center;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
 }
 
