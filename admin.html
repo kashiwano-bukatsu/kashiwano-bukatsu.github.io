@@ -149,6 +149,57 @@ body{
 .view{display:none;}
 .view.active{display:block;}
 
+/* ===== スマホ用ハンバーガーメニュー ===== */
+.mobile-menu-btn{display:none;}
+
+@media (max-width: 860px){
+  .mobile-menu-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;height:38px;
+    border-radius:10px;
+    background:var(--card);
+    border:1px solid var(--line);
+    font-size:18px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .topbar{display:flex;align-items:center;gap:12px;padding:16px 16px 14px;}
+  .topbar-title{font-size:18px;}
+  .content{padding:16px 14px 50px;}
+  .sidebar{
+    position:fixed;
+    left:0;top:0;bottom:0;
+    z-index:200;
+    transform:translateX(-100%);
+    transition:transform 0.2s ease;
+    box-shadow:4px 0 24px rgba(0,0,0,0.3);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.4);
+    z-index:150;
+  }
+  .sidebar-overlay.open{display:block;}
+  .card{padding:14px 14px;overflow-x:auto;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  table{font-size:12px;}
+
+  /* メッセージ画面：スマホでは一覧⇄チャットを切替表示 */
+  .msg-card{flex-direction:column;overflow:visible !important;}
+  .msg-list-pane{width:100% !important;border-right:none !important;border-bottom:1px solid var(--line);max-height:none !important;}
+  .msg-chat-pane{display:none !important;}
+  .msg-chat-pane.active{
+    display:flex !important;
+    position:fixed;inset:0;z-index:300;background:var(--bg);
+  }
+  .msg-back-btn{display:inline-block !important;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink);margin-right:10px;padding:0;}
+}
+.msg-back-btn{display:none;}
+
 /* ===== カード共通 ===== */
 .card{
   background:var(--card);
@@ -319,7 +370,8 @@ tr:hover td{background:var(--card-soft);}
 
 <div id="admin-app" style="display:none">
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+<div class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <div class="sidebar-brand-en">KASHIWA NO BUKATSU</div>
     <div class="sidebar-brand-ja">事務局</div>
@@ -372,8 +424,11 @@ tr:hover td{background:var(--card-soft);}
 
 <div class="main">
   <div class="topbar">
-    <div class="topbar-title" id="topbar-title">ダッシュボード</div>
-    <div class="topbar-sub" id="topbar-sub">今日対応すべきことを一覧で確認できます</div>
+    <div class="mobile-menu-btn" onclick="openMobileSidebar()">☰</div>
+    <div>
+      <div class="topbar-title" id="topbar-title">ダッシュボード</div>
+      <div class="topbar-sub" id="topbar-sub">今日対応すべきことを一覧で確認できます</div>
+    </div>
   </div>
   <div class="content">
 
@@ -617,13 +672,16 @@ tr:hover td{background:var(--card-soft);}
 
     <!-- ===== メッセージ ===== -->
     <div class="view" id="view-messages">
-      <div class="card" style="display:flex;gap:0;padding:0;overflow:hidden">
-        <div style="width:280px;border-right:1px solid var(--line);flex-shrink:0;max-height:640px;overflow-y:auto">
+      <div class="card msg-card" style="display:flex;gap:0;padding:0;overflow:hidden">
+        <div class="msg-list-pane" style="width:280px;border-right:1px solid var(--line);flex-shrink:0;max-height:640px;overflow-y:auto">
           <div style="padding:14px"><input id="msg-filter-input" type="text" placeholder="名前で検索" oninput="filterMsgList()" style="width:100%;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;box-sizing:border-box"></div>
           <div id="msg-member-list"><div class="loading-text" style="padding:0 14px">読み込み中...</div></div>
         </div>
-        <div style="flex:1;display:flex;flex-direction:column;min-height:500px">
-          <div id="msg-chat-header" style="padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:14.5px">会員を選択してください</div>
+        <div class="msg-chat-pane" id="msg-chat-pane" style="flex:1;display:flex;flex-direction:column;min-height:500px">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:14.5px;display:flex;align-items:center">
+            <button class="msg-back-btn" onclick="closeChatRoomAdmin()">←</button>
+            <span id="msg-chat-header">会員を選択してください</span>
+          </div>
           <div id="msg-chat-body" style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:8px"></div>
           <div id="msg-chat-input-area" style="display:none;padding:12px 14px;border-top:1px solid var(--line);gap:8px">
             <textarea id="msg-chat-input" rows="1" placeholder="メッセージを入力" style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;resize:none;box-sizing:border-box"></textarea>
@@ -671,6 +729,15 @@ const VIEW_TITLES = {
   log: ['操作ログ', '事務局の操作履歴を確認します'],
 };
 
+function openMobileSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('open');
+}
+function closeMobileSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
 function switchView(view){
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -678,6 +745,7 @@ function switchView(view){
   const [title, sub] = VIEW_TITLES[view] || ['', ''];
   document.getElementById('topbar-title').textContent = title;
   document.getElementById('topbar-sub').textContent = sub;
+  closeMobileSidebar();
 
   if (view === 'approval') { renderApprovalList(); renderUpgradeList(); }
   if (view === 'temp') renderTempList();
@@ -1822,10 +1890,15 @@ function renderMsgMemberList(members){
     </div>`).join('');
 }
 
+function closeChatRoomAdmin(){
+  document.getElementById('msg-chat-pane').classList.remove('active');
+}
+
 async function openChatRoomAdmin(fullname, nickname){
   _msgCurrentFullname = fullname;
   document.getElementById('msg-chat-header').textContent = nickname;
   document.getElementById('msg-chat-input-area').style.display = 'flex';
+  document.getElementById('msg-chat-pane').classList.add('active');
   const body = document.getElementById('msg-chat-body');
   body.innerHTML = '<div class="loading-text">読み込み中...</div>';
   try{
