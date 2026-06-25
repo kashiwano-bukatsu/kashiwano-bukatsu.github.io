@@ -210,6 +210,50 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+
+        .product-img-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            width: 30px;
+            height: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            z-index: 1100;
+        }
+
+        .hamburger span {
+            display: block;
+            height: 2px;
+            width: 100%;
+            background-color: var(--pure-white);
+            transition: all 0.3s;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
         }
 
         .product-info {
@@ -360,7 +404,24 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero h1 { font-size: 3rem; }
-            .nav-menu { display: none; } /* ハンバーガーメニュー等は必要に応じて拡張可能 */
+            .hamburger { display: flex; }
+            .nav-menu {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                height: 100vh;
+                background-color: var(--secondary-bg);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 2.5rem;
+                transition: right 0.3s ease;
+                display: flex;
+            }
+            .nav-menu.active {
+                right: 0;
+            }
             .section { padding-top: 6rem; }
         }
     </style>
@@ -369,19 +430,24 @@
 
     <header>
         <div class="nav-container">
-            <a href="#" class="logo">MB SPORTS [cite: 1]</a>
-            <ul class="nav-menu">
+            <a href="#" class="logo">MB SPORTS</a>
+            <ul class="nav-menu" id="navMenu">
                 <li><a href="#concept">Concept</a></li>
                 <li><a href="#products">Products</a></li>
                 <li><a href="#price">Price</a></li>
                 <li><a href="#order">Order</a></li>
             </ul>
+            <button class="hamburger" id="hamburger" aria-label="メニュー">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
     </header>
 
     <section class="hero">
-        <div class="hero-badge">Official Concept Catalog [cite: 1]</div>
-        <h1>MB SPORTS [cite: 1]</h1>
+        <div class="hero-badge">Official Concept Catalog</div>
+        <h1>MB SPORTS</h1>
         <p>MBブランドを身につけ最高の瞬間を手に入れよう!! </p>
     </section>
 
@@ -390,34 +456,34 @@
         <div class="concept-grid">
             <div class="concept-card">
                 <div class="concept-letter">MB</div>
-                <h3>みんなのBUKATSU [cite: 3]</h3>
-                <p>誰もが主役になれる、みんなの部活動を応援するプロダクト。 [cite: 3]</p>
+                <h3>みんなのBUKATSU</h3>
+                <p>誰もが主役になれる、みんなの部活動を応援するプロダクト。</p>
             </div>
             <div class="concept-card">
                 <div class="concept-letter">M</div>
-                <h3>MOMENT [cite: 4]</h3>
-                <p>スポーツが放つ、熱狂の一瞬、一秒の『瞬間』を刻む。 [cite: 4]</p>
+                <h3>MOMENT</h3>
+                <p>スポーツが放つ、熱狂の一瞬、一秒の『瞬間』を刻む。</p>
             </div>
             <div class="concept-card">
                 <div class="concept-letter">B</div>
-                <h3>BEST [cite: 5]</h3>
-                <p>常に頂点を目指す、ギアが導く『最高、最高潮』のパフォーマンス。 [cite: 5]</p>
+                <h3>BEST</h3>
+                <p>常に頂点を目指す、ギアが導く『最高、最高潮』のパフォーマンス。</p>
             </div>
         </div>
     </section>
 
     <section id="products" class="section">
-        <h2 class="section-title">ITEMS [cite: 8]</h2>
+        <h2 class="section-title">ITEMS</h2>
         <div class="products-grid">
 
             <div class="product-card">
-                <div class="product-img-placeholder">MB T-SHIRT</div>
+                <div class="product-img-placeholder"><img src="images/tshirt_black.png" alt="MB Tシャツ"></div>
                 <div class="product-info">
-                    <h3>MB Tシャツ (ロゴ大・小) [cite: 9, 10, 20, 27]</h3>
+                    <h3>MB Tシャツ (ロゴ大・小)</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ブラック [cite: 19, 33], ネイビー [cite: 24, 30], ミックスグレー, ミックスブルー [cite: 25, 31], ミックスパープル, ミックスピンク [cite: 26, 32]</span>
+                        <span><strong>COLOR:</strong> ブラック, ネイビー, ミックスグレー, ミックスブルー, ミックスパープル, ミックスピンク</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 34] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身丈</th><th>身幅</th><th>サイズ</th><th>身丈</th><th>身幅</th></tr>
@@ -434,13 +500,13 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">MB LONG T-SHIRT</div>
+                <div class="product-img-placeholder"><img src="images/longt_black.png" alt="MB ロンT"></div>
                 <div class="product-info">
-                    <h3>MB ロンT (ロゴ大・小) [cite: 11, 12, 37, 40]</h3>
+                    <h3>MB ロンT (ロゴ大・小)</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ブラック [cite: 36, 41], ネイビー [cite: 38, 42], ダークグレー [cite: 39, 43]</span>
+                        <span><strong>COLOR:</strong> ブラック, ネイビー, ダークグレー</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 44] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身丈</th><th>身幅</th><th>サイズ</th><th>身丈</th><th>身幅</th></tr>
@@ -457,13 +523,13 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">MB POLO SHIRT</div>
+                <div class="product-img-placeholder"><img src="images/polo_black.png" alt="MB ポロシャツ"></div>
                 <div class="product-info">
-                    <h3>MB ポロシャツ [cite: 13, 46]</h3>
+                    <h3>MB ポロシャツ</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ネイビー [cite: 47], ミックスグレー, ミックスブルー [cite: 48], ミックスレッド [cite: 50], デイジー [cite: 51], ブラック [cite: 52]</span>
+                        <span><strong>COLOR:</strong> ネイビー, ミックスグレー, ミックスブルー, ミックスレッド, デイジー, ブラック</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 53] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身丈</th><th>身幅</th><th>サイズ</th><th>身丈</th><th>身幅</th></tr>
@@ -480,13 +546,13 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">SWEAT HALF PANTS</div>
+                <div class="product-img-placeholder"><img src="images/halfpants_black.png" alt="MB スウェットハーフパンツ"></div>
                 <div class="product-info">
-                    <h3>MB スウェットハーフパンツ [cite: 14, 55]</h3>
+                    <h3>MB スウェットハーフパンツ</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ブラック [cite: 57], グレー [cite: 58], ネイビー [cite: 59]</span>
+                        <span><strong>COLOR:</strong> ブラック, グレー, ネイビー</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 62] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身丈</th><th>身幅</th></tr>
@@ -502,13 +568,13 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">MB HOODIE</div>
+                <div class="product-img-placeholder"><img src="images/hoodie_black.png" alt="MB パーカー"></div>
                 <div class="product-info">
-                    <h3>MB パーカー (ロゴ大・小) [cite: 16, 67, 71]</h3>
+                    <h3>MB パーカー (ロゴ大・小)</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ブラック [cite: 68, 74], グレー [cite: 69, 75], ネイビー [cite: 70, 76]</span>
+                        <span><strong>COLOR:</strong> ブラック, グレー, ネイビー</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 77] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身丈</th><th>身幅</th><th>サイズ</th><th>身丈</th><th>身幅</th></tr>
@@ -524,13 +590,13 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">SWEAT PANTS</div>
+                <div class="product-img-placeholder"><img src="images/sweatpants_black.png" alt="MB スウェットパンツ"></div>
                 <div class="product-info">
-                    <h3>MB スウェットパンツ [cite: 17, 79]</h3>
+                    <h3>MB スウェットパンツ</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ブラック [cite: 81], グレー [cite: 82], ネイビー [cite: 83]</span>
+                        <span><strong>COLOR:</strong> ブラック, グレー, ネイビー</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 84] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身長目安</th><th>サイズ</th><th>身長目安</th></tr>
@@ -546,13 +612,13 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">NYLON SHORTS</div>
+                <div class="product-img-placeholder"><img src="images/nylon_black.png" alt="無地ナイロンショートパンツ"></div>
                 <div class="product-info">
-                    <h3>無地ナイロンショートパンツ [cite: 18, 86]</h3>
+                    <h3>無地ナイロンショートパンツ</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> グレー [cite: 87], コーラル [cite: 88], ブラック [cite: 89], グリーン [cite: 90], イエロー [cite: 91]</span>
+                        <span><strong>COLOR:</strong> グレー, コーラル, ブラック, グリーン, イエロー</span>
                     </div>
-                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART [cite: 93] <span>▼</span></button>
+                    <button class="size-toggle" onclick="toggleSize(this)">SIZE CHART <span>▼</span></button>
                     <div class="size-content">
                         <table class="size-table">
                             <tr><th>サイズ</th><th>身丈</th><th>身長目安</th></tr>
@@ -567,11 +633,11 @@
             </div>
 
             <div class="product-card">
-                <div class="product-img-placeholder">MB TOTE BAG</div>
+                <div class="product-img-placeholder"><img src="images/tote_black.png" alt="MB トートバッグ"></div>
                 <div class="product-info">
-                    <h3>MB トートバッグ [cite: 15, 64]</h3>
+                    <h3>MB トートバッグ</h3>
                     <div class="product-meta">
-                        <span><strong>COLOR:</strong> ブラック [cite: 65], ベージュ [cite: 66]</span>
+                        <span><strong>COLOR:</strong> ブラック, ベージュ</span>
                         <br>
                         <span>※日常使いから遠征まで、マルチに活躍するタフなトート。</span>
                     </div>
@@ -582,67 +648,67 @@
     </section>
 
     <section id="price" class="section">
-        <h2 class="section-title">PRICE LIST [cite: 106]</h2>
+        <h2 class="section-title">PRICE LIST</h2>
         <div class="price-table-container">
             <table class="main-price-table">
                 <thead>
                     <tr>
                         <th>ITEM</th>
-                        <th>一般価格 [cite: 123]</th>
-                        <th class="price-member">会員価格 [cite: 123]</th>
+                        <th>一般価格</th>
+                        <th class="price-member">会員価格</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Tシャツ(半袖) ロゴ大・小 [cite: 102, 105]</td>
-                        <td>3,500円 [cite: 96]</td>
-                        <td class="price-member">3,000円 [cite: 98]</td>
+                        <td>Tシャツ(半袖) ロゴ大・小</td>
+                        <td>3,500円</td>
+                        <td class="price-member">3,000円</td>
                     </tr>
                     <tr>
-                        <td>Tシャツ(長袖) ロゴ大・小 [cite: 114, 116]</td>
-                        <td>4,000円 [cite: 111]</td>
-                        <td class="price-member">3,500円 [cite: 110]</td>
-                    </tr>
-                    <tr>
-                        <td>ポロシャツ [cite: 103]</td>
-                        <td>4,000円 [cite: 97]</td>
-                        <td class="price-member">3,500円 [cite: 99]</td>
-                    </tr>
-                    <tr>
-                        <td>ナイロン ショートパンツ [cite: 113, 115]</td>
-                        <td>4,000円 [cite: 112]</td>
+                        <td>Tシャツ(長袖) ロゴ大・小</td>
+                        <td>4,000円</td>
                         <td class="price-member">3,500円</td>
                     </tr>
                     <tr>
-                        <td>スウェットパンツ(ハーフ) [cite: 126, 127]</td>
-                        <td>4,300円 [cite: 120]</td>
-                        <td class="price-member">3,800円 [cite: 122]</td>
+                        <td>ポロシャツ</td>
+                        <td>4,000円</td>
+                        <td class="price-member">3,500円</td>
                     </tr>
                     <tr>
-                        <td>スウェットパンツ [cite: 117]</td>
-                        <td>4,500円 [cite: 108]</td>
-                        <td class="price-member">4,000円 [cite: 107]</td>
+                        <td>ナイロン ショートパンツ</td>
+                        <td>4,000円</td>
+                        <td class="price-member">3,500円</td>
                     </tr>
                     <tr>
-                        <td>パーカー ロゴ大・小 [cite: 124, 125]</td>
-                        <td>5,500円 [cite: 119]</td>
-                        <td class="price-member">5,000円 [cite: 121]</td>
+                        <td>スウェットパンツ(ハーフ)</td>
+                        <td>4,300円</td>
+                        <td class="price-member">3,800円</td>
                     </tr>
                     <tr>
-                        <td>トートバック [cite: 104]</td>
-                        <td>1,000円 [cite: 100]</td>
-                        <td class="price-member">800円 [cite: 100]</td>
+                        <td>スウェットパンツ</td>
+                        <td>4,500円</td>
+                        <td class="price-member">4,000円</td>
+                    </tr>
+                    <tr>
+                        <td>パーカー ロゴ大・小</td>
+                        <td>5,500円</td>
+                        <td class="price-member">5,000円</td>
+                    </tr>
+                    <tr>
+                        <td>トートバック</td>
+                        <td>1,000円</td>
+                        <td class="price-member">800円</td>
                     </tr>
                 </tbody>
             </table>
-            <div class="price-note">※表示は税抜価格 [cite: 128]</div>
+            <div class="price-note">※表示は税抜価格</div>
         </div>
     </section>
 
     <section id="order" class="section">
-        <h2 class="section-title">HOW TO ORDER [cite: 94]</h2>
+        <h2 class="section-title">HOW TO ORDER</h2>
         <div class="order-box">
-            <h3>お申し込み方法 [cite: 94]</h3>
+            <h3>お申し込み方法</h3>
             <p style="margin-top: 1rem; color: var(--text-muted);">スマートフォンでコチラのQRコードを読み取って、専用フォームからお申し込みください。 </p>
             <div class="qr-placeholder">
                 [ QR CODE PLACEHOLDER ] 
@@ -651,7 +717,7 @@
     </section>
 
     <footer>
-        <p>&copy; 2026 MB SPORTS. All Rights Reserved. [cite: 1]</p>
+        <p>&copy; 2026 MB SPORTS. All Rights Reserved.</p>
     </footer>
 
     <script>
@@ -667,6 +733,21 @@
                 icon.textContent = '▲';
             }
         }
+
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('navMenu');
+
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
     </script>
 </body>
 </html>
