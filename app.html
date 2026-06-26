@@ -814,6 +814,14 @@ function isVideoNew(dateStr){
   return diffDays>=0&&diffDays<=2;
 }
 
+// 日付文字列（"2026/7/5"のような0埋めなしも含む）を比較可能な数値キーに変換
+function dk(s){
+  if(!s)return 0;
+  const p=String(s).split('/').map(n=>parseInt(n,10));
+  if(p.length<3||p.some(isNaN))return 0;
+  return p[0]*10000+p[1]*100+p[2];
+}
+
 async function checkVideosNewBadge(){
   const badge=document.getElementById('videos-new-badge');
   if(!badge)return;
@@ -892,7 +900,7 @@ async function loadHomeData(){
     }else{
       document.getElementById('home-today-card').style.display='none';
       let earliest=null;
-      if(d.nextEvents)for(const[sp,ev]of Object.entries(d.nextEvents)){if(!earliest||ev.date<earliest.date)earliest={sport:sp,...ev};}
+      if(d.nextEvents)for(const[sp,ev]of Object.entries(d.nextEvents)){if(!earliest||dk(ev.date)<dk(earliest.date)){earliest={sport:sp,...ev};}}
       if(earliest){
         window._countdownEvent=earliest;
         const diff=Math.ceil((new Date(earliest.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/86400000);
@@ -900,7 +908,7 @@ async function loadHomeData(){
         document.getElementById('home-countdown-card').style.display='block';
       }
     }
-    const sorted=Object.entries(d.nextEvents||{}).filter(([,ev])=>ev&&ev.date).sort((a,b)=>a[1].date>b[1].date?1:-1);
+    const sorted=Object.entries(d.nextEvents||{}).filter(([,ev])=>ev&&ev.date).sort((a,b)=>dk(a[1].date)-dk(b[1].date));
     // カレンダーカード内の次回開催予定をcountつきで更新
     const ICONS={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
     const nevEl=document.getElementById('home-next-events');
@@ -1072,17 +1080,34 @@ function shouldShowSporlogAnim(milestone, lap){
   }catch(e){ return false; }
 }
 
+// achievement動画を事前に裏読みしてキャッシュしておく（初回視聴の遅延対策）
+const _sporlogPreloaded = {};
+function preloadSporlogAnim(src){
+  if (_sporlogPreloaded[src]) return;
+  _sporlogPreloaded[src] = true;
+  const v = document.createElement('video');
+  v.src = src;
+  v.preload = 'auto';
+  v.muted = true;
+  v.style.display = 'none';
+  v.load();
+  document.body.appendChild(v);
+  setTimeout(()=>{ v.remove(); }, 30000); // プリロード用要素は十分時間が経ったら片付ける
+}
+
 // 動画を全画面ポップアップで再生→終わったらフェードして閉じる
 function playSporlogAnim(src, onDone){
   const overlay = document.createElement('div');
   overlay.id = 'sporolog-anim-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,0.88);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.35s ease';
-  overlay.innerHTML = '<video id="sporolog-anim-video" src="'+src+'" playsinline webkit-playsinline style="width:92%;max-width:420px;border-radius:16px;display:block;box-shadow:0 8px 40px rgba(0,0,0,0.5)"></video>';
+  overlay.innerHTML = '<div id="sporolog-anim-loading" style="color:#fff;font-size:13px;text-align:center"><div class="prep-spinner" style="margin:0 auto 10px"></div>読み込み中…</div>'
+    + '<video id="sporolog-anim-video" src="'+src+'" playsinline webkit-playsinline preload="auto" style="width:92%;max-width:420px;border-radius:16px;display:none;box-shadow:0 8px 40px rgba(0,0,0,0.5)"></video>';
   document.body.appendChild(overlay);
   requestAnimationFrame(()=>{ overlay.style.opacity = '1'; });
 
   const vid = document.getElementById('sporolog-anim-video');
-  let done = false;
+  const loadingLabel = document.getElementById('sporolog-anim-loading');
+  let done = false, started = false;
   const finish = ()=>{
     if (done) return;
     done = true;
@@ -1091,6 +1116,17 @@ function playSporlogAnim(src, onDone){
   };
   if (!vid){ overlay.remove(); onDone(); return; }
   vid.muted = true; // JSで明示的にミュート設定（autoplay許可を確実にするため）
+
+  // 実際に映像が流れ始めた瞬間（=playing）に切り替えてからタイマー開始
+  const onActuallyPlaying = ()=>{
+    if (started) return;
+    started = true;
+    if (loadingLabel) loadingLabel.style.display = 'none';
+    vid.style.display = 'block';
+    const ms = (isFinite(vid.duration) ? vid.duration * 1000 : 8000) + 1500;
+    setTimeout(finish, ms);
+  };
+  vid.addEventListener('playing', onActuallyPlaying);
   vid.addEventListener('ended', finish);
   overlay.addEventListener('click', finish); // タップでスキップ可能に
   vid.addEventListener('error', (e)=>{ console.error('スポログ動画読み込みエラー:', src, vid.error); done = true; overlay.remove(); onDone(); });
@@ -1098,15 +1134,13 @@ function playSporlogAnim(src, onDone){
   if (playPromise && playPromise.catch) {
     playPromise.catch(()=>{ finish(); }); // 自動再生がブロックされた場合はスキップ
   }
-  vid.addEventListener('loadedmetadata', ()=>{
-    const ms = (isFinite(vid.duration) ? vid.duration * 1000 : 8000) + 2000;
-    setTimeout(finish, ms);
-  });
-  setTimeout(finish, 12000); // メタデータ取得自体に失敗した場合の最終保険
+  setTimeout(()=>{ if(!started) finish(); }, 15000); // 読み込みが長すぎる場合の最終保険
 }
 
 async function loadMypageData(checkNotice,updateRankCache){
   try{
+    preloadSporlogAnim('achievement5.mp4');
+    preloadSporlogAnim('achievement10.mp4');
     const d=await callGAS('getMemberDashboard',mypageCurrentUser.internalId);
     if(checkNotice&&d.referralNotice)showReferralNoticePopup(d.referralNotice);
     let progress=d.ticketProgress||0,tickets=d.ticketCount||0,lap=d.lap||1;
@@ -1215,7 +1249,8 @@ function renderNextMemberCard(members,schedule){
 function renderReservationList(reservations){
   const el=document.getElementById('mypage-reservation-list');
   if(!reservations||!reservations.length){el.innerHTML='<div class="empty">予約がありません</div>';return;}
-  el.innerHTML=reservations.map((r,idx)=>{
+  const sortedReservations=[...reservations].sort((a,b)=>dk(a[1])-dk(b[1]));
+  el.innerHTML=sortedReservations.map((r,idx)=>{
     const st=r[7]||'⭕',sl={'⭕':'参加','△':'未定','❌':'不参加'};
     return'<div style="padding:12px 0;border-bottom:1px solid #f0f4f8"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[r[2]]||'')+' '+r[2]+'</div><div style="font-size:13px;color:#888;margin-top:2px">'+r[1]+'（'+getDow(r[1])+'） ／ '+r[3]+'</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:#888" id="st-label-'+idx+'">'+st+' '+sl[st]+'</span><button onclick="toggleReserveEdit('+idx+')" style="background:#f0f4f8;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;color:#555">変更</button></div></div><div id="reserve-edit-'+idx+'" style="display:none;margin-top:10px;"><div style="display:flex;gap:6px;margin-bottom:8px"><button class="status-sel-btn '+(st==='⭕'?'sel-maru':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'⭕\',this,'+idx+')">⭕<div style="font-size:10px;margin-top:2px">参加</div></button><button class="status-sel-btn '+(st==='△'?'sel-sankaku':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'△\',this,'+idx+')">△<div style="font-size:10px;margin-top:2px">未定</div></button><button class="status-sel-btn '+(st==='❌'?'sel-batsu':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'❌\',this,'+idx+')">❌<div style="font-size:10px;margin-top:2px">不参加</div></button></div><div style="display:flex;gap:8px"><button onclick="saveSingleStatus(\''+r[1]+'\',\''+r[2]+'\','+idx+')" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">保存</button><button onclick="cancelSingleReserve(\''+r[1]+'\',\''+r[2]+'\')" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button></div></div></div>';
   }).join('');
@@ -1224,7 +1259,7 @@ function renderReservationList(reservations){
 function renderScheduleList(schedules){
   const el=document.getElementById('mypage-schedule-list');
   if(!schedules||!schedules.length){el.innerHTML='<div class="empty">予定がありません</div>';return;}
-  const sorted=[...schedules].sort((a,b)=>a[0]>b[0]?1:-1);
+  const sorted=[...schedules].sort((a,b)=>dk(a[0])-dk(b[0]));
   el.innerHTML=sorted.map((s,i)=>'<div class="schedule-item" onclick="toggleMypageSchedule('+i+',\''+s[0]+'\',\''+s[4]+'\',\''+s[2]+'\')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[s[4]]||'')+' '+s[4]+'</div><div style="font-size:13px;color:#888;margin-top:4px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div></div><div style="font-size:20px;color:#aaa" id="sched-arrow-'+i+'">›</div></div><div id="mypage-detail-'+i+'" style="display:none;margin-top:12px"></div></div>').join('');
 }
 
@@ -1829,7 +1864,15 @@ function renderMonthCalendar(date){
   const today=new Date();
   const ym=`${year}/${String(month+1).padStart(2,'0')}`;
   const evMap={};
-  calendarSchedules.forEach(s=>{if(s[0]&&s[0].startsWith(ym)){const d=parseInt(s[0].split('/')[2]);if(!evMap[d])evMap[d]=[];evMap[d].push(s[4]);}});
+  calendarSchedules.forEach(s=>{
+    if(!s[0])return;
+    const p=s[0].split('/').map(n=>parseInt(n,10));
+    if(p.length<3||p.some(isNaN))return;
+    if(p[0]===year&&p[1]===month+1){
+      if(!evMap[p[2]])evMap[p[2]]=[];
+      evMap[p[2]].push(s[4]);
+    }
+  });
   const firstDay=new Date(year,month,1).getDay();
   const lastDate=new Date(year,month+1,0).getDate();
   const DOW=['日','月','火','水','木','金','土'];
@@ -1859,13 +1902,13 @@ function renderMonthCalendar(date){
 function renderNextEventsInCalendar(){
   const el=document.getElementById('home-next-events');if(!el)return;
   const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
-  const today=new Date().toISOString().slice(0,10).replace(/-/g,'/');
+  const todayKey=dk(new Date().toISOString().slice(0,10).replace(/-/g,'/'));
   const sportMap={};
   calendarSchedules.forEach(s=>{
-    if(!s[0]||s[0]<today)return;
+    if(!s[0]||dk(s[0])<todayKey)return;
     if(!sportMap[s[4]])sportMap[s[4]]={date:s[0],time:s[1],place:s[2],count:s[10]||''};
   });
-  const rows=Object.entries(sportMap).sort((a,b)=>a[1].date>b[1].date?1:-1);
+  const rows=Object.entries(sportMap).sort((a,b)=>dk(a[1].date)-dk(b[1].date));
   el.innerHTML=rows.length?rows.map(([sport,ev])=>`
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8">
       <div style="display:flex;align-items:center;gap:10px">
