@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ご注文確認 | MB SPORTS</title>
+<style>
+    :root {
+        --bg-color: #0b0c10;
+        --secondary-bg: #1f2833;
+        --text-color: #c5a059;
+        --text-muted: #95a5a6;
+        --accent-color: #4a9d6f;
+        --pure-white: #ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        background-color: var(--bg-color);
+        color: var(--pure-white);
+        font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif;
+        line-height: 1.7;
+        padding: 2rem 1.2rem 6rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 0.6rem;
+    }
+    .back-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+    .cart-item {
+        background-color: var(--secondary-bg);
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.8rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .cart-item .info h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+    .cart-item .info p { font-size: 0.85rem; color: var(--text-muted); }
+    .cart-item .remove-btn {
+        background: none;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: var(--text-muted);
+        border-radius: 20px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+    }
+    .empty-msg {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 3rem 0;
+    }
+    .policy-box {
+        background-color: var(--secondary-bg);
+        border-radius: 8px;
+        padding: 1.2rem 1.4rem;
+        margin: 2rem 0;
+        font-size: 0.88rem;
+        color: var(--text-muted);
+    }
+    .policy-box h2 {
+        font-size: 0.95rem;
+        color: var(--pure-white);
+        margin-bottom: 0.6rem;
+    }
+    .policy-box ul { padding-left: 1.2rem; margin-top: 0.4rem; }
+    .policy-box li { margin-bottom: 0.4rem; }
+    form {
+        margin-top: 1.5rem;
+    }
+    label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+        margin-top: 1rem;
+    }
+    input, textarea {
+        width: 100%;
+        background-color: var(--secondary-bg);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: var(--pure-white);
+        border-radius: 6px;
+        padding: 0.7rem 0.9rem;
+        font-size: 0.95rem;
+    }
+    .submit-btn {
+        display: block;
+        width: 100%;
+        margin-top: 1.8rem;
+        padding: 1rem;
+        background-color: var(--accent-color);
+        color: var(--bg-color);
+        border: none;
+        border-radius: 30px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    .submit-btn:active { transform: scale(0.98); }
+    .thanks-box {
+        text-align: center;
+        padding: 3rem 1rem;
+        display: none;
+    }
+    .thanks-box.active { display: block; }
+    .main-content.hidden { display: none; }
+</style>
+</head>
+<body>
+
+    <a href="MBsport.html" class="back-link">&larr; カタログに戻る</a>
+    <h1>ご注文内容の確認</h1>
+
+    <div class="main-content" id="mainContent">
+
+        <div id="cartList"></div>
+
+        <div class="policy-box">
+            <h2>お支払い・キャンセルについて</h2>
+            <ul>
+                <li>お支払いは<strong>現金と商品の引き換え</strong>(対面でのお渡し)のみとなります。事前のオンライン決済はありません。</li>
+                <li>キャンセルは<strong>ご注文から3日以内</strong>のみ承ります。期間を過ぎたご注文はキャンセルできませんのでご注意ください。</li>
+            </ul>
+        </div>
+
+        <form id="orderForm">
+            <label for="name">お名前</label>
+            <input type="text" id="name" required placeholder="例: 大谷 悠樹">
+
+            <label for="contact">連絡先(電話番号 または SNSアカウント)</label>
+            <input type="text" id="contact" required placeholder="例: 090-XXXX-XXXX / Threads ID">
+
+            <label for="memo">ご要望・備考(任意)</label>
+            <textarea id="memo" rows="3" placeholder="受け取り希望日など"></textarea>
+
+            <button type="submit" class="submit-btn">この内容で申し込む</button>
+        </form>
+
+    </div>
+
+    <div class="thanks-box" id="thanksBox">
+        <h2 style="margin-bottom:1rem;">お申し込みありがとうございます!</h2>
+        <p style="color: var(--text-muted);">スタッフより確認のご連絡をいたします。<br>商品の受け渡し時に現金でお支払いください。</p>
+        <a href="MBsport.html" class="back-link" style="margin-top:2rem; display:inline-block;">カタログに戻る</a>
+    </div>
+
+<script>
+    function getCart() {
+        try {
+            return JSON.parse(localStorage.getItem('mb_cart') || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveCart(cart) {
+        localStorage.setItem('mb_cart', JSON.stringify(cart));
+    }
+
+    function renderCart() {
+        const cart = getCart();
+        const listEl = document.getElementById('cartList');
+        listEl.innerHTML = '';
+
+        if (cart.length === 0) {
+            listEl.innerHTML = '<p class="empty-msg">カートに商品がありません。<br>カタログから商品を選んでください。</p>';
+            document.getElementById('orderForm').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('orderForm').style.display = 'block';
+
+        cart.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <div class="info">
+                    <h3>${item.name}</h3>
+                    <p>${item.color ? 'カラー: ' + item.color + ' / ' : ''}数量: ${item.qty}</p>
+                </div>
+                <button class="remove-btn" onclick="removeItem(${i})">削除</button>
+            `;
+            listEl.appendChild(div);
+        });
+    }
+
+    function removeItem(index) {
+        const cart = getCart();
+        cart.splice(index, 1);
+        saveCart(cart);
+        renderCart();
+    }
+
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // TODO: 送信先(GAS/フォーム等)との連携は後で実装
+        localStorage.removeItem('mb_cart');
+        document.getElementById('mainContent').classList.add('hidden');
+        document.getElementById('thanksBox').classList.add('active');
+    });
+
+    renderCart();
+</script>
+</body>
+</html>
