@@ -1054,6 +1054,34 @@ function buildSporlogBoard(progress, lap){
     '<div style="display:flex;justify-content:center;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
 }
 
+// 5回目・10回目に到達した「最初の1回だけ」動画を見せる（同じ周回内では2回目以降出さない）
+function shouldShowSporlogAnim(milestone, lap){
+  try{
+    const key = 'bukatsu_sporolog_seen_' + mypageCurrentUser.internalId + '_' + lap + '_' + milestone;
+    if (localStorage.getItem(key)) return false;
+    localStorage.setItem(key, '1');
+    return true;
+  }catch(e){ return false; }
+}
+
+// 動画を再生→終わったらフェードで通常表示に切り替える（動画が無い/失敗した場合は即スキップ）
+function playSporlogAnim(src, onDone){
+  const area = document.getElementById('mypage-progress-area');
+  area.innerHTML = '<video id="sporolog-anim-video" src="'+src+'" autoplay muted playsinline webkit-playsinline style="width:100%;border-radius:14px;display:block;opacity:1;transition:opacity 0.5s ease"></video>';
+  const vid = document.getElementById('sporolog-anim-video');
+  let done = false;
+  const finish = ()=>{
+    if (done) return;
+    done = true;
+    if (vid) vid.style.opacity = '0';
+    setTimeout(onDone, 500);
+  };
+  if (!vid){ onDone(); return; }
+  vid.addEventListener('ended', finish);
+  vid.addEventListener('error', ()=>{ done = true; onDone(); });
+  setTimeout(finish, 6000); // 念のための保険（動画再生に問題があっても進める）
+}
+
 async function loadMypageData(checkNotice,updateRankCache){
   try{
     const d=await callGAS('getMemberDashboard',mypageCurrentUser.internalId);
@@ -1079,18 +1107,24 @@ async function loadMypageData(checkNotice,updateRankCache){
     }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
     const isMaxed=tickets>0;
-    if(mypageCurrentUser.isApplying){
-      document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認されるとスポログが始まります</div></div>';
-    } else if(isMaxed){
+    const renderMaxedUI=()=>{
       document.getElementById('mypage-progress-area').innerHTML=
         '<div style="font-size:13px;color:#b8860b;margin-bottom:6px;font-weight:700">無料チケットあり。タップして使おう！</div>'+
         '<div class="progress-bar-bg" style="box-shadow:0 0 10px rgba(255,215,0,0.7)"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite"></div></div>'+
         '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>チケット '+tickets+'枚</span><span>10回で1枚GET</span></div>'+
         '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:#b8860b">次回参加が無料になります</div>'+
         '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+    };
+    const renderBoardUI=()=>{ document.getElementById('mypage-progress-area').innerHTML = buildSporlogBoard(progress, lap); };
+    if(mypageCurrentUser.isApplying){
+      document.getElementById('mypage-progress-area').innerHTML=
+        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認されるとスポログが始まります</div></div>';
+    } else if(isMaxed){
+      if(shouldShowSporlogAnim(10,lap)) playSporlogAnim('achievement10.mp4', renderMaxedUI);
+      else renderMaxedUI();
     } else {
-      document.getElementById('mypage-progress-area').innerHTML = buildSporlogBoard(progress, lap);
+      if(progress===5 && shouldShowSporlogAnim(5,lap)) playSporlogAnim('achievement5.mp4', renderBoardUI);
+      else renderBoardUI();
     }
     // 未読バナー
     const c=d.unreadCount||0;
