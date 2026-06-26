@@ -1064,22 +1064,37 @@ function shouldShowSporlogAnim(milestone, lap){
   }catch(e){ return false; }
 }
 
-// 動画を再生→終わったらフェードで通常表示に切り替える（動画が無い/失敗した場合は即スキップ）
+// 動画を全画面ポップアップで再生→終わったらフェードして閉じる
 function playSporlogAnim(src, onDone){
-  const area = document.getElementById('mypage-progress-area');
-  area.innerHTML = '<video id="sporolog-anim-video" src="'+src+'" autoplay muted playsinline webkit-playsinline style="width:100%;border-radius:14px;display:block;opacity:1;transition:opacity 0.5s ease"></video>';
+  const overlay = document.createElement('div');
+  overlay.id = 'sporolog-anim-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(10,10,20,0.88);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.35s ease';
+  overlay.innerHTML = '<video id="sporolog-anim-video" src="'+src+'" playsinline webkit-playsinline style="width:92%;max-width:420px;border-radius:16px;display:block;box-shadow:0 8px 40px rgba(0,0,0,0.5)"></video>';
+  document.body.appendChild(overlay);
+  requestAnimationFrame(()=>{ overlay.style.opacity = '1'; });
+
   const vid = document.getElementById('sporolog-anim-video');
   let done = false;
   const finish = ()=>{
     if (done) return;
     done = true;
-    if (vid) vid.style.opacity = '0';
-    setTimeout(onDone, 500);
+    overlay.style.opacity = '0';
+    setTimeout(()=>{ overlay.remove(); onDone(); }, 400);
   };
-  if (!vid){ onDone(); return; }
+  if (!vid){ overlay.remove(); onDone(); return; }
+  vid.muted = true; // JSで明示的にミュート設定（autoplay許可を確実にするため）
   vid.addEventListener('ended', finish);
-  vid.addEventListener('error', ()=>{ done = true; onDone(); });
-  setTimeout(finish, 6000); // 念のための保険（動画再生に問題があっても進める）
+  overlay.addEventListener('click', finish); // タップでスキップ可能に
+  vid.addEventListener('error', (e)=>{ console.error('スポログ動画読み込みエラー:', src, vid.error); done = true; overlay.remove(); onDone(); });
+  const playPromise = vid.play();
+  if (playPromise && playPromise.catch) {
+    playPromise.catch(()=>{ finish(); }); // 自動再生がブロックされた場合はスキップ
+  }
+  vid.addEventListener('loadedmetadata', ()=>{
+    const ms = (isFinite(vid.duration) ? vid.duration * 1000 : 8000) + 2000;
+    setTimeout(finish, ms);
+  });
+  setTimeout(finish, 12000); // メタデータ取得自体に失敗した場合の最終保険
 }
 
 async function loadMypageData(checkNotice,updateRankCache){
@@ -1120,11 +1135,11 @@ async function loadMypageData(checkNotice,updateRankCache){
       document.getElementById('mypage-progress-area').innerHTML=
         '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認されるとスポログが始まります</div></div>';
     } else if(isMaxed){
-      if(shouldShowSporlogAnim(10,lap)) playSporlogAnim('achievement10.mp4', renderMaxedUI);
-      else renderMaxedUI();
+      renderMaxedUI();
+      if(shouldShowSporlogAnim(10,lap)) playSporlogAnim('achievement10.mp4', ()=>{});
     } else {
-      if(progress===5 && shouldShowSporlogAnim(5,lap)) playSporlogAnim('achievement5.mp4', renderBoardUI);
-      else renderBoardUI();
+      renderBoardUI();
+      if(progress===5 && shouldShowSporlogAnim(5,lap)) playSporlogAnim('achievement5.mp4', ()=>{});
     }
     // 未読バナー
     const c=d.unreadCount||0;
