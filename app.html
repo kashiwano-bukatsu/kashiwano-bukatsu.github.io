@@ -1051,7 +1051,15 @@ function buildSporlogBoard(progress, lap){
       circleHtml+
     '</div>'+
     '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remaining+'回でチケット1枚</div>'+
-    '<div style="display:flex;justify-content:center;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+    '<div style="display:flex;justify-content:center;gap:14px;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="resetSporlogAnimSeen()" style="font-size:11px;color:#bbb;background:none;border:none;text-decoration:underline;cursor:pointer;">（動画テストをリセット）</button></div>';
+}
+
+// テスト用：今の周回の「動画を見た」記録を消して、もう一度動画が出るようにする
+function resetSporlogAnimSeen(){
+  try{
+    Object.keys(localStorage).filter(k => k.startsWith('bukatsu_sporolog_seen_')).forEach(k => localStorage.removeItem(k));
+    alert('動画の視聴記録をリセットしました。マイページを開き直すと、また動画が出ます。');
+  }catch(e){}
 }
 
 // 5回目・10回目に到達した「最初の1回だけ」動画を見せる（同じ周回内では2回目以降出さない）
@@ -1128,7 +1136,7 @@ async function loadMypageData(checkNotice,updateRankCache){
         '<div class="progress-bar-bg" style="box-shadow:0 0 10px rgba(255,215,0,0.7)"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite"></div></div>'+
         '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>チケット '+tickets+'枚</span><span>10回で1枚GET</span></div>'+
         '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:#b8860b">次回参加が無料になります</div>'+
-        '<div style="display:flex;justify-content:center;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button></div>';
+        '<div style="display:flex;justify-content:center;gap:14px;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="resetSporlogAnimSeen()" style="font-size:11px;color:#bbb;background:none;border:none;text-decoration:underline;cursor:pointer;">（動画テストをリセット）</button></div>';
     };
     const renderBoardUI=()=>{ document.getElementById('mypage-progress-area').innerHTML = buildSporlogBoard(progress, lap); };
     if(mypageCurrentUser.isApplying){
