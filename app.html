@@ -311,10 +311,11 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>スポログ</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-total-count">0</div><div style="font-size:10px;color:#888;margin-top:2px">累計参加</div></div>
-        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-month-count">0</div><div style="font-size:10px;color:#888;margin-top:2px">今月</div></div>
-        <div id="ticket-stat-box" onclick="openTicketModal()" style="flex:1;background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-radius:12px;padding:10px 8px;text-align:center;border:1px solid rgba(74,197,80,0.15);cursor:pointer"><div style="font-size:22px;font-weight:800;color:#1a1a2e" id="mypage-ticket-count">0枚</div><div style="font-size:10px;color:#888;margin-top:2px">チケット</div></div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-total-count">0</div><div style="font-size:9px;color:#888;margin-top:2px">累計参加</div></div>
+        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-month-count">0</div><div style="font-size:9px;color:#888;margin-top:2px">今月</div></div>
+        <div id="ticket-stat-box" onclick="openTicketModal()" style="flex:1;background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(74,197,80,0.15);cursor:pointer"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-ticket-count">0枚</div><div style="font-size:9px;color:#888;margin-top:2px">無料チケット</div></div>
+        <div id="halfprice-stat-box" onclick="openHalfPriceModal()" style="flex:1;background:linear-gradient(135deg,#fff8e1,#ffecd2);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(245,124,0,0.15);cursor:pointer"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-halfprice-count">0枚</div><div style="font-size:9px;color:#888;margin-top:2px">200円引</div></div>
       </div>
       <div id="mypage-progress-area"></div>
       <!-- 次回予約 -->
@@ -663,6 +664,22 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
     <div class="ticket-btn-row">
       <button class="ticket-btn-use" onclick="useTicketModal()">使う</button>
       <button class="ticket-btn-close" onclick="closeTicketModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 200円引きチケットモーダル -->
+<div id="halfprice-modal-overlay" style="display:none" class="ticket-overlay">
+  <div class="ticket-blur-bg" onclick="closeHalfPriceModal()"></div>
+  <div class="ticket-modal">
+    <div style="font-size:64px;margin-bottom:8px;line-height:1">💰</div>
+    <div style="font-size:22px;font-weight:700;color:#222;margin-bottom:4px">200円引きチケット</div>
+    <div style="font-size:13px;color:#888;margin-bottom:20px" id="halfprice-modal-count">0枚 所持</div>
+    <div style="font-size:20px;font-weight:700;color:#222;background:#f8f8f8;border-radius:12px;padding:12px;margin-bottom:20px" id="halfprice-modal-name"></div>
+    <div style="font-size:13px;color:#f57c00;background:#fff3e0;border-radius:10px;padding:12px;margin-bottom:20px;line-height:1.8;font-weight:600">このチケットを使うときは<br>運営スタッフに画面を見せて<br>「使う」ボタンを押してもらってください</div>
+    <div class="ticket-btn-row">
+      <button class="ticket-btn-use" onclick="useHalfPriceTicketModal()">使う</button>
+      <button class="ticket-btn-close" onclick="closeHalfPriceModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1149,6 +1166,13 @@ async function loadMypageData(checkNotice,updateRankCache){
     document.getElementById('mypage-month-count').textContent=d.monthCount;
     currentTicketCount=tickets;
     document.getElementById('mypage-ticket-count').textContent=tickets+'枚';
+    currentHalfPriceCount=d.halfPriceTicketCount||0;
+    const hpBox=document.getElementById('halfprice-stat-box');
+    document.getElementById('mypage-halfprice-count').textContent=currentHalfPriceCount+'枚';
+    if(hpBox){
+      if(currentHalfPriceCount>0){hpBox.style.background='linear-gradient(135deg,#ffe0b2,#ffcc80)';hpBox.style.border='2px solid #f57c00';}
+      else{hpBox.style.background='linear-gradient(135deg,#fff8e1,#ffecd2)';hpBox.style.border='1px solid rgba(245,124,0,0.15)';}
+    }
     const tb=document.getElementById('ticket-stat-box');
     if(tickets>0){tb.style.background='linear-gradient(135deg,#e8f5e9,#c8e6c9)';tb.style.border='2px solid #4CAF50';}
     else{tb.style.background='linear-gradient(135deg,#f0fdf4,#e8f5e9)';tb.style.border='1px solid rgba(74,197,80,0.15)';}
@@ -1434,6 +1458,20 @@ function closeTicketModal(){document.getElementById('ticket-modal-overlay').styl
 async function useTicketModal(){
   if(!confirm('チケットを1枚使いますか？\n（運営スタッフが確認した上で押してください）'))return;
   try{await callGAS('useFreeTicket',mypageCurrentUser.fullname);closeTicketModal();alert('チケットを使用しました');loadMypageData();}catch(e){alert('エラー：'+e.message);}
+}
+
+// ===== 200円引きチケット =====
+let currentHalfPriceCount=0;
+function openHalfPriceModal(){
+  if(!mypageCurrentUser)return;if(currentHalfPriceCount<=0){alert('現在使える200円引きチケットがありません');return;}
+  document.getElementById('halfprice-modal-name').textContent=mypageCurrentUser.nickname+' さん';
+  document.getElementById('halfprice-modal-count').textContent=currentHalfPriceCount+'枚 所持';
+  document.getElementById('halfprice-modal-overlay').style.display='flex';
+}
+function closeHalfPriceModal(){document.getElementById('halfprice-modal-overlay').style.display='none';}
+async function useHalfPriceTicketModal(){
+  if(!confirm('200円引きチケットを1枚使いますか？\n（運営スタッフが確認した上で押してください）'))return;
+  try{await callGAS('useHalfPriceTicket',mypageCurrentUser.fullname);closeHalfPriceModal();alert('200円引きチケットを使用しました');loadMypageData();}catch(e){alert('エラー：'+e.message);}
 }
 
 // ===== 回数券購入申込 =====
