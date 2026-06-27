@@ -302,9 +302,9 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:28px">🎟</div>
         <div style="flex:1">
-          <div style="font-size:12px;color:#b8860b;font-weight:700;margin-bottom:2px">回数券 申請中</div>
+          <div style="font-size:12px;color:#b8860b;font-weight:700;margin-bottom:2px" id="mypage-ticket-pending-label">回数券 申請中</div>
           <div style="font-size:15px;font-weight:800;color:#1a1a2e" id="mypage-ticket-pending-text"></div>
-          <div style="font-size:12px;color:#888;margin-top:2px">当日スタッフにお支払いください</div>
+          <div style="font-size:12px;color:#888;margin-top:2px" id="mypage-ticket-pending-note">当日スタッフにお支払いください</div>
         </div>
       </div>
     </div>
@@ -344,6 +344,9 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
   <div id="reserve-login-required" class="card" style="display:none">
     <div style="text-align:center;color:#888;font-size:15px;padding:16px 0">マイページからログインしてください</div>
     <button class="btn btn-primary" onclick="showTab('mypage')">マイページへ</button>
+  </div>
+  <div id="reserve-pending-approval" class="card" style="display:none">
+    <div style="text-align:center;padding:16px 0"><div class="prep-spinner" style="margin:0 auto 12px"></div><div style="font-size:15px;font-weight:700;color:#888">事務局の確認をお待ちください</div><div style="font-size:13px;color:#aaa;margin-top:6px">承認後、予約機能がご利用いただけます</div></div>
   </div>
   <div id="reserve-main" style="display:none">
     <div id="next-member-card" class="next-member-card" style="display:none">
@@ -963,7 +966,7 @@ async function mypageLogin(){
   try{
     const data=await callGAS('loginAttendee',fullname,dob);
     if(!data){document.getElementById('mypage-login-error').style.display='block';return;}
-    mypageCurrentUser={internalId:data.internalId,fullname:data.fullname,nickname:data.nickname,memberSport:data.sport||'全て',memberNumber:data.memberNumber||'',type:data.type||'一般',gender:data.gender||'',area:data.area||'',isApplying:data.status==='会員(申請中)'};
+    mypageCurrentUser={internalId:data.internalId,fullname:data.fullname,nickname:data.nickname,memberSport:data.sport||'全て',memberNumber:data.memberNumber||'',type:data.type||'一般',gender:data.gender||'',area:data.area||'',status:data.status||'',isApplying:data.status==='会員(申請中)',isPendingPayment:data.status==='会員(支払い確認中)'};
     saveCurrentUser();
     localStorage.setItem('bukatsu_auto_login',remember?'true':'false');
     closeLoginModal();
@@ -1047,8 +1050,14 @@ function buildSporlogBoard(progress, lap){
     return '<div style="position:relative;z-index:2;width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:'+fontSize+'px;font-weight:800;color:'+color+';flex-shrink:0;'+glow+'">'+mascotHtml+n+badge+'</div>';
   }).join('');
   const startMascot = progress===0 ? '<div style="position:absolute;z-index:3;top:-38px;left:13px;width:26px;line-height:1">'+MASCOT+'</div>' : '';
-  const remaining = 10 - progress;
-  const lapLabel = lap > 1 ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
+  // 次の特典までの残り回数とラベル（5回目=200円引きチケット／10回目=無料チケット）
+  const nextMilestone = progress < 5 ? 5 : 10;
+  const remaining = nextMilestone - progress;
+  const nextRewardLabel = nextMilestone === 5 ? '200円引きチケット' : '無料チケット';
+  // 10回達成直後（progress===0）はまだ前の周回扱いにして、11回目（progress>=1）になってから「○周目」を表示する
+  const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
+  // 5回目（200円引きチケット獲得）に到達している時だけ、動画を見返せるボタンを出す
+  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#f57c00;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
   return ''+
     '<div style="text-align:center">'+lapLabel+'</div>'+
     '<div style="font-size:13px;color:#888;margin-bottom:4px">次の無料チケットまで</div>'+
@@ -1058,16 +1067,8 @@ function buildSporlogBoard(progress, lap){
       '<div style="position:absolute;left:13px;top:59px;height:3px;background:linear-gradient(90deg,'+lineGradient+');border-radius:2px;z-index:1;width:'+pct+'%;max-width:calc(100% - 26px)"></div>'+
       circleHtml+
     '</div>'+
-    '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remaining+'回でチケット1枚</div>'+
-    '<div style="display:flex;justify-content:center;gap:14px;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="resetSporlogAnimSeen()" style="font-size:11px;color:#bbb;background:none;border:none;text-decoration:underline;cursor:pointer;">（動画テストをリセット）</button></div>';
-}
-
-// テスト用：今の周回の「動画を見た」記録を消して、もう一度動画が出るようにする
-function resetSporlogAnimSeen(){
-  try{
-    Object.keys(localStorage).filter(k => k.startsWith('bukatsu_sporolog_seen_')).forEach(k => localStorage.removeItem(k));
-    alert('動画の視聴記録をリセットしました。マイページを開き直すと、また動画が出ます。');
-  }catch(e){}
+    '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remaining+'回で'+nextRewardLabel+'</div>'+
+    '<div style="display:flex;justify-content:center;gap:14px;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button>'+replayBtn+'</div>';
 }
 
 // 5回目・10回目に到達した「最初の1回だけ」動画を見せる（同じ周回内では2回目以降出さない）
@@ -1157,9 +1158,11 @@ async function loadMypageData(checkNotice,updateRankCache){
       mypageCurrentUser.area=d.area||'';
       mypageCurrentUser.gender=d.gender||'';
       mypageCurrentUser.memberSport=d.memberSport||'全て';
-      mypageCurrentUser.isApplying=d.status==='会員(申請中)';
       mypageCurrentUser.type=d.type||mypageCurrentUser.type;
       mypageCurrentUser.memberNumber=d.memberNumber||mypageCurrentUser.memberNumber;
+      mypageCurrentUser.status=d.status||mypageCurrentUser.status;
+      mypageCurrentUser.isApplying=d.status==='会員(申請中)';
+      mypageCurrentUser.isPendingPayment=d.status==='会員(支払い確認中)';
       saveCurrentUser();
     }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
@@ -1170,12 +1173,15 @@ async function loadMypageData(checkNotice,updateRankCache){
         '<div class="progress-bar-bg" style="box-shadow:0 0 10px rgba(255,215,0,0.7)"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite"></div></div>'+
         '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>チケット '+tickets+'枚</span><span>10回で1枚GET</span></div>'+
         '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:#b8860b">次回参加が無料になります</div>'+
-        '<div style="display:flex;justify-content:center;gap:14px;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="resetSporlogAnimSeen()" style="font-size:11px;color:#bbb;background:none;border:none;text-decoration:underline;cursor:pointer;">（動画テストをリセット）</button></div>';
+        '<div style="display:flex;justify-content:center;gap:14px;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#b8860b;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button></div>';
     };
     const renderBoardUI=()=>{ document.getElementById('mypage-progress-area').innerHTML = buildSporlogBoard(progress, lap); };
     if(mypageCurrentUser.isApplying){
       document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">承認されるとスポログが始まります</div></div>';
+        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">事務局の確認が完了するとご利用いただけます</div></div>';
+    } else if(mypageCurrentUser.isPendingPayment){
+      document.getElementById('mypage-progress-area').innerHTML=
+        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px">🔒</div><div style="font-size:14px;font-weight:700;color:#888;margin-top:6px">会員限定コンテンツ</div><div style="font-size:12px;color:#aaa;margin-top:4px">入会費のお支払い確認後、スポログ機能が解放されます</div></div>';
     } else if(isMaxed){
       renderMaxedUI();
       if(shouldShowSporlogAnim(10,lap)) playSporlogAnim('achievement10.mp4', ()=>{});
@@ -1191,7 +1197,20 @@ async function loadMypageData(checkNotice,updateRankCache){
     const hasPT=d.pendingTickets&&d.pendingTickets.length>0;
     const ptCard=document.getElementById('mypage-ticket-pending-card');
     const ptTxt=document.getElementById('mypage-ticket-pending-text');
-    if(hasPT&&ptCard&&ptTxt){ptTxt.textContent=d.pendingTickets[0][4]+'セット（¥'+Number(d.pendingTickets[0][5]).toLocaleString()+'）';ptCard.style.display='block';}
+    if(hasPT&&ptCard&&ptTxt){
+      const pt=d.pendingTickets[0];
+      ptTxt.textContent=pt[4]+'セット（¥'+Number(pt[5]).toLocaleString()+'）';
+      const lbl=document.getElementById('mypage-ticket-pending-label');
+      const note=document.getElementById('mypage-ticket-pending-note');
+      if(pt[6]==='確認済（支払い待ち）'){
+        if(lbl)lbl.textContent='回数券 支払い待ち';
+        if(note)note.textContent='お支払いをお願いします。確認後、回数券を追加します';
+      }else{
+        if(lbl)lbl.textContent='回数券 申請中';
+        if(note)note.textContent='事務局が内容を確認しています';
+      }
+      ptCard.style.display='block';
+    }
     else if(ptCard){ptCard.style.display='none';}
     // 会員向けお知らせ
     loadMemberNotices();
@@ -1201,10 +1220,18 @@ async function loadMypageData(checkNotice,updateRankCache){
 async function initReserveTab(){
   if(!mypageCurrentUser){
     document.getElementById('reserve-login-required').style.display='block';
+    document.getElementById('reserve-pending-approval').style.display='none';
+    document.getElementById('reserve-main').style.display='none';
+    return;
+  }
+  if(mypageCurrentUser.isApplying){
+    document.getElementById('reserve-login-required').style.display='none';
+    document.getElementById('reserve-pending-approval').style.display='block';
     document.getElementById('reserve-main').style.display='none';
     return;
   }
   document.getElementById('reserve-login-required').style.display='none';
+  document.getElementById('reserve-pending-approval').style.display='none';
   document.getElementById('reserve-main').style.display='block';
   loadReserveData();
 }
@@ -1319,6 +1346,7 @@ async function loadDetailMembers(i,date,sport){
 
 async function mypageAddReserve(date,sport,place,i){
   if(!mypageCurrentUser)return;
+  if(checkApplying())return;
   const status=selectedStatuses[i]||'⭕';
   const row=[new Date().toLocaleString('ja-JP'),date,sport,place,mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'',''];
   const btn=document.getElementById('reserve-btn-'+i);if(btn){btn.disabled=true;btn.textContent='送信中...';}
@@ -1347,6 +1375,7 @@ async function loadBulkScheduleList(){
 }
 async function submitBulkReservations(){
   if(!mypageCurrentUser)return;
+  if(checkApplying())return;
   const checks=document.querySelectorAll('.bulk-check:checked');if(!checks.length)return alert('予約する日程を選択してください');
   const s=window._bulkSchedules||[];
   const rows=Array.from(checks).map(c=>{const x=s[parseInt(c.dataset.idx)];return[new Date().toLocaleString('ja-JP'),x[0],x[4],x[2],mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'','⭕','',''];});
@@ -2240,6 +2269,15 @@ async function loadTicketPendingCard(){
     const mtxt=document.getElementById('mypage-ticket-pending-text');
     if(hasPending&&card&&mtxt){
       mtxt.textContent=list[0][4]+'セット（¥'+Number(list[0][5]).toLocaleString()+'）';
+      const lbl=document.getElementById('mypage-ticket-pending-label');
+      const note=document.getElementById('mypage-ticket-pending-note');
+      if(list[0][6]==='確認済（支払い待ち）'){
+        if(lbl)lbl.textContent='回数券 支払い待ち';
+        if(note)note.textContent='お支払いをお願いします。確認後、回数券を追加します';
+      }else{
+        if(lbl)lbl.textContent='回数券 申請中';
+        if(note)note.textContent='事務局が内容を確認しています';
+      }
       card.style.display='block';
     }else if(card){card.style.display='none';}
   }catch(e){}
