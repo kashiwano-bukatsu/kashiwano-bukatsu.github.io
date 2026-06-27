@@ -658,7 +658,6 @@ tr:hover td{background:var(--card-soft);}
             <option value="8">ライバル8人</option>
           </select>
         </div>
-        <input id="lot-members" type="text" placeholder="参加者（/区切り。例：タカヒロ/ナオキ/オグ）" style="width:100%;max-width:680px;margin-top:10px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;box-sizing:border-box">
         <button class="btn btn-primary btn-sm" onclick="addLotteryPendingSlot()" style="margin-top:12px">＋ この枠を追加</button>
 
         <div id="lot-pending-slots" style="margin-top:14px"></div>
@@ -1900,11 +1899,8 @@ function addLotteryPendingSlot(){
   const sport = document.getElementById('lot-sport').value;
   const court = document.getElementById('lot-court').value;
   const rival = document.getElementById('lot-rival').value;
-  const members = (document.getElementById('lot-members').value || '').trim();
   if (!time) return alert('時間を入力してください');
-  if (!members) return alert('参加者を入力してください');
-  lotteryPendingSlots.push({ time, place, sport, court, rival, members });
-  document.getElementById('lot-members').value = '';
+  lotteryPendingSlots.push({ time, place, sport, court, rival, members: '' });
   renderPendingSlotsUI();
 }
 
@@ -1923,7 +1919,7 @@ function renderPendingSlotsUI(){
   }
   wrap.innerHTML = '<div style="font-size:12.5px;font-weight:700;color:var(--ink-faint);margin-bottom:6px">' + getLotterySelectedDate() + ' の追加予定枠（' + lotteryPendingSlots.length + '件）</div>' +
     lotteryPendingSlots.map((s, i) => `<div style="padding:8px 10px;background:#f7f9fc;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px">
-      <div>${escapeHtml(s.time)}／${escapeHtml(s.place)}／${escapeHtml(s.sport)}／${escapeHtml(s.court)}面／ライバル${escapeHtml(s.rival)}人／${escapeHtml(s.members)}</div>
+      <div>${escapeHtml(s.time)}／${escapeHtml(s.place)}／${escapeHtml(s.sport)}／${escapeHtml(s.court)}面／ライバル${escapeHtml(s.rival)}人</div>
       <button class="btn btn-sm" onclick="removePendingSlot(${i})" style="padding:4px 8px;font-size:11.5px;background:#fff;border:1.5px solid var(--line);border-radius:6px">削除</button>
     </div>`).join('');
   btn.style.display = 'block';
