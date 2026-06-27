@@ -398,6 +398,9 @@ tr:hover td{background:var(--card-soft);}
     <div class="nav-item" data-view="ops" onclick="switchView('ops')">
       <div class="nav-left"><span class="nav-icon">$</span>運営記録</div>
     </div>
+    <div class="nav-item" data-view="finance" onclick="switchView('finance')">
+      <div class="nav-left"><span class="nav-icon">📊</span>経理・分析</div>
+    </div>
     <div class="nav-item" data-view="messages" onclick="switchView('messages')">
       <div class="nav-left"><span class="nav-icon">✉</span>メッセージ</div>
       <span class="nav-badge zero" id="badge-messages">0</span>
@@ -438,7 +441,7 @@ tr:hover td{background:var(--card-soft);}
         <div class="stat-card urgent" onclick="switchView('approval')">
           <div class="stat-card-label">会員承認待ち</div>
           <div class="stat-card-value" id="stat-approval">–<span class="unit">件</span></div>
-          <div class="stat-card-foot">人マスタ：ステータス「会員(申請中)」</div>
+          <div class="stat-card-foot">人マスタ：ステータス「会員(申請中)」「会員(支払い確認中)」</div>
         </div>
         <div class="stat-card" onclick="switchView('temp')">
           <div class="stat-card-label">体験予定</div>
@@ -448,7 +451,7 @@ tr:hover td{background:var(--card-soft);}
         <div class="stat-card urgent" onclick="switchView('ticket')">
           <div class="stat-card-label">回数券申請</div>
           <div class="stat-card-value" id="stat-ticket">–<span class="unit">件</span></div>
-          <div class="stat-card-foot">未受領の購入申請</div>
+          <div class="stat-card-foot">未受領・支払い待ちの購入申請</div>
         </div>
         <div class="stat-card" onclick="switchView('ticket')">
           <div class="stat-card-label">プラン変更申請</div>
@@ -468,8 +471,12 @@ tr:hover td{background:var(--card-soft);}
     <!-- ===== 会員承認 ===== -->
     <div class="view" id="view-approval">
       <div class="card">
-        <div class="card-title"><div class="dot"></div>承認待ちの会員</div>
+        <div class="card-title"><div class="dot"></div>承認待ちの会員（第1段階：内容確認）</div>
         <div id="approval-table-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>支払い確認待ちの会員（第2段階：本会員化）</div>
+        <div id="payment-confirm-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>プラン変更申請</div>
@@ -532,13 +539,18 @@ tr:hover td{background:var(--card-soft);}
         <div id="freeticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
-        <div class="card-title"><div class="dot"></div>半額クーポン保持者</div>
+        <div class="card-title"><div class="dot"></div>200円引きクーポン保持者</div>
         <div id="halfticket-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>無料チケットを手動付与</div>
         <input id="freegrant-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderFreeGrantSearch()">
         <div id="freegrant-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>200円引きクーポンを手動付与</div>
+        <input id="halfgrant-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderHalfGrantSearch()">
+        <div id="halfgrant-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>回数券を手動付与</div>
@@ -598,14 +610,43 @@ tr:hover td{background:var(--card-soft);}
         <button class="btn btn-primary btn-sm" onclick="addScheduleAdmin()" style="margin-top:12px">登録する</button>
       </div>
       <div class="card">
-        <div class="card-title"><div class="dot"></div>抽選データ</div>
-        <textarea id="lottery-csv-input" placeholder="CSV貼り付け（日付,時間,種目,面,ライバル数,参加者（/区切り））" rows="3" style="width:100%;max-width:680px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;margin-bottom:8px;box-sizing:border-box;font-family:monospace"></textarea>
+        <div class="card-title"><div class="dot"></div>抽選データを1件追加</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px" id="lot-date-selects"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:680px">
+          <input id="lot-time" type="text" placeholder="時間（例：19:00）" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <select id="lot-sport" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="バスケットボール">バスケットボール</option>
+            <option value="バドミントン">バドミントン</option>
+            <option value="バレーボール">バレーボール</option>
+          </select>
+          <input id="lot-court" type="text" placeholder="面（例：AB面・任意）" style="flex:1;min-width:120px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <select id="lot-rival" style="flex:1;min-width:100px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+            <option value="0">ライバル0人</option>
+            <option value="1">ライバル1人</option>
+            <option value="2">ライバル2人</option>
+            <option value="3">ライバル3人</option>
+            <option value="4">ライバル4人</option>
+            <option value="5">ライバル5人</option>
+            <option value="6">ライバル6人</option>
+            <option value="7">ライバル7人</option>
+            <option value="8">ライバル8人</option>
+          </select>
+        </div>
+        <input id="lot-members" type="text" placeholder="参加者（/区切り。例：タカヒロ/ナオキ/オグ）" style="width:100%;max-width:680px;margin-top:10px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;box-sizing:border-box">
+        <button class="btn btn-primary btn-sm" onclick="addLotteryEntryAdmin()" style="margin-top:12px">追加する</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>抽選データ一覧</div>
         <div style="display:flex;gap:8px;margin-bottom:14px">
-          <button class="btn btn-primary btn-sm" onclick="importLotteryCSVAdmin()">CSVを登録</button>
           <button class="btn btn-primary btn-sm" onclick="confirmLotteryToScheduleAdmin()">当選枠をスケジュールに反映</button>
           <button class="btn btn-danger btn-sm" onclick="clearLotteryAdmin()">全削除</button>
         </div>
         <div id="lottery-list-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>CSVでまとめて登録（上級者向け・既存データは全て上書きされます）</div>
+        <textarea id="lottery-csv-input" placeholder="CSV貼り付け（日付,時間,種目,面,ライバル数,参加者（/区切り））" rows="3" style="width:100%;max-width:680px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;margin-bottom:8px;box-sizing:border-box;font-family:monospace"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="importLotteryCSVAdmin()">CSVで全件上書き登録</button>
       </div>
     </div>
 
@@ -699,6 +740,26 @@ tr:hover td{background:var(--card-soft);}
       </div>
     </div>
 
+    <!-- ===== 経理・分析 ===== -->
+    <div class="view" id="view-finance">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>月次収支（現金出納＋回数券販売）</div>
+        <div id="finance-monthly-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>支払い待ちの方</div>
+        <div id="finance-unpaid-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>離脱気味の会員（直近の参加から30日以上）</div>
+        <div id="finance-inactive-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>キャンセル・無断欠席が多い方（直近3ヶ月）</div>
+        <div id="finance-noshow-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -721,12 +782,13 @@ async function callGAS(func, ...args){
 // ===== 画面切り替え =====
 const VIEW_TITLES = {
   dashboard: ['ダッシュボード', '今日対応すべきことを一覧で確認できます'],
-  approval: ['会員承認', '人マスタでステータスが「会員(申請中)」の方を確認・承認します'],
+  approval: ['会員承認', '人マスタでステータスが「会員(申請中)」「会員(支払い確認中)」の方を確認・承認します'],
   temp: ['体験者管理', '体験予定の方を検索・確認します'],
   price: ['価格・キャンペーン管理', '価格マスタの内容を管理します'],
   ticket: ['チケット管理', '回数券・プラン変更の申請に対応します'],
   notice: ['お知らせ管理', '会員向けのお知らせを投稿・管理します'],
   log: ['操作ログ', '事務局の操作履歴を確認します'],
+  finance: ['経理・分析', '月次収支・未払い・離脱気味の会員・キャンセル状況を確認します'],
 };
 
 function openMobileSidebar(){
@@ -747,7 +809,7 @@ function switchView(view){
   document.getElementById('topbar-sub').textContent = sub;
   closeMobileSidebar();
 
-  if (view === 'approval') { renderApprovalList(); renderUpgradeList(); }
+  if (view === 'approval') { renderApprovalList(); renderPaymentConfirmList(); renderUpgradeList(); }
   if (view === 'temp') renderTempList();
   if (view === 'member') { /* 検索待ち、何もしない */ }
   if (view === 'schedule') renderScheduleView();
@@ -757,6 +819,7 @@ function switchView(view){
   if (view === 'price') renderPriceView();
   if (view === 'notice') renderNoticeView();
   if (view === 'log') renderLogView();
+  if (view === 'finance') renderFinanceView();
 }
 
 // ===== データキャッシュ（人マスタ全件を1回だけ取得して各画面で使う） =====
@@ -782,7 +845,7 @@ function referrerLabel(referrerId, nameMap){
 async function loadDashboard(){
   try{
     const persons = await getPersonMaster();
-    const approvalCount = persons.filter(p => p.status === '会員(申請中)').length;
+    const approvalCount = persons.filter(p => p.status === '会員(申請中)' || p.status === '会員(支払い確認中)').length;
     const today0 = new Date(); today0.setHours(0,0,0,0);
     const tempCount = persons.filter(p => {
       if (p.status !== '体験予定') return false;
@@ -794,15 +857,15 @@ async function loadDashboard(){
     setBadge('badge-approval', approvalCount);
     setBadge('badge-temp', tempCount);
 
-    // タイムライン：体験予定（期限切れ・予定日無し除く）・申請中の人を登録日が新しい順に並べて表示（簡易版）
+    // タイムライン：体験予定（期限切れ・予定日無し除く）・申請中・支払い確認中の人を登録日が新しい順に並べて表示（簡易版）
     let recent = persons.filter(p => {
-      if (p.status === '会員(申請中)') return true;
+      if (p.status === '会員(申請中)' || p.status === '会員(支払い確認中)') return true;
       if (p.status === '体験予定') {
         const d = extractScheduleDate(p.note);
         return !!d && d >= today0;
       }
       return false;
-    }).map(p => ({ kind: p.status === '会員(申請中)' ? 'approval' : 'temp', name: p.nickname || p.fullname, sub: p.type || '', date: p.joinDate || '' }));
+    }).map(p => ({ kind: (p.status === '会員(申請中)' || p.status === '会員(支払い確認中)') ? 'approval' : 'temp', name: p.nickname || p.fullname, sub: p.type || '', date: p.joinDate || '' }));
 
     // 直近の開催予定への参加予約も合わせて表示
     try{
@@ -840,7 +903,7 @@ async function loadDashboard(){
   // チケット・アップグレード申請件数（既存関数をそのまま利用）
   try{
     const tickets = await callGAS('getTicketRequests');
-    const pendingTickets = (tickets||[]).filter(r => r[6] === '未受領').length;
+    const pendingTickets = (tickets||[]).filter(r => r[6] === '未受領' || r[6] === '確認済（支払い待ち）').length;
     document.getElementById('stat-ticket').innerHTML = pendingTickets + '<span class="unit">件</span>';
     setBadge('badge-ticket', pendingTickets);
   }catch(e){ document.getElementById('stat-ticket').textContent = '–'; }
@@ -859,7 +922,7 @@ function setBadge(id, count){
   el.classList.toggle('zero', count === 0);
 }
 
-// ===== 会員承認 =====
+// ===== 会員承認（第1段階：内容確認） =====
 async function renderApprovalList(){
   const wrap = document.getElementById('approval-table-wrap');
   wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
@@ -889,11 +952,53 @@ async function renderApprovalList(){
 }
 
 async function approvePerson(internalId){
-  if (!confirm(internalId + ' を会員として承認します。よろしいですか？')) return;
+  if (!confirm(internalId + ' を承認します（予約等は使えますが、会員限定コンテンツはまだ利用不可の状態になります）。よろしいですか？')) return;
   try{
     await callGAS('approveRegistration', internalId);
-    logOp('会員承認', internalId);
+    logOp('会員承認（第1段階）', internalId);
     await renderApprovalList();
+    await renderPaymentConfirmList();
+    loadDashboard();
+  }catch(e){
+    alert('承認に失敗しました：' + e.message);
+  }
+}
+
+// ===== 会員承認（第2段階：支払い確認→本会員化） =====
+async function renderPaymentConfirmList(){
+  const wrap = document.getElementById('payment-confirm-table-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const persons = await getPersonMaster(true);
+    const nameMap = buildNameMap(persons);
+    const list = persons.filter(p => p.status === '会員(支払い確認中)');
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">支払い確認待ちの会員はいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>内部ID</th><th>ニックネーム</th><th>種別</th><th>申請日</th><th>紹介者</th><th></th></tr></thead>
+      <tbody>${list.map(p => `
+        <tr>
+          <td>${escapeHtml(p.internalId)}</td>
+          <td>${escapeHtml(p.nickname||p.fullname)}</td>
+          <td><span class="badge badge-gold">${escapeHtml(p.type||'')}</span></td>
+          <td>${escapeHtml(p.joinDate||'')}</td>
+          <td>${escapeHtml(referrerLabel(p.referrerId, nameMap))}</td>
+          <td><button class="btn btn-primary btn-sm" onclick="confirmPaymentPerson('${p.internalId}')">支払い確認OK→本会員化</button></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function confirmPaymentPerson(internalId){
+  if (!confirm(internalId + ' の支払いを確認し、本会員として全機能を解放します。よろしいですか？')) return;
+  try{
+    await callGAS('confirmPayment', internalId);
+    logOp('会員承認（第2段階・支払い確認）', internalId);
+    await renderPaymentConfirmList();
     loadDashboard();
   }catch(e){
     alert('承認に失敗しました：' + e.message);
@@ -970,13 +1075,14 @@ function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ===== チケット管理（回数券購入申請・無料チケット保持者・半額クーポン保持者・手動付与） =====
+// ===== チケット管理（回数券購入申請・無料チケット保持者・200円引きクーポン保持者・手動付与） =====
 async function renderTicketView(){
   renderTicketRequestList();
   renderFreeTicketList();
   renderHalfTicketList();
   document.getElementById('grant-search-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
   document.getElementById('freegrant-search-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+  document.getElementById('halfgrant-search-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
 }
 
 async function renderFreeGrantSearch(){
@@ -1015,6 +1121,48 @@ async function grantFreeTicket(fullname, i){
   try{
     await callGAS('grantFreeTicketManual', fullname, reason);
     logOp('無料チケット付与', fullname + '／' + reason);
+    showToastAdmin('付与しました！');
+  }catch(e){
+    alert('付与に失敗しました：' + e.message);
+  }
+}
+
+async function renderHalfGrantSearch(){
+  const wrap = document.getElementById('halfgrant-search-wrap');
+  const keyword = (document.getElementById('halfgrant-search-input').value || '').trim();
+  if (!keyword){
+    wrap.innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+    return;
+  }
+  try{
+    const persons = await getPersonMaster();
+    const list = persons.filter(p => (p.status === '会員' || p.status === '会員(申請中)') &&
+      ((p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword)));
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">該当する会員がいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>お名前</th><th>種別</th><th>付与理由（任意）</th><th></th></tr></thead>
+      <tbody>${list.map((p, i) => `
+        <tr>
+          <td>${escapeHtml(p.nickname||p.fullname)}</td>
+          <td><span class="badge badge-gold">${escapeHtml(p.type||'')}</span></td>
+          <td><input type="text" id="halfgrant-reason-${i}" placeholder="事務局より付与" style="width:160px;padding:6px 8px;border:1.5px solid var(--line);border-radius:7px"></td>
+          <td><button class="btn btn-primary btn-sm" onclick="grantHalfTicket('${escapeHtml(p.fullname).replace(/'/g,"\\'")}', ${i})">付与する</button></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function grantHalfTicket(fullname, i){
+  const reason = (document.getElementById('halfgrant-reason-' + i).value || '').trim() || '事務局より付与';
+  if (!confirm(fullname + ' さんに200円引きクーポンを1枚付与します。よろしいですか？')) return;
+  try{
+    await callGAS('grantHalfPriceTicketManual', fullname, reason);
+    logOp('200円引きクーポン付与', fullname + '／' + reason);
     showToastAdmin('付与しました！');
   }catch(e){
     alert('付与に失敗しました：' + e.message);
@@ -1077,7 +1225,7 @@ async function renderHalfTicketList(){
     });
     const names = Object.keys(grouped);
     if (!names.length){
-      wrap.innerHTML = '<div class="empty-state">半額クーポンを保持している方はいません</div>';
+      wrap.innerHTML = '<div class="empty-state">200円引きクーポンを保持している方はいません</div>';
       return;
     }
     wrap.innerHTML = `<table>
@@ -1184,36 +1332,57 @@ async function renderTicketRequestList(){
   wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
   try{
     const rows = await callGAS('getTicketRequests');
-    const list = (rows||[]).filter(r => r[6] === '未受領');
+    const list = (rows||[]).filter(r => r[6] === '未受領' || r[6] === '確認済（支払い待ち）');
     if (!list.length){
       wrap.innerHTML = '<div class="empty-state">対応待ちの回数券購入申請はありません</div>';
       return;
     }
     wrap.innerHTML = `<table>
-      <thead><tr><th>申請日時</th><th>お名前</th><th>会員種別</th><th>セット数</th><th>合計金額</th><th></th></tr></thead>
-      <tbody>${list.map(r => `
+      <thead><tr><th>申請日時</th><th>お名前</th><th>会員種別</th><th>セット数</th><th>合計金額</th><th>状態</th><th></th></tr></thead>
+      <tbody>${list.map(r => {
+        const isConfirmed = r[6] === '確認済（支払い待ち）';
+        const statusBadge = isConfirmed
+          ? '<span class="badge" style="background:#fff3e0;color:#e65100">支払い待ち</span>'
+          : '<span class="badge" style="background:#eceff1;color:#546e7a">内容確認待ち</span>';
+        const actionBtn = isConfirmed
+          ? `<button class="btn btn-primary btn-sm" onclick="receiveTicket('${escapeHtml(r[1])}',${Number(r[4])})">支払い確認OK→付与</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="approveTicket('${escapeHtml(r[1])}',${Number(r[4])})">承認する（支払い待ちへ）</button>`;
+        return `
         <tr>
           <td>${escapeHtml(r[0])}</td>
           <td>${escapeHtml(r[2]||r[1])}</td>
           <td><span class="badge badge-accent">${escapeHtml(r[3])}</span></td>
           <td>${escapeHtml(r[4])}セット</td>
           <td>${escapeHtml(r[5])}円</td>
+          <td>${statusBadge}</td>
           <td class="actions-cell">
-            <button class="btn btn-primary btn-sm" onclick="receiveTicket('${escapeHtml(r[1])}',${Number(r[4])})">受領する</button>
+            ${actionBtn}
             <button class="btn btn-danger btn-sm" onclick="rejectTicket('${escapeHtml(r[1])}',${Number(r[4])})">却下する</button>
           </td>
-        </tr>`).join('')}</tbody>
+        </tr>`;}).join('')}</tbody>
     </table>`;
   }catch(e){
     wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
   }
 }
 
+async function approveTicket(fullname, sets){
+  if (!confirm(fullname + ' さんの回数券購入申請（' + sets + 'セット）を承認します（支払い待ちの状態になります）。よろしいですか？')) return;
+  try{
+    await callGAS('approveTicketRequest', fullname, sets);
+    logOp('回数券購入承認（第1段階）', fullname + '／' + sets + 'セット');
+    await renderTicketRequestList();
+    loadDashboard();
+  }catch(e){
+    alert('処理に失敗しました：' + e.message);
+  }
+}
+
 async function receiveTicket(fullname, sets){
-  if (!confirm(fullname + ' さんの回数券（' + sets + 'セット）受領を確定します。よろしいですか？')) return;
+  if (!confirm(fullname + ' さんの回数券（' + sets + 'セット）の支払いを確認し、付与します。よろしいですか？')) return;
   try{
     await callGAS('receiveTicketRequest', fullname, sets);
-    logOp('回数券受領承認', fullname + '／' + sets + 'セット');
+    logOp('回数券受領承認（第2段階・支払い確認）', fullname + '／' + sets + 'セット');
     await renderTicketRequestList();
     loadDashboard();
   }catch(e){
@@ -1409,6 +1578,114 @@ async function renderLogView(){
   }
 }
 
+// ===== 経理・分析 =====
+async function renderFinanceView(){
+  renderFinanceMonthly();
+  renderFinanceUnpaid();
+  renderFinanceInactive();
+  renderFinanceNoShow();
+}
+
+async function renderFinanceMonthly(){
+  const wrap = document.getElementById('finance-monthly-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const data = await callGAS('getFinanceSummary');
+    const monthly = data.monthly || [];
+    if (!monthly.length){
+      wrap.innerHTML = '<div class="empty-state">収支データがありません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>月</th><th>収入</th><th>支出</th><th>差額</th></tr></thead>
+      <tbody>${monthly.map(m => `
+        <tr>
+          <td>${escapeHtml(m.month)}</td>
+          <td>¥${Number(m.income).toLocaleString()}</td>
+          <td>¥${Number(m.expense).toLocaleString()}</td>
+          <td style="font-weight:700;color:${m.net>=0?'#188038':'#d32f2f'}">¥${Number(m.net).toLocaleString()}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function renderFinanceUnpaid(){
+  const wrap = document.getElementById('finance-unpaid-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const data = await callGAS('getFinanceSummary');
+    const members = data.unpaidMembers || [];
+    const tickets = data.unpaidTickets || [];
+    if (!members.length && !tickets.length){
+      wrap.innerHTML = '<div class="empty-state">支払い待ちの方はいません</div>';
+      return;
+    }
+    let html = '';
+    if (members.length){
+      html += '<div style="font-size:12.5px;font-weight:700;color:var(--ink-faint);margin-bottom:6px">会員登録（支払い確認中）</div>';
+      html += members.map(m => `<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">${escapeHtml(m.nickname)}（${escapeHtml(m.type||'')}）／申請日：${escapeHtml(m.joinDate||'')}</div>`).join('');
+    }
+    if (tickets.length){
+      html += '<div style="font-size:12.5px;font-weight:700;color:var(--ink-faint);margin:14px 0 6px">回数券購入</div>';
+      html += tickets.map(t => `<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">${escapeHtml(t.nickname||t.fullname)}／${escapeHtml(t.sets)}セット／¥${Number(t.totalPrice).toLocaleString()}／${escapeHtml(t.status)}</div>`).join('');
+    }
+    wrap.innerHTML = html;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function renderFinanceInactive(){
+  const wrap = document.getElementById('finance-inactive-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const data = await callGAS('getInactiveMembers', 30);
+    const list = data.list || [];
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">該当する会員はいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>ニックネーム</th><th>種別</th><th>最後の参加から</th></tr></thead>
+      <tbody>${list.map(m => `
+        <tr>
+          <td>${escapeHtml(m.nickname)}</td>
+          <td><span class="badge badge-accent">${escapeHtml(m.type||'')}</span></td>
+          <td>${m.daysSinceLastVisit===null?'参加記録なし':m.daysSinceLastVisit+'日'}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function renderFinanceNoShow(){
+  const wrap = document.getElementById('finance-noshow-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const data = await callGAS('getCancelNoShowStats', 3);
+    const list = data.list || [];
+    if (!list.length){
+      wrap.innerHTML = '<div class="empty-state">該当する方はいません</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr><th>ニックネーム</th><th>予約数</th><th>キャンセル</th><th>無断欠席</th></tr></thead>
+      <tbody>${list.map(m => `
+        <tr>
+          <td>${escapeHtml(m.nickname)}</td>
+          <td>${m.total}件</td>
+          <td>${m.cancelled}件（${m.cancelRate}%）</td>
+          <td>${m.noShow}件（${m.noShowRate}%）</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
 // ===== 運営ログイン =====
 let currentAdminUser = null;
 
@@ -1564,10 +1841,47 @@ async function addStaffMemberAdmin(){
 // ===== 予定・抽選 =====
 async function renderScheduleView(){
   buildScheduleDateSelects();
+  buildLotteryDateSelects();
   loadSchedulePlaces();
   loadScheduleResponsibles();
   renderScheduleList();
   renderLotteryList();
+}
+
+function buildLotteryDateSelects(){
+  const now = new Date(), y = now.getFullYear();
+  let html = '<select id="lot-y">'; for (let i = y; i <= y + 2; i++) html += `<option value="${i}">${i}年</option>`; html += '</select>';
+  html += '<select id="lot-m">'; for (let i = 1; i <= 12; i++) html += `<option value="${i}" ${i === now.getMonth() + 1 ? 'selected' : ''}>${i}月</option>`; html += '</select>';
+  html += '<select id="lot-d">'; for (let i = 1; i <= 31; i++) html += `<option value="${i}" ${i === now.getDate() ? 'selected' : ''}>${i}日</option>`; html += '</select>';
+  document.getElementById('lot-date-selects').innerHTML = html;
+}
+function getLotterySelectedDate(){ const y=document.getElementById('lot-y').value, m=String(document.getElementById('lot-m').value).padStart(2,'0'), d=String(document.getElementById('lot-d').value).padStart(2,'0'); return `${y}/${m}/${d}`; }
+
+async function addLotteryEntryAdmin(){
+  const date = getLotterySelectedDate();
+  const time = (document.getElementById('lot-time').value || '').trim();
+  const sport = document.getElementById('lot-sport').value;
+  const court = (document.getElementById('lot-court').value || '').trim();
+  const rival = document.getElementById('lot-rival').value;
+  const members = (document.getElementById('lot-members').value || '').trim();
+  if (!time) return alert('時間を入力してください');
+  try{
+    await callGAS('addLotteryEntry', date, time, sport, court, rival, members);
+    document.getElementById('lot-members').value = '';
+    showToastAdmin('抽選データを追加しました！');
+    renderLotteryList();
+  }catch(e){ alert('追加に失敗しました：' + e.message); }
+}
+
+async function deleteLotteryRowAdmin(idx){
+  if (!confirm('この抽選データを削除しますか？')) return;
+  try{ await callGAS('deleteLotteryRow', idx); showToastAdmin('削除しました'); renderLotteryList(); }catch(e){ alert('エラー：' + e.message); }
+}
+
+async function editLotteryMembersAdmin(idx, current){
+  const next = prompt('参加者を編集（/区切り）', current);
+  if (next === null) return;
+  try{ await callGAS('updateLotteryMembers', idx, next.trim()); showToastAdmin('更新しました'); renderLotteryList(); }catch(e){ alert('エラー：' + e.message); }
 }
 
 async function renderScheduleList(){
@@ -1679,6 +1993,8 @@ async function renderLotteryList(){
               <option value="当選" ${result==='当選'?'selected':''}>当選</option>
               <option value="落選" ${result==='落選'?'selected':''}>落選</option>
             </select>
+            <button class="btn btn-sm" onclick="editLotteryMembersAdmin(${sheetIndex},'${escapeHtml(members.join('/')).replace(/'/g,"\\'")}')" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:7px;font-size:12.5px;background:#fff">参加者編集</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLotteryRowAdmin(${sheetIndex})" style="padding:6px 10px;font-size:12.5px">削除</button>
           </div>
         </div>`;
       });
