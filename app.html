@@ -1073,8 +1073,9 @@ function buildSporlogBoard(progress, lap){
   const nextRewardLabel = nextMilestone === 5 ? '200円引きチケット' : '無料チケット';
   // 10回達成直後（progress===0）はまだ前の周回扱いにして、11回目（progress>=1）になってから「○周目」を表示する
   const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
-  // 5回目（200円引きチケット獲得）に到達している時だけ、動画を見返せるボタンを出す
-  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#f57c00;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
+  // 5回目（200円引きチケット獲得）・10回目（無料チケット獲得）に到達している時だけ、動画を見返せるボタンを出す
+  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#f57c00;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>'
+    : (progress===10) ? '<button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#b8860b;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
   return ''+
     '<div style="text-align:center">'+lapLabel+'</div>'+
     '<div style="font-size:13px;color:#888;margin-bottom:4px">次の無料チケットまで</div>'+
