@@ -1441,7 +1441,8 @@ async function saveEditProfile(){
   if(!nickname)return alert('ニックネームを入力してください');
   const area=document.getElementById('edit-area').value,sport=document.getElementById('edit-sport').value,gender=document.getElementById('edit-gender').value;
   try{
-    await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    const result=await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    if(result==='duplicate')return alert('そのニックネームは既に使われています。別のニックネームを入力してください。');
     mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
     saveCurrentUser();
     closeEditProfile();document.getElementById('mypage-logged-name').textContent=nickname+' さん';alert('プロフィールを更新しました');
@@ -1702,6 +1703,7 @@ async function registerAttendee(){
     // tempId（体験者自身の内部ID）をGASに渡して人マスタの該当行を会員ステータスに更新
     const memberNumber=await callGAS('completeRegistration',tempId,nickname,dob,sport,area,gender,eRel,eTel,referrer,selectedPlan);
     btn.disabled=false;btn.textContent='登録する';
+    if(memberNumber==='duplicate'){return alert('そのニックネームは既に使われています。別のニックネームを入力してください。');}
     mypageCurrentUser={internalId:tempId,fullname,nickname,memberSport:sport,memberNumber,type:memberType,isApplying:selectedPlan!=='visitor'};
     saveCurrentUser();
     closeRegisterModal();resetRegFlow();
@@ -2079,7 +2081,8 @@ async function saveSettingsProfile(){
   const sport=document.getElementById('settings-sport').value;
   const gender=document.getElementById('settings-gender').value;
   try{
-    await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    const result=await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    if(result==='duplicate')return alert('そのニックネームは既に使われています。別のニックネームを入力してください。');
     mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
     saveCurrentUser();
     document.getElementById('mypage-logged-name').textContent=nickname+' さん';
@@ -2654,12 +2657,21 @@ async function _execRegister(){
     if(!tempId){throw new Error('体験登録情報が見つかりません。検索からやり直してください。');}
     // tempId（体験者自身の内部ID）をGASに渡して人マスタの該当行を会員ステータスに更新（種別もここで設定済み）
     const memberNumber = await callGAS('completeRegistration', tempId, nickname, dob, sport, area, gender, eRel, eTel, referrer, selectedPlan);
+    if(memberNumber === 'duplicate'){
+      document.getElementById('reg-loading-overlay')?.remove();
+      return alert('そのニックネームは既に使われています。別のニックネームを入力してください。');
+    }
     // ファミリーメンバー登録（代表者=tempId に紐づく新規メンバーとして人マスタに直接追加）
     if(selectedPlan === 'family' && familyMembers.length > 0){
+      const dupFamily=[];
       for(const m of familyMembers){
         if(m.name && m.dob){
-          await callGAS('addFamilyMember', m.name, m.dob, sport, area, tempId).catch(()=>{});
+          const famResult = await callGAS('addFamilyMember', m.name, m.dob, sport, area, tempId).catch(()=>null);
+          if(famResult === 'duplicate') dupFamily.push(m.name);
         }
+      }
+      if(dupFamily.length){
+        alert('以下の家族のニックネーム（お名前）が既に使われています。後ほど運営にご連絡ください：\n' + dupFamily.join('、'));
       }
     }
     // 自動ウェルカムメッセージ送信
