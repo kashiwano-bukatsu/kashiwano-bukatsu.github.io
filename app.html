@@ -356,6 +356,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div id="next-member-list"></div>
       <div id="next-member-count" style="font-size:11px;color:#aaa;margin-top:8px;text-align:right"></div>
     </div>
+    <div id="next-member-loading" class="next-member-card" style="display:none">
+      <div class="card-title"><div class="card-title-dot"></div>次回の参加予定メンバー</div>
+      <div style="text-align:center;padding:10px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div></div>
+    </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reservation-list-body','reservation-list-arrow')">
         <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>予約一覧</div>
@@ -1264,6 +1268,8 @@ async function initReserveTab(){
 async function loadReserveData(){
   document.getElementById('mypage-reservation-list').innerHTML='<div class="empty">読み込み中...</div>';
   document.getElementById('mypage-schedule-list').innerHTML='<div class="empty">読み込み中...</div>';
+  document.getElementById('next-member-card').style.display='none';
+  document.getElementById('next-member-loading').style.display='block';
   try{
     const [reservations, schedules, tempList] = await Promise.all([
       callGAS('getMyReservations', mypageCurrentUser.fullname).catch(()=>[]),
@@ -1279,11 +1285,14 @@ async function loadReserveData(){
         .filter(t=>t[0]===first[0]&&t[2]===first[4])
         .map(t=>['','','','',t[1],t[1],'','⭕','','NEW']);
       renderNextMemberCard([...nm,...tempForFirst],first);
+    }else{
+      document.getElementById('next-member-loading').style.display='none';
     }
-  }catch(e){}
+  }catch(e){document.getElementById('next-member-loading').style.display='none';}
 }
 
 function renderNextMemberCard(members,schedule){
+  document.getElementById('next-member-loading').style.display='none';
   const card=document.getElementById('next-member-card');
   if(!members||!members.length){card.style.display='none';return;}
   document.getElementById('next-member-info').textContent=(SPORT_ICON[schedule[4]]||'')+' '+schedule[4]+' ／ '+schedule[0]+'（'+getDow(schedule[0])+'）';
