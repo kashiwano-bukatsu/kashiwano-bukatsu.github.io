@@ -1342,7 +1342,7 @@ async function toggleMypageSchedule(i,date,sport,place){
     if(myRes){
       detail.innerHTML='<div style="font-size:14px;color:#555;margin-bottom:10px">予約済み：<strong>'+(myRes[7]||'⭕')+'</strong></div><button class="view-members-btn" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div><button class="btn btn-danger" style="font-size:14px;padding:12px;margin-top:10px" onclick="mypageCancelReserve(\''+date+'\',\''+sport+'\')">キャンセルする</button>';
     }else{
-      detail.innerHTML='<div style="font-size:13px;color:#888;margin-bottom:10px">参加ステータスを選んで予約</div><div class="status-select-row"><button class="status-sel-btn" id="sel-'+i+'-maru" onclick="selectStatus('+i+',\'⭕\')">⭕<div style="font-size:11px;color:#888;margin-top:4px">参加</div></button><button class="status-sel-btn" id="sel-'+i+'-sankaku" onclick="selectStatus('+i+',\'△\')">△<div style="font-size:11px;color:#888;margin-top:4px">未定</div></button><button class="status-sel-btn" id="sel-'+i+'-batsu" onclick="selectStatus('+i+',\'❌\')">❌<div style="font-size:11px;color:#888;margin-top:4px">不参加</div></button></div><button id="reserve-btn-'+i+'" class="btn btn-primary" style="font-size:15px;padding:14px;margin-top:8px" onclick="mypageAddReserve(\''+date+'\',\''+sport+'\',\''+place+'\','+i+')">予約する</button><button class="view-members-btn" style="margin-top:8px" onclick="loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
+      detail.innerHTML='<div style="font-size:13px;color:#888;margin-bottom:10px">参加ステータスを選んで予約</div><div class="status-select-row"><button class="status-sel-btn" id="sel-'+i+'-maru" onclick="event.stopPropagation();selectStatus('+i+',\'⭕\')">⭕<div style="font-size:11px;color:#888;margin-top:4px">参加</div></button><button class="status-sel-btn" id="sel-'+i+'-sankaku" onclick="event.stopPropagation();selectStatus('+i+',\'△\')">△<div style="font-size:11px;color:#888;margin-top:4px">未定</div></button><button class="status-sel-btn" id="sel-'+i+'-batsu" onclick="event.stopPropagation();selectStatus('+i+',\'❌\')">❌<div style="font-size:11px;color:#888;margin-top:4px">不参加</div></button></div><button id="reserve-btn-'+i+'" class="btn btn-primary" style="font-size:15px;padding:14px;margin-top:8px" onclick="event.stopPropagation();mypageAddReserve(\''+date+'\',\''+sport+'\',\''+place+'\','+i+')">予約する</button><button class="view-members-btn" style="margin-top:8px" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
       selectStatus(i,'⭕');
     }
   }catch(e){detail.innerHTML='<div class="empty">読み込みエラー</div>';}
@@ -1357,7 +1357,7 @@ function selectStatus(i,status){
 async function loadDetailMembers(i,date,sport){
   const area=document.getElementById('detail-members-'+i);
   if(area.style.display==='block'){area.style.display='none';return;}
-  area.style.display='block';area.innerHTML='<div style="color:#bbb;font-size:14px;padding:8px 0">読み込み中...</div>';
+  area.style.display='block';area.innerHTML='<div style="text-align:center;padding:14px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">参加者を読み込み中…</div></div>';
   try{
     const r=await callGAS('getReservations',date,sport);
     area.innerHTML=r.length?'<div style="font-size:13px;color:#888;margin-bottom:6px">参加予定（'+r.filter(x=>(x[7]||'⭕')!=='❌').length+'人）</div>'+r.map(x=>{
@@ -1366,7 +1366,7 @@ async function loadDetailMembers(i,date,sport){
       const isNew=x[9]==='NEW'||x[9]==='初参加';
       return'<div class="reserve-member-item"><span style="font-size:18px">'+st+'</span><span style="font-size:15px">'+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+'</span>'+(x[4]===mypageCurrentUser.fullname?'<span style="font-size:11px;background:#e6f4ea;color:#188038;padding:2px 8px;border-radius:10px;margin-left:auto">あなた</span>':'')+'</div>';
     }).filter(Boolean).join(''):'<div style="color:#bbb;font-size:14px;padding:8px 0">まだ予約がありません</div>';
-  }catch(e){area.innerHTML='<div style="color:#e53935;font-size:14px">読み込みエラー</div>';}
+  }catch(e){area.innerHTML='<div style="text-align:center;padding:10px 0"><div style="color:#e53935;font-size:13px;margin-bottom:8px">読み込みに失敗しました</div><button onclick="event.stopPropagation();loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')" style="background:#f0f4f8;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:#555;cursor:pointer">もう一度読み込む</button></div>';}
 }
 
 async function mypageAddReserve(date,sport,place,i){
