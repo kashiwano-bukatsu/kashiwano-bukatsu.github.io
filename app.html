@@ -1314,8 +1314,8 @@ async function loadReserveData(){
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
     renderReservationList(data.reservations);
     renderScheduleList(data.schedules, data.reservations);
-    if(data.nextSchedule && data.nextMembers && data.nextMembers.length){
-      renderNextMemberCard(data.nextMembers, data.nextSchedule);
+    if(data.nextSchedule){
+      renderNextMemberCard(data.nextMembers||[], data.nextSchedule);
     }else{
       document.getElementById('next-member-loading').style.display='none';
     }
@@ -1325,8 +1325,14 @@ async function loadReserveData(){
 function renderNextMemberCard(members,schedule){
   document.getElementById('next-member-loading').style.display='none';
   const card=document.getElementById('next-member-card');
-  if(!members||!members.length){card.style.display='none';return;}
+  if(!schedule){card.style.display='none';return;}
   document.getElementById('next-member-info').textContent=(SPORT_ICON[schedule[4]]||'')+' '+schedule[4]+' ／ '+schedule[0]+'（'+getDow(schedule[0])+'）';
+  if(!members||!members.length){
+    document.getElementById('next-member-list').innerHTML='<div style="color:#bbb;font-size:13px;padding:4px 0">まだ予約者がいません</div>';
+    document.getElementById('next-member-count').textContent='';
+    card.style.display='block';
+    return;
+  }
   document.getElementById('next-member-list').innerHTML=members.map(r=>{
     const isMe=r[4]===mypageCurrentUser.fullname;
     const isNew=r[9]==='NEW'||r[9]==='初参加';
