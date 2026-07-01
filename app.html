@@ -768,10 +768,16 @@ function courtDiagramHTML(courtLetters,size){
   const entranceX=gx+cw,entranceY=gy-6;
   let route='';
   if(usesCD){
-    const leftX=gx-size*0.14,bottomY=gy+size+size*0.1,enterX=gx+cw+cw*0.5,enterY=gy+size+1;
-    route='<path d="M '+entranceX+' '+entranceY+' C '+(gx-2)+' '+entranceY+', '+leftX+' '+(gy+cw*0.25)+', '+leftX+' '+(gy+cw)+' C '+leftX+' '+(bottomY-6)+', '+(gx+cw*0.15)+' '+bottomY+', '+enterX+' '+enterY+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
+    // 入口→中央（BとCの間）を通ってそのままCへ
+    const centerY=gy+cw,enterX=gx+cw*1.25,enterY=gy+cw*1.15;
+    route='<path d="M '+entranceX+' '+entranceY+' L '+entranceX+' '+centerY+' Q '+entranceX+' '+(centerY+cw*0.12)+', '+enterX+' '+enterY+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
   }else{
-    route='<path d="M '+entranceX+' '+entranceY+' L '+entranceX+' '+(gy+9)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
+    // A/B：入口自体は中央固定だが、Aのみなら右寄り（Aセル内）へ、Bのみなら左寄り（Bセル内）へ曲げて着地させる
+    let landX=entranceX;
+    if(active.includes('A')&&!active.includes('B'))landX=gx+cw*1.5;
+    else if(active.includes('B')&&!active.includes('A'))landX=gx+cw*0.5;
+    const midY=gy+size*0.02;
+    route='<path d="M '+entranceX+' '+entranceY+' Q '+landX+' '+midY+', '+landX+' '+(gy+9)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
   }
 
   return '<svg viewBox="0 0 '+vbW+' '+vbH+'" style="width:'+vbW+'px;height:'+vbH+'px;flex-shrink:0">'+
@@ -779,7 +785,7 @@ function courtDiagramHTML(courtLetters,size){
       '<marker id="courtArrow'+seq+'" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#e53935"/></marker>'+
       '<filter id="courtGlow'+seq+'" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
     '</defs>'+
-    '<text x="'+entranceX+'" y="10" font-size="8" text-anchor="middle" fill="#888">入口</text>'+
+    '<text x="'+entranceX+'" y="10" font-size="7.5" text-anchor="middle" fill="#888">体育館入口</text>'+
     cells+route+
     '</svg>';
 }
