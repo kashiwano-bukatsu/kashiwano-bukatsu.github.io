@@ -738,6 +738,32 @@ function showMaintenancePopup(){
 }
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
 
+// ===== コート配置図（沼南体育館アリーナ配置図：受付側から見てB/A（上段）、D/C（下段）） =====
+const COURT_LAYOUT=[
+  {k:'B',col:0,row:0,color:'#d9cf5a'},
+  {k:'A',col:1,row:0,color:'#c9527a'},
+  {k:'D',col:0,row:1,color:'#7fb37f'},
+  {k:'C',col:1,row:1,color:'#5b93c9'},
+];
+function courtDiagramHTML(courtLetters,size){
+  size=size||92;
+  const active=String(courtLetters||'').toUpperCase();
+  const cw=size/2,pad=14;
+  const cells=COURT_LAYOUT.map(c=>{
+    const on=active.includes(c.k);
+    const x=c.col*cw,y=c.row*cw+pad;
+    return '<rect x="'+x+'" y="'+y+'" width="'+cw+'" height="'+cw+'" fill="'+c.color+'" opacity="'+(on?1:0.15)+'" stroke="#fff" stroke-width="2"/>'+
+      '<text x="'+(x+cw/2)+'" y="'+(y+cw/2+cw*0.13)+'" font-size="'+(cw*0.36)+'" font-weight="800" text-anchor="middle" fill="'+(on?'#fff':'#999')+'">'+c.k+'</text>';
+  }).join('');
+  return '<svg viewBox="0 0 '+size+' '+(size+pad)+'" style="width:'+size+'px;height:'+(size+pad)+'px;flex-shrink:0">'+
+    '<text x="'+(size/2)+'" y="9" font-size="8" text-anchor="middle" fill="#999">受付・入口側</text>'+cells+
+    '</svg>';
+}
+function courtLabel(courtLetters){
+  if(!courtLetters)return'';
+  return String(courtLetters).toUpperCase().split('').join('・')+'コート';
+}
+
 // ===== ログイン情報の保存を一箇所に集約（重複バグ防止用） =====
 function saveCurrentUser(){
   if(mypageCurrentUser){
@@ -906,7 +932,7 @@ async function loadHomeData(){
     const today=formatDate(new Date());
     if(d.todaySchedule){
       const s=d.todaySchedule;
-      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div></div></div>';
+      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div style="flex:1"><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div>'+(s[8]?'<div style="font-size:14px;color:#1a3a5c;margin-top:2px;font-weight:700">📍 '+courtLabel(s[8])+'</div>':'')+'</div>'+(s[8]?courtDiagramHTML(s[8],76):'')+'</div>';
       document.getElementById('home-today-card').style.display='block';
       document.getElementById('home-countdown-card').style.display='none';
     }else{
@@ -916,7 +942,7 @@ async function loadHomeData(){
       if(earliest){
         window._countdownEvent=earliest;
         const diff=Math.ceil((new Date(earliest.date.replace(/\//g,'-'))-new Date(today.replace(/\//g,'-')))/86400000);
-        document.getElementById('home-countdown-content').innerHTML='<div style="font-size:13px;color:#888;margin-bottom:12px">次の開催まで</div><div style="display:flex;align-items:baseline;justify-content:center;gap:4px;margin-bottom:12px"><div style="font-size:56px;font-weight:900;color:#1a1a2e;line-height:1">'+diff+'</div><div style="font-size:16px;color:#888">日後</div></div><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px">'+(SPORT_ICON[earliest.sport]||'')+' '+earliest.sport+'</div><div style="font-size:13px;color:#888">'+earliest.date+'（'+getDow(earliest.date)+'）'+earliest.time+' ／ '+earliest.place+'</div>';
+        document.getElementById('home-countdown-content').innerHTML='<div style="font-size:13px;color:#888;margin-bottom:12px">次の開催まで</div><div style="display:flex;align-items:baseline;justify-content:center;gap:4px;margin-bottom:12px"><div style="font-size:56px;font-weight:900;color:#1a1a2e;line-height:1">'+diff+'</div><div style="font-size:16px;color:#888">日後</div></div><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px">'+(SPORT_ICON[earliest.sport]||'')+' '+earliest.sport+'</div><div style="font-size:13px;color:#888">'+earliest.date+'（'+getDow(earliest.date)+'）'+earliest.time+' ／ '+earliest.place+'</div>'+(earliest.court?'<div style="font-size:13px;color:#1a3a5c;margin-top:4px;font-weight:700">📍 '+courtLabel(earliest.court)+'</div><div style="display:flex;justify-content:center;margin-top:10px">'+courtDiagramHTML(earliest.court,84)+'</div>':'');
         document.getElementById('home-countdown-card').style.display='block';
       }
     }

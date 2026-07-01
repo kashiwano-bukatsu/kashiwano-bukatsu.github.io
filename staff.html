@@ -305,6 +305,32 @@ async function callGAS(func, ...args) {
   }
 }
 const SPORT_ICON = { 'バドミントン': '🏸', 'バスケットボール': '🏀', 'バレーボール': '🏐' };
+
+// ===== コート配置図（沼南体育館アリーナ配置図：受付側から見てB/A（上段）、D/C（下段）） =====
+const COURT_LAYOUT = [
+  { k: 'B', col: 0, row: 0, color: '#d9cf5a' },
+  { k: 'A', col: 1, row: 0, color: '#c9527a' },
+  { k: 'D', col: 0, row: 1, color: '#7fb37f' },
+  { k: 'C', col: 1, row: 1, color: '#5b93c9' },
+];
+function courtDiagramHTML(courtLetters, size) {
+  size = size || 92;
+  const active = String(courtLetters || '').toUpperCase();
+  const cw = size / 2, pad = 14;
+  const cells = COURT_LAYOUT.map(c => {
+    const on = active.includes(c.k);
+    const x = c.col * cw, y = c.row * cw + pad;
+    return `<rect x="${x}" y="${y}" width="${cw}" height="${cw}" fill="${c.color}" opacity="${on ? 1 : 0.15}" stroke="#1a1a1a" stroke-width="2"/>` +
+      `<text x="${x + cw / 2}" y="${y + cw / 2 + cw * 0.13}" font-size="${cw * 0.36}" font-weight="800" text-anchor="middle" fill="${on ? '#fff' : '#666'}">${c.k}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${size} ${size + pad}" style="width:${size}px;height:${size + pad}px;flex-shrink:0">` +
+    `<text x="${size / 2}" y="9" font-size="8" text-anchor="middle" fill="#888">受付・入口側</text>${cells}` +
+    `</svg>`;
+}
+function courtLabel(courtLetters) {
+  if (!courtLetters) return '';
+  return String(courtLetters).toUpperCase().split('').join('・') + 'コート';
+}
 const RANK_MEDAL = ['🥇', '🥈', '🥉'];
 const SUBJECTS = { '収入': ['参加費', '補助金', '寄付', 'その他収入'], '支出': ['会場費', '交通費', '備品費', 'シャトル購入', 'その他支出'], 'クレカ精算': ['会場費', '交通費', '備品費', 'シャトル購入', 'その他'] };
 
@@ -423,7 +449,7 @@ function renderHome(d) {
   }
   if (d.nextEvent) {
     const e = d.nextEvent;
-    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">次回開催</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div></div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div></div>`;
+    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">次回開催</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
   }
   html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:10px">今月の参加</div><div class="stat-grid"><div class="stat"><div class="stat-label">参加人数</div><div class="stat-val">${d.monthCount}<span style="font-size:14px;color:#aaa">人</span></div></div><div class="stat"><div class="stat-label">開催回数</div><div class="stat-val">${d.sessionCount}<span style="font-size:14px;color:#aaa">回</span></div></div></div></div>`;
   if (d.ranking && d.ranking.length) {
