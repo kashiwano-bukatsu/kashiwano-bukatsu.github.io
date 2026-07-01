@@ -766,18 +766,35 @@ function courtDiagramHTML(courtLetters,size){
   }).join('');
 
   const entranceX=gx+cw,entranceY=gy-6;
+  const gapHalf=size*0.09;
+  const gapBX=gx+cw*0.5,gapAX=gx+cw*1.5,gapY=gy+cw; // B真上・A真上・BとDの間、の3か所が入口
+  const WC='#333';
+  const wall=
+    '<line x1="'+gx+'" y1="'+gy+'" x2="'+(gapBX-gapHalf)+'" y2="'+gy+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+(gapBX+gapHalf)+'" y1="'+gy+'" x2="'+(gapAX-gapHalf)+'" y2="'+gy+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+(gapAX+gapHalf)+'" y1="'+gy+'" x2="'+(gx+size)+'" y2="'+gy+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+(gx+size)+'" y1="'+gy+'" x2="'+(gx+size)+'" y2="'+(gy+size)+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+(gx+size)+'" y1="'+(gy+size)+'" x2="'+gx+'" y2="'+(gy+size)+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+gx+'" y1="'+(gy+size)+'" x2="'+gx+'" y2="'+(gapY+gapHalf)+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="'+gx+'" y1="'+(gapY-gapHalf)+'" x2="'+gx+'" y2="'+gy+'" stroke="'+WC+'" stroke-width="4" stroke-linecap="round"/>';
+
   let route='';
   if(usesCD){
-    // 入口→外周を左回りで正面玄関側へ→Dの角からIN（Cのみの時もこの入口を経由してCへ向かう）
-    const leftX=gx-size*0.14,enterX=gx+cw*0.4,enterY=gy+cw*1.3;
-    route='<path d="M '+entranceX+' '+entranceY+' C '+(gx-2)+' '+entranceY+', '+leftX+' '+(gy+cw*0.2)+', '+leftX+' '+(gy+cw)+' C '+leftX+' '+(gy+cw*1.25)+', '+(gx-cw*0.05)+' '+(gy+cw*1.4)+', '+enterX+' '+enterY+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
+    // 入口→壁の外側だけを通って正面玄関側へ→BとDの間の隙間からIN（Cのみの時もここを経由）
+    const leftX=gx-size*0.14;
+    route='<path d="M '+entranceX+' '+entranceY+' C '+(gx-2)+' '+entranceY+', '+leftX+' '+(gy+cw*0.15)+', '+leftX+' '+gapY+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round"/>'+
+      '<path d="M '+leftX+' '+gapY+' L '+(gx+6)+' '+gapY+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
   }else{
-    // A/B：入口自体は中央固定だが、Aのみなら右寄り（Aセル内）へ、Bのみなら左寄り（Bセル内）へ曲げて着地させる
-    let landX=entranceX;
-    if(active.includes('A')&&!active.includes('B'))landX=gx+cw*1.5;
-    else if(active.includes('B')&&!active.includes('A'))landX=gx+cw*0.5;
-    const midY=gy+size*0.02;
-    route='<path d="M '+entranceX+' '+entranceY+' Q '+landX+' '+midY+', '+landX+' '+(gy+9)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
+    // A/B：入口から壁の外側を通って、それぞれの真上の隙間からIN
+    const midY=gy-size*0.16;
+    if(active.includes('B')){
+      route+='<path d="M '+entranceX+' '+entranceY+' Q '+gapBX+' '+midY+', '+gapBX+' '+(gy-2)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round"/>'+
+        '<path d="M '+gapBX+' '+(gy-2)+' L '+gapBX+' '+(gy+8)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
+    }
+    if(active.includes('A')){
+      route+='<path d="M '+entranceX+' '+entranceY+' Q '+gapAX+' '+midY+', '+gapAX+' '+(gy-2)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round"/>'+
+        '<path d="M '+gapAX+' '+(gy-2)+' L '+gapAX+' '+(gy+8)+'" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow'+seq+')"/>';
+    }
   }
 
   return '<svg viewBox="0 0 '+vbW+' '+vbH+'" style="width:'+vbW+'px;height:'+vbH+'px;flex-shrink:0">'+
@@ -786,9 +803,7 @@ function courtDiagramHTML(courtLetters,size){
       '<filter id="courtGlow'+seq+'" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
     '</defs>'+
     '<text x="'+entranceX+'" y="10" font-size="7.5" text-anchor="middle" fill="#888">体育館入口</text>'+
-    cells+
-    '<rect x="'+gx+'" y="'+gy+'" width="'+size+'" height="'+size+'" fill="none" stroke="#333" stroke-width="4"/>'+
-    route+
+    cells+wall+route+
     '<text x="'+entranceX+'" y="'+(gy+size+bottomPad*0.6)+'" font-size="7.5" text-anchor="middle" fill="#888">ステージ</text>'+
     '</svg>';
 }
