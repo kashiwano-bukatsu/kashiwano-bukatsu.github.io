@@ -307,24 +307,48 @@ async function callGAS(func, ...args) {
 const SPORT_ICON = { 'バドミントン': '🏸', 'バスケットボール': '🏀', 'バレーボール': '🏐' };
 
 // ===== コート配置図（沼南体育館アリーナ配置図：受付側から見てB/A（上段）、D/C（下段）） =====
+// A・B → 入口から直接IN／ C・D → 入口から左回り（Bの外側→下）で回り込んでCからIN
 const COURT_LAYOUT = [
-  { k: 'B', col: 0, row: 0, color: '#d9cf5a' },
-  { k: 'A', col: 1, row: 0, color: '#c9527a' },
-  { k: 'D', col: 0, row: 1, color: '#7fb37f' },
-  { k: 'C', col: 1, row: 1, color: '#5b93c9' },
+  { k: 'B', col: 0, row: 0, color: '#e0d23a' },
+  { k: 'A', col: 1, row: 0, color: '#e0407a' },
+  { k: 'D', col: 0, row: 1, color: '#5cb85c' },
+  { k: 'C', col: 1, row: 1, color: '#3d8fd9' },
 ];
+let _courtDiagramSeq = 0;
 function courtDiagramHTML(courtLetters, size) {
-  size = size || 92;
+  size = size || 100;
   const active = String(courtLetters || '').toUpperCase();
-  const cw = size / 2, pad = 14;
+  const seq = (_courtDiagramSeq++);
+  const cw = size / 2, gx = size * 0.22, gy = size * 0.18, bottomPad = size * 0.22;
+  const vbW = gx + size + 6, vbH = gy + size + bottomPad;
+  const usesCD = active.includes('C') || active.includes('D');
   const cells = COURT_LAYOUT.map(c => {
     const on = active.includes(c.k);
-    const x = c.col * cw, y = c.row * cw + pad;
-    return `<rect x="${x}" y="${y}" width="${cw}" height="${cw}" fill="${c.color}" opacity="${on ? 1 : 0.15}" stroke="#1a1a1a" stroke-width="2"/>` +
-      `<text x="${x + cw / 2}" y="${y + cw / 2 + cw * 0.13}" font-size="${cw * 0.36}" font-weight="800" text-anchor="middle" fill="${on ? '#fff' : '#666'}">${c.k}</text>`;
+    const x = gx + c.col * cw, y = gy + c.row * cw;
+    const glow = on ? `<rect x="${x}" y="${y}" width="${cw}" height="${cw}" fill="${c.color}" opacity="0.95" filter="url(#courtGlow${seq})"/>` : '';
+    const pulse = on ? `<rect x="${x + 1.5}" y="${y + 1.5}" width="${cw - 3}" height="${cw - 3}" fill="none" stroke="#fff" stroke-width="2.5" opacity="0.9"><animate attributeName="opacity" values="0.35;1;0.35" dur="1.5s" repeatCount="indefinite"/></rect>` : '';
+    return glow +
+      `<rect x="${x}" y="${y}" width="${cw}" height="${cw}" fill="${c.color}" opacity="${on ? 1 : 0.16}" stroke="#1a1a1a" stroke-width="2"/>` +
+      pulse +
+      `<text x="${x + cw / 2}" y="${y + cw / 2 + cw * 0.15}" font-size="${cw * 0.4}" font-weight="900" text-anchor="middle" fill="${on ? '#fff' : '#888'}" style="${on ? 'text-shadow:0 0 6px rgba(0,0,0,.5)' : ''}">${c.k}</text>`;
   }).join('');
-  return `<svg viewBox="0 0 ${size} ${size + pad}" style="width:${size}px;height:${size + pad}px;flex-shrink:0">` +
-    `<text x="${size / 2}" y="9" font-size="8" text-anchor="middle" fill="#888">受付・入口側</text>${cells}` +
+
+  const entranceX = gx + cw, entranceY = gy - 6;
+  let route = '';
+  if (usesCD) {
+    const leftX = gx - size * 0.14, bottomY = gy + size + size * 0.1, enterX = gx + cw + cw * 0.5, enterY = gy + size + 1;
+    route = `<path d="M ${entranceX} ${entranceY} C ${gx - 2} ${entranceY}, ${leftX} ${gy + cw * 0.25}, ${leftX} ${gy + cw} C ${leftX} ${bottomY - 6}, ${gx + cw * 0.15} ${bottomY}, ${enterX} ${enterY}" fill="none" stroke="#ff5252" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow${seq})"/>`;
+  } else {
+    route = `<path d="M ${entranceX} ${entranceY} L ${entranceX} ${gy + 9}" fill="none" stroke="#ff5252" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow${seq})"/>`;
+  }
+
+  return `<svg viewBox="0 0 ${vbW} ${vbH}" style="width:${vbW}px;height:${vbH}px;flex-shrink:0">` +
+    `<defs>` +
+      `<marker id="courtArrow${seq}" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#ff5252"/></marker>` +
+      `<filter id="courtGlow${seq}" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` +
+    `</defs>` +
+    `<text x="${entranceX}" y="10" font-size="8" text-anchor="middle" fill="#aaa">入口</text>` +
+    cells + route +
     `</svg>`;
 }
 function courtLabel(courtLetters) {
