@@ -336,9 +336,9 @@ function courtDiagramHTML(courtLetters, size) {
   const entranceX = gx + cw, entranceY = gy - 6;
   let route = '';
   if (usesCD) {
-    // 入口→中央（BとCの間）を通ってそのままCへ
-    const centerY = gy + cw, enterX = gx + cw * 1.25, enterY = gy + cw * 1.15;
-    route = `<path d="M ${entranceX} ${entranceY} L ${entranceX} ${centerY} Q ${entranceX} ${centerY + cw * 0.12}, ${enterX} ${enterY}" fill="none" stroke="#ff5252" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow${seq})"/>`;
+    // 入口→外周を左回りで正面玄関側へ→Dの角からIN（Cのみの時もこの入口を経由してCへ向かう）
+    const leftX = gx - size * 0.14, enterX = gx + cw * 0.4, enterY = gy + cw * 1.3;
+    route = `<path d="M ${entranceX} ${entranceY} C ${gx - 2} ${entranceY}, ${leftX} ${gy + cw * 0.2}, ${leftX} ${gy + cw} C ${leftX} ${gy + cw * 1.25}, ${gx - cw * 0.05} ${gy + cw * 1.4}, ${enterX} ${enterY}" fill="none" stroke="#ff5252" stroke-width="3" stroke-linecap="round" marker-end="url(#courtArrow${seq})"/>`;
   } else {
     // A/B：入口自体は中央固定だが、Aのみなら右寄り（Aセル内）へ、Bのみなら左寄り（Bセル内）へ曲げて着地させる
     let landX = entranceX;
