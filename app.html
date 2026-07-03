@@ -309,7 +309,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sporolog-card">
       <div class="card-title"><div class="card-title-dot"></div>スポログ</div>
       <div style="display:flex;gap:6px;margin-bottom:12px">
         <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-total-count">0</div><div style="font-size:9px;color:#888;margin-top:2px">累計参加</div></div>
@@ -1081,6 +1081,8 @@ function showMypageMain(){
   document.getElementById('mypage-member-number').textContent=mypageCurrentUser.memberNumber||'';
   const ub=document.getElementById('upgrade-banner');
   if(ub)ub.style.display=isVisitor(mypageCurrentUser.type)?'block':'none';
+  const sc=document.getElementById('sporolog-card');
+  if(sc)sc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
   // 活動記録ボタン（誰でもタップ可能、限定判定はvideos.html側）
   const vc=document.getElementById('videos-card');
   if(vc){
@@ -1255,6 +1257,8 @@ async function loadMypageData(checkNotice,updateRankCache){
       mypageCurrentUser.isApplying=d.status==='会員(申請中)';
       mypageCurrentUser.isPendingPayment=d.status==='会員(支払い確認中)';
       saveCurrentUser();
+      const sc=document.getElementById('sporolog-card');
+      if(sc)sc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
     }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
     const isMaxed=tickets>0;
