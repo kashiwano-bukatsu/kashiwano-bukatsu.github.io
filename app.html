@@ -290,6 +290,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
           <div class="member-card-name" id="mypage-logged-name"></div>
           <div class="member-card-type" id="mypage-logged-type"></div>
           <div class="member-badge" id="mypage-member-number"></div>
+          <div id="mypage-family-label" style="display:none;font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px">👨‍👩‍👧 ファミリー：<span id="mypage-family-name"></span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           <button class="open-card-btn" onclick="openMemberCard()">会員証</button>
@@ -1079,6 +1080,15 @@ function showMypageMain(){
   document.getElementById('mypage-logged-name').textContent=mypageCurrentUser.nickname+' さん';
   document.getElementById('mypage-logged-type').textContent=getTypeLabel(mypageCurrentUser.type);
   document.getElementById('mypage-member-number').textContent=mypageCurrentUser.memberNumber||'';
+  // ファミリーパートナー表示
+  const famLabel=document.getElementById('mypage-family-label');
+  const famName=document.getElementById('mypage-family-name');
+  if(famLabel&&famName){
+    if(mypageCurrentUser.familyPartner&&mypageCurrentUser.familyPartner.nickname){
+      famName.textContent=mypageCurrentUser.familyPartner.nickname;
+      famLabel.style.display='block';
+    } else { famLabel.style.display='none'; }
+  }
   const ub=document.getElementById('upgrade-banner');
   if(ub)ub.style.display=isVisitor(mypageCurrentUser.type)?'block':'none';
   const sc=document.getElementById('sporolog-card');
@@ -1256,6 +1266,7 @@ async function loadMypageData(checkNotice,updateRankCache){
       mypageCurrentUser.status=d.status||mypageCurrentUser.status;
       mypageCurrentUser.isApplying=d.status==='会員(申請中)';
       mypageCurrentUser.isPendingPayment=d.status==='会員(支払い確認中)';
+      mypageCurrentUser.familyPartner=d.familyPartner||null;
       saveCurrentUser();
       const sc=document.getElementById('sporolog-card');
       if(sc)sc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
@@ -1393,7 +1404,15 @@ function renderScheduleList(schedules,reservations){
   window._reserveSchedules=sorted;
   _scheduleStatusMap={};
   if(!sorted.length){el.innerHTML='<div class="empty">予約可能な予定がありません（すでに全て予約済みです）</div>';return;}
-  let html='<label style="display:flex;align-items:center;gap:10px;padding:6px 0 14px;cursor:pointer"><input type="checkbox" id="schedule-select-all" checked onchange="toggleAllSchedules(this)" style="width:22px;height:22px;accent-color:#1a3a5c;flex-shrink:0"><span style="font-size:14px;font-weight:700;color:#1a3a5c">全て選択</span></label>';
+  // ファミリーパートナー同時予約チェックボックス
+  let familyHtml='';
+  const fp=mypageCurrentUser.familyPartner;
+  if(fp&&fp.fullname){
+    const myNick=(mypageCurrentUser.nickname||'').split(/[\s　]/)[0];
+    const partnerNick=(fp.nickname||'').split(/[\s　]/)[0];
+    familyHtml='<div style="background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-bottom:14px"><div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:700">予約する人</div><div style="display:flex;gap:12px"><label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:#fff;border-radius:10px;padding:10px 6px;border:2px solid #1a3a5c"><input type="checkbox" id="family-self-check" checked style="width:22px;height:22px;accent-color:#1a3a5c"><span style="font-size:13px;font-weight:700;color:#1a3a5c">'+myNick+'</span></label><label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:#fff;border-radius:10px;padding:10px 6px;border:2px solid #ddd" id="family-partner-label"><input type="checkbox" id="family-partner-check" style="width:22px;height:22px;accent-color:#1a3a5c" onchange="document.getElementById(\'family-partner-label\').style.borderColor=this.checked?\'#1a3a5c\':\'#ddd\'"><span style="font-size:13px;font-weight:700;color:#1a3a5c">'+partnerNick+'</span></label></div></div>';
+  }
+  let html=familyHtml+'<label style="display:flex;align-items:center;gap:10px;padding:6px 0 14px;cursor:pointer"><input type="checkbox" id="schedule-select-all" checked onchange="toggleAllSchedules(this)" style="width:22px;height:22px;accent-color:#1a3a5c;flex-shrink:0"><span style="font-size:14px;font-weight:700;color:#1a3a5c">全て選択</span></label>';
   html+=sorted.map((s,i)=>{
     _scheduleStatusMap[i]='⭕';
     return '<div class="schedule-item" style="padding:10px 0;border-bottom:1px solid #f0f4f8">'+
@@ -1457,11 +1476,20 @@ async function submitScheduleReservations(){
   const checks=document.querySelectorAll('.schedule-check:checked');
   if(!checks.length)return alert('予約する日程を選択してください');
   const s=window._reserveSchedules||[];
-  const rows=Array.from(checks).map(c=>{
+  const now=new Date().toLocaleString('ja-JP');
+  const rows=[];
+  const selfCheck=document.getElementById('family-self-check');
+  const partnerCheck=document.getElementById('family-partner-check');
+  const includeSelf=!selfCheck||selfCheck.checked;
+  const fp=mypageCurrentUser.familyPartner;
+  const includePartner=fp&&fp.fullname&&partnerCheck&&partnerCheck.checked;
+  if(!includeSelf&&!includePartner)return alert('予約する人を選択してください');
+  Array.from(checks).forEach(c=>{
     const idx=parseInt(c.dataset.idx);
     const x=s[idx];
     const status=_scheduleStatusMap[idx]||'⭕';
-    return[new Date().toLocaleString('ja-JP'),x[0],x[4],x[2],mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'',''];
+    if(includeSelf) rows.push([now,x[0],x[4],x[2],mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'','']);
+    if(includePartner) rows.push([now,x[0],x[4],x[2],fp.fullname,fp.nickname,mypageCurrentUser.memberSport||'',status,'','']);
   });
   const btn=document.getElementById('schedule-submit-btn');if(btn){btn.disabled=true;btn.textContent='予約中...';}
   try{const added=await callGAS('bulkAddReservations',rows);alert(added+'件予約しました');loadReserveData();}
