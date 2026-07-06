@@ -2800,6 +2800,52 @@ async function _execRegister(){
 // ===== GAS doPost に sendMessage 追加確認 =====
 // ※ GAS側のallowedに 'sendMessage': sendMessage を追加してください
 
+// ===== 予約変更：変更パネル開閉 =====
+function toggleReserveEdit(idx){
+  const el=document.getElementById('reserve-edit-'+idx);
+  if(!el)return;
+  el.style.display=el.style.display==='block'?'none':'block';
+}
+
+// ===== 予約変更：ステータス仮選択（保存前の見た目変更のみ） =====
+const _pendingStatusMap={};
+function setPendingStatus(key,status,btn,idx){
+  _pendingStatusMap[key]=status;
+  const panel=document.getElementById('reserve-edit-'+idx);
+  if(panel){
+    panel.querySelectorAll('.status-sel-btn').forEach(b=>{
+      b.classList.remove('sel-maru','sel-sankaku','sel-batsu');
+    });
+    const cls={'⭕':'sel-maru','△':'sel-sankaku','❌':'sel-batsu'}[status];
+    if(cls)btn.classList.add(cls);
+  }
+}
+
+// ===== 予約変更：保存 =====
+async function saveSingleStatus(date,sport,idx){
+  if(!mypageCurrentUser)return;
+  const key=date+'_'+sport;
+  const status=_pendingStatusMap[key]||(document.querySelector('#reserve-edit-'+idx+' .sel-maru')?'⭕':document.querySelector('#reserve-edit-'+idx+' .sel-sankaku')?'△':'❌');
+  try{
+    await callGAS('updateReservationStatus',date,sport,mypageCurrentUser.fullname,status);
+    const lbl=document.getElementById('st-label-'+idx);
+    if(lbl){const sl={'⭕':'参加','△':'未定','❌':'不参加'};lbl.textContent=status+' '+(sl[status]||'');}
+    toggleReserveEdit(idx);
+    alert('ステータスを変更しました');
+  }catch(e){alert('エラー：'+e.message);}
+}
+
+// ===== 予約変更：キャンセル（削除） =====
+async function cancelSingleReserve(date,sport){
+  if(!mypageCurrentUser)return;
+  if(!confirm(date+'の予約をキャンセルしますか？'))return;
+  try{
+    await callGAS('cancelReservation',date,sport,mypageCurrentUser.fullname);
+    alert('予約をキャンセルしました');
+    loadReserveData();
+  }catch(e){alert('エラー：'+e.message);}
+}
+
 // ===== オンラインヨガ部（カミングスーン）=====
 // HOMEに追加
 window.addEventListener('load', function(){
