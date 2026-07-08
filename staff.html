@@ -531,9 +531,11 @@ const TYPE_ORDER = {'代表':0,'運営':1,'部長':2,'応援団':3,'応援団会
 function getTypeOrder(type){ for(const k of Object.keys(TYPE_ORDER)){ if(type&&type.includes(k)) return TYPE_ORDER[k]; } return 8; }
 
 // 種別・利用モードから料金プルダウンの選択肢を組み立てる（チェックイン3画面共通）
-function buildPayOptions(type, isBad, usageMode, ticketRemain){
+function buildPayOptions(type, isBad, usageMode, ticketRemain, isMemberTrial){
   const isFree = ['運営', '代表', '部長', '本部', '特別会員'].includes(type);
   if (isFree) return [{ label: '¥0（運営）', value: 0 }];
+  // ★追加：会員が「体験参加」で予約している場合（他種目お試し・1回無料特典）は自動的に0円固定
+  if (isMemberTrial) return [{ label: '¥0（体験参加・無料特典）', value: 0 }];
   if (usageMode === '回数券'){
     const remainLabel = '（残り' + (ticketRemain != null ? ticketRemain : '-') + '枚）';
     if (isBad) return [
@@ -593,7 +595,8 @@ function renderDailyListFromData(d) {
   (d.reservations || []).forEach(r => {
     if ((r[7] || '⭕') === '❌') return;
     const master = masterMap[r[4]] || {};
-    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', usageMode: master[14] || 'スポログ', isNew: false });
+    const isMemberTrial = r[8] === '体験参加'; // ★既存会員の他種目体験参加予約（無料特典）
+    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
   });
   const tempUsers = (d.tempAttendees || []).filter(t => t[0] === d.today && !(d.attendees || []).find(a => a[1] === t[1]));
   tempUsers.forEach(u => {
@@ -605,7 +608,7 @@ function renderDailyListFromData(d) {
     const isChecked = checkedInNames.has(item.fullname);
     const type = item.type;
     const remain = ticketMap[item.fullname];
-    const options = buildPayOptions(type, isBad, item.usageMode, remain);
+    const options = buildPayOptions(type, isBad, item.usageMode, remain, item.isMemberTrial);
     const optData = JSON.stringify(options);
     const safeId = item.fullname.replace(/[^a-zA-Z0-9]/g, '');
     if (isChecked) return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a;opacity:0.4"><div style="flex:1;font-size:14px;color:#aaa">${item.nickname}</div><div style="font-size:11px;color:#666">済</div></div>`;
@@ -655,7 +658,8 @@ async function renderDailyList() {
       if ((r[7] || '⭕') === '❌') return;
       const master = masterMap[r[4]] || {};
       const type = master[2] || '一般';
-      allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, usageMode: master[14] || 'スポログ', isNew: false });
+      const isMemberTrial = r[8] === '体験参加'; // ★既存会員の他種目体験参加予約（無料特典）
+      allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
     });
     const tempUsers = tempList.filter(t => t[0] === todayFmt && !attendees.find(a => a[1] === t[1]));
     tempUsers.forEach(u => {
@@ -667,7 +671,7 @@ async function renderDailyList() {
       const isChecked = checkedInNames.has(item.fullname);
       const type = item.type;
       const remain = ticketMap[item.fullname];
-      const options = buildPayOptions(type, isBad, item.usageMode, remain);
+      const options = buildPayOptions(type, isBad, item.usageMode, remain, item.isMemberTrial);
       const optData = JSON.stringify(options);
       const safeId = item.fullname.replace(/[^a-zA-Z0-9]/g, '');
       if (isChecked) return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a;opacity:0.4"><div style="flex:1;font-size:14px;color:#aaa">${item.nickname}</div><div style="font-size:11px;color:#666">済</div></div>`;
@@ -1096,7 +1100,10 @@ async function fillReport() {
   if (idx === '') { detail.style.display = 'none'; return; }
   const r = pendingSchedules[parseInt(idx)];
   detail.style.display = 'block';
-  const date = r[0], sport = r[4], courtFee = parseInt(r[9]) || 0, shuttlePrice = parseFloat(r[6]) || 0;
+  const date = r[0], sport = r[4], courtLetters = String(r[8] || '').trim(), shuttlePrice = parseFloat(r[6]) || 0;
+  // ★変更：スプレッドシートに直接書き込む運用のため、J列（コート料金）が未入力でも
+  // I列（コート面数：A・AB・CDなど）から自動計算する。J列に値があってもI列を優先する（面数と料金の食い違いを防ぐ）。
+  const courtFee = courtLetters ? (courtLetters.length >= 2 ? 2650 : 1320) : (parseInt(r[9]) || 0);
   document.getElementById('r-info').innerHTML = `${SPORT_ICON[sport]||''} ${sport} ${date} ${r[1]} ／ 📍${r[2]}（${r[8]||''}面）`;
   document.getElementById('r-court-fee').value = courtFee;
   document.getElementById('r-shuttle-cost').dataset.price = shuttlePrice;
