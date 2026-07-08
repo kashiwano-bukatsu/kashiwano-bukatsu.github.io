@@ -375,6 +375,18 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
       </div>
     </div>
+    <div class="card" id="trial-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="onTrialAccordionClick()">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>体験参加<span id="trial-lock" style="display:none;margin-left:6px">🔐</span></div>
+        <div id="trial-arrow" style="font-size:18px;color:#aaa">›</div>
+      </div>
+      <div id="trial-body" style="display:none;margin-top:12px">
+        <div style="background:#f0f9ff;border-radius:12px;padding:12px 14px;margin-bottom:12px;cursor:pointer" onclick="showTrialInfoModal(event)">
+          <div style="font-size:13px;font-weight:700;color:#1a3a5c">体験参加とは？（タップで詳細）</div>
+        </div>
+        <div id="trial-sport-list"><div class="empty">読み込み中...</div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1353,6 +1365,7 @@ async function loadReserveData(){
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
     renderReservationList(data.reservations);
     renderScheduleList(data.schedules, data.reservations);
+    loadTrialData();
     if(data.nextSchedule){
       renderNextMemberCard(data.nextMembers||[], data.nextSchedule);
     }else{
@@ -1453,6 +1466,62 @@ function selectScheduleStatus(i,status){
   const label={'⭕':'⭕ 参加','△':'△ 未定','❌':'❌ 不参加'}[status];
   const labelEl=document.getElementById('sched-status-label-'+i);if(labelEl)labelEl.textContent='参加ステータス：'+label+'（タップで変更）';
   const cb=document.getElementById('sched-check-'+i);if(cb)cb.checked=true; // ステータスを変えたら予約対象として自動チェック
+}
+
+async function loadTrialData(){
+  const el=document.getElementById('trial-sport-list');
+  const lockIcon=document.getElementById('trial-lock');
+  if(isVisitor(mypageCurrentUser.type)){
+    lockIcon.style.display='inline';
+    el.innerHTML='<div style="text-align:center;padding:10px 0"><div style="font-size:13px;color:#888;margin-bottom:10px">体験参加は会員限定の特典です。<br>会員になると未経験の種目に無料で参加できます！</div><button class="btn btn-primary" onclick="event.stopPropagation();openUpgradeModal()" style="width:100%">プランを見る</button></div>';
+    return;
+  }
+  lockIcon.style.display='none';
+  try{
+    const sports=await callGAS('getTrialSports',mypageCurrentUser.fullname);
+    if(!sports.length){el.innerHTML='<div class="empty">対象の種目はありません（全種目参加済みです）</div>';return;}
+    el.innerHTML=sports.map(s=>{
+      if(s.used){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8;opacity:0.5"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><div style="font-size:12px;color:#aaa">利用済み</div></div>';
+      }
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><button onclick="openTrialScheduleList(\''+s.sport+'\')" style="background:#1a3a5c;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">参加してみる</button></div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty">読み込みに失敗しました</div>';}
+}
+
+function onTrialAccordionClick(){
+  toggleReserveAccordion('trial-body','trial-arrow');
+}
+
+function showTrialInfoModal(e){
+  e.stopPropagation();
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">体験参加とは？</div><div style="font-size:13px;color:#444;line-height:2;margin-bottom:20px">カシワのBUKATSU会員は、まだ参加したことのない種目に<b>1回だけ無料</b>で体験参加できます。<br>気になる種目があれば、この機会にぜひ試してみてください！</div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
+  document.body.appendChild(ov);
+}
+
+async function openTrialScheduleList(sport){
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:14px;text-align:center">'+sport+'の日程を選ぶ</div><div id="trial-schedule-body"><div class="empty">読み込み中...</div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:12px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;">閉じる</button></div>';
+  document.body.appendChild(ov);
+  const body=ov.querySelector('#trial-schedule-body');
+  try{
+    const all=await callGAS('getUpcomingSchedules','全て');
+    const list=all.filter(s=>s[4]===sport);
+    if(!list.length){body.innerHTML='<div class="empty">現在予約可能な日程がありません</div>';return;}
+    body.innerHTML=list.map(s=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:13px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div><button onclick=\'confirmTrialReserve("'+s[0]+'","'+sport+'","'+s[2]+'")\' style="background:#1a3a5c;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">選ぶ</button></div>').join('');
+  }catch(e){body.innerHTML='<div class="empty">読み込みに失敗しました</div>';}
+}
+
+async function confirmTrialReserve(date,sport,place){
+  if(!confirm(date+'の'+sport+'に体験参加で予約しますか？'))return;
+  try{
+    const r=await callGAS('reserveTrialParticipation',mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',date,sport,place);
+    if(r==='ok'){alert('体験参加の予約が完了しました！');document.querySelectorAll('.ticket-overlay').forEach(o=>o.remove());loadReserveData();}
+    else if(r==='already_used')alert('この種目はすでに体験参加済みです');
+    else if(r==='duplicate')alert('その日程はすでに予約済みです');
+    else alert('エラーが発生しました');
+  }catch(e){alert('エラー：'+e.message);}
 }
 
 async function loadDetailMembers(i,date,sport){
