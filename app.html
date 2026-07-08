@@ -357,10 +357,15 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div style="text-align:center;padding:10px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div></div>
     </div>
     <div class="card">
-      <div class="card-title"><div class="card-title-dot"></div>参加予約</div>
-      <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.7">予約したい日程にチェックして、下のボタンでまとめて予約できます。<br>日程をタップすると参加予定メンバーが見られます。</div>
-      <div id="mypage-schedule-list"><div class="empty">読み込み中...</div></div>
-      <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reserve-form-body','reserve-form-arrow')">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>参加予約</div>
+        <div id="reserve-form-arrow" style="font-size:18px;color:#aaa">›</div>
+      </div>
+      <div id="reserve-form-body" style="display:none;margin-top:12px">
+        <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.7">予約したい日程にチェックして、下のボタンでまとめて予約できます。<br>日程をタップすると参加予定メンバーが見られます。</div>
+        <div id="mypage-schedule-list"><div class="empty">読み込み中...</div></div>
+        <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
+      </div>
     </div>
     <div class="card" id="trial-card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="onTrialAccordionClick()">
@@ -1359,6 +1364,17 @@ async function loadReserveData(){
   }catch(e){document.getElementById('next-member-loading').style.display='none';}
 }
 
+const TYPE_CHIP_COLOR={
+  'カシワのBUKATSU会員':{bg:'#f4f7fb',border:'#c3cfdd',text:'#3a5578'},
+  'ファミリー会員':{bg:'#f4f7fb',border:'#c3cfdd',text:'#3a5578'},
+  'みんなのBUKATSU会員':{bg:'#f4f9f1',border:'#c3dcb5',text:'#4d7a33'},
+  '応援団':{bg:'#fdf9ee',border:'#e6d4a0',text:'#a3821f'},
+  '運営':{bg:'#fdf2f2',border:'#e6bcbc',text:'#b85f5f'},
+  '代表':{bg:'#fdf2f2',border:'#e6bcbc',text:'#b85f5f'},
+  '部長':{bg:'#fdf2f2',border:'#e6bcbc',text:'#b85f5f'},
+  '本部':{bg:'#fdf2f2',border:'#e6bcbc',text:'#b85f5f'},
+  'ビジター会員':{bg:'#f4f4f5',border:'#d6d8db',text:'#7a828c'},
+};
 function renderNextMemberCard(members,schedule){
   document.getElementById('next-member-loading').style.display='none';
   const card=document.getElementById('next-member-card');
@@ -1373,9 +1389,12 @@ function renderNextMemberCard(members,schedule){
   document.getElementById('next-member-list').innerHTML=members.map(r=>{
     const isMe=r[4]===mypageCurrentUser.fullname;
     const isNew=r[9]==='NEW'||r[9]==='初参加';
+    const type=r[10]||'';
+    const tc=TYPE_CHIP_COLOR[type];
+    const colorStyle=tc?('background:'+tc.bg+';border-color:'+tc.border+';color:'+tc.text+';'):'';
     // 苗字だけ表示（スペースや区切りで分割、なければそのまま）
     const displayName=r[5]?r[5].split(/[\s　]/)[0]:r[5];
-    return'<span class="member-chip" style="'+(isMe?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(r[7]||'⭕')+' '+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+(isMe?' 👈':'')+'</span>';
+    return'<span class="member-chip" style="'+colorStyle+(isMe?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(r[7]||'⭕')+' '+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+(isMe?' 👈':'')+'</span>';
   }).join('');
   document.getElementById('next-member-count').textContent=members.filter(r=>(r[7]||'⭕')!=='❌').length+'人参加予定';
   card.style.display='block';
