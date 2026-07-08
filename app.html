@@ -357,23 +357,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div style="text-align:center;padding:10px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div></div>
     </div>
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reservation-list-body','reservation-list-arrow')">
-        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>予約一覧</div>
-        <div id="reservation-list-arrow" style="font-size:18px;color:#aaa">›</div>
-      </div>
-      <div id="reservation-list-body" style="display:none;margin-top:12px">
-        <div id="mypage-reservation-list"><div class="empty">読み込み中...</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reserve-form-body','reserve-form-arrow')">
-        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>参加予約する</div>
-        <div id="reserve-form-arrow" style="font-size:18px;color:#aaa">›</div>
-      </div>
-      <div id="reserve-form-body" style="display:none;margin-top:12px">
-        <div id="mypage-schedule-list"><div class="empty">読み込み中...</div></div>
-        <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
-      </div>
+      <div class="card-title"><div class="card-title-dot"></div>参加予約</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.7">予約したい日程にチェックして、下のボタンでまとめて予約できます。<br>日程をタップすると参加予定メンバーが見られます。</div>
+      <div id="mypage-schedule-list"><div class="empty">読み込み中...</div></div>
+      <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
     </div>
     <div class="card" id="trial-card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="onTrialAccordionClick()">
@@ -1355,7 +1342,6 @@ async function initReserveTab(){
 }
 
 async function loadReserveData(){
-  document.getElementById('mypage-reservation-list').innerHTML='<div class="empty">読み込み中...</div>';
   document.getElementById('mypage-schedule-list').innerHTML='<div class="empty">読み込み中...</div>';
   document.getElementById('next-member-card').style.display='none';
   document.getElementById('next-member-loading').style.display='block';
@@ -1363,7 +1349,6 @@ async function loadReserveData(){
     // ★軽量化：以前は getMyReservations / getUpcomingSchedules / getTempAttendees / getReservations の
     // 4回サーバー往復していたが、GAS側で1回にまとめて返すように変更（要：Code.gs側にgetReserveTabDataを追加）
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
-    renderReservationList(data.reservations);
     renderScheduleList(data.schedules, data.reservations);
     loadTrialData();
     if(data.nextSchedule){
@@ -1396,27 +1381,23 @@ function renderNextMemberCard(members,schedule){
   card.style.display='block';
 }
 
-function renderReservationList(reservations){
-  const el=document.getElementById('mypage-reservation-list');
-  if(!reservations||!reservations.length){el.innerHTML='<div class="empty">予約がありません</div>';return;}
-  const sortedReservations=[...reservations].sort((a,b)=>dk(a[1])-dk(b[1]));
-  el.innerHTML=sortedReservations.map((r,idx)=>{
-    const st=r[7]||'⭕',sl={'⭕':'参加','△':'未定','❌':'不参加'};
-    return'<div style="padding:12px 0;border-bottom:1px solid #f0f4f8"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">'+(SPORT_ICON[r[2]]||'')+' '+r[2]+'</div><div style="font-size:13px;color:#888;margin-top:2px">'+r[1]+'（'+getDow(r[1])+'） ／ '+r[3]+'</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:#888" id="st-label-'+idx+'">'+st+' '+sl[st]+'</span><button onclick="toggleReserveEdit('+idx+')" style="background:#f0f4f8;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;color:#555">変更</button></div></div><div id="reserve-edit-'+idx+'" style="display:none;margin-top:10px;"><div style="display:flex;gap:6px;margin-bottom:8px"><button class="status-sel-btn '+(st==='⭕'?'sel-maru':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'⭕\',this,'+idx+')">⭕<div style="font-size:10px;margin-top:2px">参加</div></button><button class="status-sel-btn '+(st==='△'?'sel-sankaku':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'△\',this,'+idx+')">△<div style="font-size:10px;margin-top:2px">未定</div></button><button class="status-sel-btn '+(st==='❌'?'sel-batsu':'')+'" onclick="setPendingStatus(\''+r[1]+'_'+r[2]+'\',\'❌\',this,'+idx+')">❌<div style="font-size:10px;margin-top:2px">不参加</div></button></div><div style="display:flex;gap:8px"><button onclick="saveSingleStatus(\''+r[1]+'\',\''+r[2]+'\','+idx+')" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">保存</button><button onclick="cancelSingleReserve(\''+r[1]+'\',\''+r[2]+'\')" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button></div></div></div>';
-  }).join('');
-}
-
-// ===== 参加予約する：一括ベース（未予約分のみ表示、全選択チェック付き、個別は選択して詳細を開く） =====
+// ===== 参加予約：統合リスト（予約済み＋未予約を1つのリストで日付順に表示） =====
+// ・未予約 → チェックボックス（一括BASE）、開くとステータス選択＋参加メンバー
+// ・予約済み → ✅バッジ＋ステータス表示、開くとステータス変更・キャンセル＋参加メンバー
 let _scheduleStatusMap={}; // idx -> ステータス（デフォルト⭕、詳細を開いて変更可）
 function renderScheduleList(schedules,reservations){
   const el=document.getElementById('mypage-schedule-list');
   reservations=reservations||[];
-  const reservedKeys=new Set(reservations.map(r=>r[1]+'_'+r[2]));
-  const unreserved=(schedules||[]).filter(s=>!reservedKeys.has(s[0]+'_'+s[4]));
-  const sorted=[...unreserved].sort((a,b)=>dk(a[0])-dk(b[0]));
+  const resMap={};
+  reservations.forEach(r=>{resMap[r[1]+'_'+r[2]]=r;});
+  // スケジュール（未来分）と、スケジュールに載っていない自分の予約（体験参加など）をマージ
+  const items=(schedules||[]).map(s=>({date:s[0],time:s[1],place:s[2],sport:s[4],res:resMap[s[0]+'_'+s[4]]||null}));
+  const schedKeys=new Set(items.map(it=>it.date+'_'+it.sport));
+  reservations.forEach(r=>{if(!schedKeys.has(r[1]+'_'+r[2]))items.push({date:r[1],time:'',place:r[3],sport:r[2],res:r});});
+  const sorted=items.sort((a,b)=>dk(a.date)-dk(b.date));
   window._reserveSchedules=sorted;
   _scheduleStatusMap={};
-  if(!sorted.length){el.innerHTML='<div class="empty">予約可能な予定がありません（すでに全て予約済みです）</div>';return;}
+  if(!sorted.length){el.innerHTML='<div class="empty">今後の予定がありません</div>';return;}
   // ファミリーパートナー同時予約チェックボックス
   let familyHtml='';
   const fp=mypageCurrentUser.familyPartner;
@@ -1425,15 +1406,37 @@ function renderScheduleList(schedules,reservations){
     const partnerNick=(fp.nickname||'').split(/[\s　]/)[0];
     familyHtml='<div style="background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-bottom:14px"><div style="font-size:12px;color:#888;margin-bottom:8px;font-weight:700">予約する人</div><div style="display:flex;gap:12px"><label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:#fff;border-radius:10px;padding:10px 6px;border:2px solid #1a3a5c"><input type="checkbox" id="family-self-check" checked style="width:22px;height:22px;accent-color:#1a3a5c"><span style="font-size:13px;font-weight:700;color:#1a3a5c">'+myNick+'</span></label><label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:#fff;border-radius:10px;padding:10px 6px;border:2px solid #ddd" id="family-partner-label"><input type="checkbox" id="family-partner-check" style="width:22px;height:22px;accent-color:#1a3a5c" onchange="document.getElementById(\'family-partner-label\').style.borderColor=this.checked?\'#1a3a5c\':\'#ddd\'"><span style="font-size:13px;font-weight:700;color:#1a3a5c">'+partnerNick+'</span></label></div></div>';
   }
-  let html=familyHtml+'<label style="display:flex;align-items:center;gap:10px;padding:6px 0 14px;cursor:pointer"><input type="checkbox" id="schedule-select-all" checked onchange="toggleAllSchedules(this)" style="width:22px;height:22px;accent-color:#1a3a5c;flex-shrink:0"><span style="font-size:14px;font-weight:700;color:#1a3a5c">全て選択</span></label>';
-  html+=sorted.map((s,i)=>{
+  const hasUnreserved=sorted.some(it=>!it.res);
+  let html=familyHtml;
+  if(hasUnreserved){
+    html+='<label style="display:flex;align-items:center;gap:10px;padding:6px 0 14px;cursor:pointer"><input type="checkbox" id="schedule-select-all" onchange="toggleAllSchedules(this)" style="width:22px;height:22px;accent-color:#1a3a5c;flex-shrink:0"><span style="font-size:14px;font-weight:700;color:#1a3a5c">未予約の日程を全て選択</span></label>';
+  }
+  html+=sorted.map((it,i)=>{
+    const isTrial=it.res&&it.res[8]==='体験参加';
+    if(it.res){
+      // ===== 予約済み行 =====
+      const st=it.res[7]||'⭕',sl={'⭕':'参加','△':'未定','❌':'不参加'};
+      return '<div class="schedule-item" style="padding:10px 0;border-bottom:1px solid #f0f4f8;background:#fafffe">'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<div style="width:22px;text-align:center;font-size:16px;flex-shrink:0">✅</div>'+
+          '<div style="flex:1;cursor:pointer" onclick="toggleScheduleDetail('+i+')">'+
+            '<div style="font-size:15px;font-weight:700">'+(SPORT_ICON[it.sport]||'')+' '+it.sport+(isTrial?'<span class="new-badge" style="background:#1a3a5c">体験</span>':'')+'</div>'+
+            '<div style="font-size:13px;color:#888;margin-top:2px">'+it.date+'（'+getDow(it.date)+'）'+(it.time?' '+it.time:'')+' ／ '+it.place+'</div>'+
+            '<div style="font-size:12px;color:#188038;margin-top:4px;font-weight:700" id="st-label-'+i+'">予約済み：'+st+' '+sl[st]+'（タップで変更・キャンセル）</div>'+
+          '</div>'+
+          '<div style="font-size:18px;color:#aaa" id="sched-arrow-'+i+'" onclick="toggleScheduleDetail('+i+')">›</div>'+
+        '</div>'+
+        '<div id="mypage-detail-'+i+'" style="display:none;margin-top:10px;padding-left:34px"></div>'+
+      '</div>';
+    }
+    // ===== 未予約行 =====
     _scheduleStatusMap[i]='⭕';
     return '<div class="schedule-item" style="padding:10px 0;border-bottom:1px solid #f0f4f8">'+
       '<div style="display:flex;align-items:center;gap:12px">'+
-        '<input type="checkbox" class="schedule-check" id="sched-check-'+i+'" data-idx="'+i+'" checked style="width:22px;height:22px;flex-shrink:0;accent-color:#1a3a5c">'+
+        '<input type="checkbox" class="schedule-check" id="sched-check-'+i+'" data-idx="'+i+'" style="width:22px;height:22px;flex-shrink:0;accent-color:#1a3a5c">'+
         '<div style="flex:1;cursor:pointer" onclick="toggleScheduleDetail('+i+')">'+
-          '<div style="font-size:15px;font-weight:700">'+(SPORT_ICON[s[4]]||'')+' '+s[4]+'</div>'+
-          '<div style="font-size:13px;color:#888;margin-top:2px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div>'+
+          '<div style="font-size:15px;font-weight:700">'+(SPORT_ICON[it.sport]||'')+' '+it.sport+'</div>'+
+          '<div style="font-size:13px;color:#888;margin-top:2px">'+it.date+'（'+getDow(it.date)+'）'+(it.time?' '+it.time:'')+' ／ '+it.place+'</div>'+
           '<div style="font-size:12px;color:#1a3a5c;margin-top:4px" id="sched-status-label-'+i+'">参加ステータス：⭕ 参加（タップで変更）</div>'+
         '</div>'+
         '<div style="font-size:18px;color:#aaa" id="sched-arrow-'+i+'" onclick="toggleScheduleDetail('+i+')">›</div>'+
@@ -1453,9 +1456,26 @@ function toggleScheduleDetail(i){
   if(detail.style.display==='block'){detail.style.display='none';arrow.textContent='›';return;}
   detail.style.display='block';arrow.textContent='∨';
   if(!detail.dataset.built){
-    const s=window._reserveSchedules[i];
+    const it=window._reserveSchedules[i];
     detail.dataset.built='1';
-    detail.innerHTML='<div style="font-size:13px;color:#888;margin-bottom:8px">参加ステータス</div><div class="status-select-row"><button class="status-sel-btn sel-maru" id="sel-'+i+'-maru" onclick="event.stopPropagation();selectScheduleStatus('+i+',\'⭕\')">⭕<div style="font-size:11px;color:#888;margin-top:4px">参加</div></button><button class="status-sel-btn" id="sel-'+i+'-sankaku" onclick="event.stopPropagation();selectScheduleStatus('+i+',\'△\')">△<div style="font-size:11px;color:#888;margin-top:4px">未定</div></button><button class="status-sel-btn" id="sel-'+i+'-batsu" onclick="event.stopPropagation();selectScheduleStatus('+i+',\'❌\')">❌<div style="font-size:11px;color:#888;margin-top:4px">不参加</div></button></div><button class="view-members-btn" style="margin-top:10px" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+s[0]+'\',\''+s[4]+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
+    if(it.res){
+      // 予約済み：ステータス変更＋キャンセル＋参加メンバー
+      const st=it.res[7]||'⭕';
+      detail.innerHTML='<div style="font-size:13px;color:#888;margin-bottom:8px">参加ステータスを変更</div>'+
+        '<div style="display:flex;gap:6px;margin-bottom:8px">'+
+          '<button class="status-sel-btn '+(st==='⭕'?'sel-maru':'')+'" onclick="event.stopPropagation();setPendingStatus(\''+it.date+'_'+it.sport+'\',\'⭕\',this,'+i+')">⭕<div style="font-size:10px;margin-top:2px">参加</div></button>'+
+          '<button class="status-sel-btn '+(st==='△'?'sel-sankaku':'')+'" onclick="event.stopPropagation();setPendingStatus(\''+it.date+'_'+it.sport+'\',\'△\',this,'+i+')">△<div style="font-size:10px;margin-top:2px">未定</div></button>'+
+          '<button class="status-sel-btn '+(st==='❌'?'sel-batsu':'')+'" onclick="event.stopPropagation();setPendingStatus(\''+it.date+'_'+it.sport+'\',\'❌\',this,'+i+')">❌<div style="font-size:10px;margin-top:2px">不参加</div></button>'+
+        '</div>'+
+        '<div id="reserve-edit-'+i+'" style="display:flex;gap:8px">'+
+          '<button onclick="event.stopPropagation();saveSingleStatus(\''+it.date+'\',\''+it.sport+'\','+i+')" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">保存</button>'+
+          '<button onclick="event.stopPropagation();cancelSingleReserve(\''+it.date+'\',\''+it.sport+'\')" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>'+
+        '</div>'+
+        '<button class="view-members-btn" style="margin-top:10px" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+it.date+'\',\''+it.sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
+    }else{
+      // 未予約：ステータス選択＋参加メンバー
+      detail.innerHTML='<div style="font-size:13px;color:#888;margin-bottom:8px">参加ステータス</div><div class="status-select-row"><button class="status-sel-btn sel-maru" id="sel-'+i+'-maru" onclick="event.stopPropagation();selectScheduleStatus('+i+',\'⭕\')">⭕<div style="font-size:11px;color:#888;margin-top:4px">参加</div></button><button class="status-sel-btn" id="sel-'+i+'-sankaku" onclick="event.stopPropagation();selectScheduleStatus('+i+',\'△\')">△<div style="font-size:11px;color:#888;margin-top:4px">未定</div></button><button class="status-sel-btn" id="sel-'+i+'-batsu" onclick="event.stopPropagation();selectScheduleStatus('+i+',\'❌\')">❌<div style="font-size:11px;color:#888;margin-top:4px">不参加</div></button></div><button class="view-members-btn" style="margin-top:10px" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+it.date+'\',\''+it.sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
+    }
   }
 }
 
@@ -1557,9 +1577,10 @@ async function submitScheduleReservations(){
   Array.from(checks).forEach(c=>{
     const idx=parseInt(c.dataset.idx);
     const x=s[idx];
+    if(!x||x.res)return; // 予約済み行は対象外（念のためガード）
     const status=_scheduleStatusMap[idx]||'⭕';
-    if(includeSelf) rows.push([now,x[0],x[4],x[2],mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'','']);
-    if(includePartner) rows.push([now,x[0],x[4],x[2],fp.fullname,fp.nickname,mypageCurrentUser.memberSport||'',status,'','']);
+    if(includeSelf) rows.push([now,x.date,x.sport,x.place,mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'','']);
+    if(includePartner) rows.push([now,x.date,x.sport,x.place,fp.fullname,fp.nickname,mypageCurrentUser.memberSport||'',status,'','']);
   });
   const btn=document.getElementById('schedule-submit-btn');if(btn){btn.disabled=true;btn.textContent='予約中...';}
   try{const added=await callGAS('bulkAddReservations',rows);alert(added+'件予約しました');loadReserveData();}
@@ -2881,7 +2902,7 @@ function toggleReserveEdit(idx){
 const _pendingStatusMap={};
 function setPendingStatus(key,status,btn,idx){
   _pendingStatusMap[key]=status;
-  const panel=document.getElementById('reserve-edit-'+idx);
+  const panel=document.getElementById('mypage-detail-'+idx)||document.getElementById('reserve-edit-'+idx);
   if(panel){
     panel.querySelectorAll('.status-sel-btn').forEach(b=>{
       b.classList.remove('sel-maru','sel-sankaku','sel-batsu');
@@ -2895,12 +2916,12 @@ function setPendingStatus(key,status,btn,idx){
 async function saveSingleStatus(date,sport,idx){
   if(!mypageCurrentUser)return;
   const key=date+'_'+sport;
-  const status=_pendingStatusMap[key]||(document.querySelector('#reserve-edit-'+idx+' .sel-maru')?'⭕':document.querySelector('#reserve-edit-'+idx+' .sel-sankaku')?'△':'❌');
+  const panel=document.getElementById('mypage-detail-'+idx);
+  const status=_pendingStatusMap[key]||(panel&&panel.querySelector('.sel-maru')?'⭕':panel&&panel.querySelector('.sel-sankaku')?'△':panel&&panel.querySelector('.sel-batsu')?'❌':'⭕');
   try{
     await callGAS('updateReservationStatus',date,sport,mypageCurrentUser.fullname,status);
     const lbl=document.getElementById('st-label-'+idx);
-    if(lbl){const sl={'⭕':'参加','△':'未定','❌':'不参加'};lbl.textContent=status+' '+(sl[status]||'');}
-    toggleReserveEdit(idx);
+    if(lbl){const sl={'⭕':'参加','△':'未定','❌':'不参加'};lbl.textContent='予約済み：'+status+' '+(sl[status]||'')+'（タップで変更・キャンセル）';}
     alert('ステータスを変更しました');
   }catch(e){alert('エラー：'+e.message);}
 }
