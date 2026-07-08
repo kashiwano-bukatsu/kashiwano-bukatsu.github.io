@@ -1519,6 +1519,7 @@ async function confirmTrialReserve(date,sport,place){
     const r=await callGAS('reserveTrialParticipation',mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',date,sport,place);
     if(r==='ok'){alert('体験参加の予約が完了しました！');document.querySelectorAll('.ticket-overlay').forEach(o=>o.remove());loadReserveData();}
     else if(r==='already_used')alert('この種目はすでに体験参加済みです');
+    else if(r==='already_reserved')alert('この種目はすでに体験参加を予約中です（参加後にまた選べます）');
     else if(r==='duplicate')alert('その日程はすでに予約済みです');
     else alert('エラーが発生しました');
   }catch(e){alert('エラー：'+e.message);}
