@@ -699,6 +699,58 @@ tr:hover td{background:var(--card-soft);}
         <div id="ops-cash-list-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
+        <div class="card-title"><div class="dot"></div>現金残高チェック（実査）</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;max-width:820px;margin-bottom:16px">
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">10000円</label>
+            <input id="cd-10000" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">5000円</label>
+            <input id="cd-5000" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">1000円</label>
+            <input id="cd-1000" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">500円</label>
+            <input id="cd-500" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">100円</label>
+            <input id="cd-100" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">50円</label>
+            <input id="cd-50" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">10円</label>
+            <input id="cd-10" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">5円</label>
+            <input id="cd-5" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+          <div>
+            <label style="font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:4px">1円</label>
+            <input id="cd-1" type="number" min="0" value="0" oninput="updateCashDenomTotal()" style="width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          </div>
+        </div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:14px">
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">実査合計</div><div id="cd-actual-total" style="font-size:20px;font-weight:800">¥0</div></div>
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">理論残高（現金出納より）</div><div id="cd-theoretical" style="font-size:20px;font-weight:800">¥0</div></div>
+          <div><div style="font-size:11.5px;color:var(--ink-faint)">差額</div><div id="cd-diff" style="font-size:20px;font-weight:800">¥0</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;max-width:600px;margin-bottom:16px">
+          <input id="cd-memo" type="text" placeholder="メモ（任意）" style="flex:2;min-width:200px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <button class="btn btn-primary btn-sm" onclick="saveCashDenomAdmin()">この内容で記録する</button>
+        </div>
+        <div style="font-size:12px;color:var(--ink-faint);margin-bottom:8px">記録履歴（最新20件）</div>
+        <div id="cd-history-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>シャトル在庫</div>
         <div style="display:flex;gap:24px;margin-bottom:14px">
           <div><div style="font-size:11.5px;color:var(--ink-faint)">在庫（箱）</div><div id="ops-shuttle-total" style="font-size:20px;font-weight:800">-</div></div>
@@ -2127,6 +2179,7 @@ async function renderOpsView(){
   updateOpsSubjects();
   renderOpsSummary();
   renderOpsCash();
+  loadCashDenomPanel();
   renderOpsEquipment();
 }
 
@@ -2182,6 +2235,72 @@ async function renderOpsCash(){
     }).join('');
   }catch(e){
     listWrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+// ===== 現金残高チェック（金種別の実査・履歴・理論残高との差額） =====
+const CASH_DENOMS_ADMIN = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
+let _cdTheoreticalBalance = 0;
+
+function updateCashDenomTotal(){
+  let total = 0;
+  CASH_DENOMS_ADMIN.forEach(d => {
+    const el = document.getElementById('cd-' + d);
+    total += d * (parseInt(el.value) || 0);
+  });
+  document.getElementById('cd-actual-total').textContent = '¥' + total.toLocaleString();
+  const diff = total - _cdTheoreticalBalance;
+  const diffEl = document.getElementById('cd-diff');
+  diffEl.textContent = (diff > 0 ? '+' : '') + '¥' + diff.toLocaleString();
+  diffEl.style.color = diff === 0 ? '#2e7d32' : '#c0392b';
+  return total;
+}
+
+async function loadCashDenomPanel(){
+  try{
+    _cdTheoreticalBalance = await callGAS('getCashTheoreticalBalance');
+    document.getElementById('cd-theoretical').textContent = '¥' + _cdTheoreticalBalance.toLocaleString();
+  }catch(e){
+    document.getElementById('cd-theoretical').textContent = '－';
+  }
+  updateCashDenomTotal();
+  renderCashDenomHistory();
+}
+
+async function saveCashDenomAdmin(){
+  const counts = {};
+  CASH_DENOMS_ADMIN.forEach(d => { counts[d] = parseInt(document.getElementById('cd-' + d).value) || 0; });
+  const memo = document.getElementById('cd-memo').value;
+  const operator = currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明';
+  try{
+    const result = await callGAS('saveCashDenomination', operator, counts, memo);
+    const diffText = (result.diff > 0 ? '+' : '') + result.diff.toLocaleString() + '円';
+    logOp('現金残高記録', '実査¥' + result.actualTotal.toLocaleString() + '／差額' + diffText);
+    document.getElementById('cd-memo').value = '';
+    showToastAdmin(result.diff === 0 ? '記録しました（差額なし）' : '記録しました（差額 ' + diffText + '）');
+    loadCashDenomPanel();
+  }catch(e){
+    alert('記録に失敗しました：' + e.message);
+  }
+}
+
+async function renderCashDenomHistory(){
+  const wrap = document.getElementById('cd-history-wrap');
+  try{
+    const rows = await callGAS('getCashDenominationHistory', 20);
+    if (!rows || !rows.length){
+      wrap.innerHTML = '<div class="empty-state">記録がありません</div>';
+      return;
+    }
+    wrap.innerHTML = rows.map(r => {
+      const diff = Number(r[13] || 0);
+      return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <div><div style="color:var(--ink-faint);font-size:11.5px">${escapeHtml(r[0])}／${escapeHtml(r[1])}${r[14] ? '／' + escapeHtml(r[14]) : ''}</div><div>実査¥${Number(r[11]||0).toLocaleString()}　理論¥${Number(r[12]||0).toLocaleString()}</div></div>
+        <div style="font-weight:700;color:${diff===0?'#2e7d32':'#c0392b'}">${diff>0?'+':''}¥${diff.toLocaleString()}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
   }
 }
 
