@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>現金棚卸 | カシワのBUKATSU</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<style>
+:root{
+  --bg:#f5f1e8;
+  --card:#ffffff;
+  --ink:#2b2620;
+  --ink-soft:#6b6258;
+  --ink-faint:#a39a8c;
+  --line:#e4dcc8;
+  --accent:#2d6a4f;
+  --accent-soft:#e3eee8;
+  --warn:#c9772d;
+  --warn-soft:#f7e9da;
+  --danger:#b3432f;
+  --danger-soft:#f5e2dc;
+  --gold:#a9842f;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.5;
+  padding-bottom:150px;
+}
+.wrap{max-width:480px;margin:0 auto;padding:28px 18px 20px;}
+
+/* ===== ヘッダー ===== */
+.eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);font-weight:800;}
+h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
+.prev-check{
+  margin-top:14px;
+  padding:12px 14px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  font-size:12.5px;
+  color:var(--ink-soft);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.prev-check b{color:var(--ink);font-weight:700;}
+
+/* ===== 金種リスト ===== */
+.denom-list{margin-top:18px;}
+.denom-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px 14px;
+  margin-bottom:8px;
+}
+.chip{
+  width:38px;height:38px;
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;font-weight:800;color:#fff;
+  position:relative;
+}
+.chip.bill{border-radius:6px;width:44px;height:28px;}
+.chip.coin{border-radius:50%;}
+.chip .hole{
+  position:absolute;
+  width:12px;height:12px;
+  border-radius:50%;
+  background:var(--bg);
+}
+.denom-info{flex:1;min-width:0;}
+.denom-label{font-size:14.5px;font-weight:700;}
+.denom-sub{font-size:11.5px;color:var(--ink-faint);margin-top:1px;}
+.stepper{display:flex;align-items:center;gap:0;flex-shrink:0;}
+.step-btn{
+  width:34px;height:34px;
+  border:1.5px solid var(--line);
+  background:var(--bg);
+  font-size:18px;
+  font-weight:700;
+  color:var(--ink-soft);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;
+}
+.step-btn:first-child{border-radius:9px 0 0 9px;}
+.step-btn:last-child{border-radius:0 9px 9px 0;}
+.step-input{
+  width:52px;height:34px;
+  border:1.5px solid var(--line);
+  border-left:none;border-right:none;
+  text-align:center;
+  font-size:15px;
+  font-weight:700;
+  -moz-appearance:textfield;
+}
+.step-input::-webkit-outer-spin-button,.step-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+/* ===== メモ ===== */
+.memo-wrap{margin-top:14px;}
+.memo-wrap input{
+  width:100%;
+  padding:12px 14px;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  font-size:13.5px;
+  background:var(--card);
+}
+
+/* ===== 下部固定：合計・保存 ===== */
+.sticky-total{
+  position:fixed;
+  left:0;right:0;bottom:0;
+  background:var(--card);
+  border-top:1px solid var(--line);
+  padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+  box-shadow:0 -4px 20px rgba(0,0,0,0.06);
+}
+.sticky-total-inner{max-width:480px;margin:0 auto;}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.total-label{font-size:12px;color:var(--ink-faint);}
+.total-value{font-size:26px;font-weight:800;}
+.save-btn{
+  width:100%;
+  padding:15px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:15.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.save-btn:disabled{opacity:0.5;}
+
+/* ===== 結果パネル ===== */
+.result-overlay{
+  position:fixed;inset:0;
+  background:rgba(43,38,32,0.55);
+  display:none;
+  align-items:flex-end;
+  z-index:100;
+}
+.result-overlay.active{display:flex;}
+.result-card{
+  width:100%;
+  background:var(--bg);
+  border-radius:20px 20px 0 0;
+  padding:26px 22px calc(26px + env(safe-area-inset-bottom));
+  max-height:85vh;
+  overflow-y:auto;
+}
+.result-status{
+  font-size:12px;font-weight:800;letter-spacing:1.5px;
+  padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:10px;
+}
+.result-status.ok{background:var(--accent-soft);color:var(--accent);}
+.result-status.ng{background:var(--danger-soft);color:var(--danger);}
+.result-title{font-size:19px;font-weight:800;margin-bottom:16px;}
+.result-figures{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.result-figure{display:flex;justify-content:space-between;padding:10px 14px;background:var(--card);border-radius:10px;font-size:13.5px;}
+.result-figure b{font-size:16px;}
+.result-actions{display:flex;flex-direction:column;gap:10px;}
+.btn{padding:14px;border-radius:12px;font-size:14.5px;font-weight:700;text-align:center;cursor:pointer;border:none;}
+.btn-primary{background:var(--ink);color:#fff;}
+.btn-outline{background:none;border:1.5px solid var(--line);color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">CASH COUNT</div>
+  <h1>現金棚卸</h1>
+  <div class="prev-check" id="prevCheck">前回の記録を読み込み中...</div>
+
+  <div class="denom-list" id="denomList"></div>
+
+  <div class="memo-wrap">
+    <input id="memoInput" type="text" placeholder="メモ（任意：気づいたことがあれば）">
+  </div>
+</div>
+
+<div class="sticky-total">
+  <div class="sticky-total-inner">
+    <div class="total-row">
+      <div class="total-label">実査合計</div>
+      <div class="total-value" id="totalValue">¥0</div>
+    </div>
+    <button class="save-btn" id="saveBtn" onclick="saveCount()">この内容で記録する</button>
+  </div>
+</div>
+
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div id="resultStatus" class="result-status ok">一致</div>
+    <div class="result-title" id="resultTitle">記録しました</div>
+    <div class="result-figures">
+      <div class="result-figure"><span>実査合計</span><b id="rActual">¥0</b></div>
+      <div class="result-figure"><span>理論残高</span><b id="rTheoretical">¥0</b></div>
+      <div class="result-figure"><span>差額</span><b id="rDiff">¥0</b></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" id="reconcileBtn" style="display:none" onclick="doReconcile()">雑費として記帳する</button>
+      <button class="btn btn-outline" onclick="resetForNextCount()">もう一度数える</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+const OPERATOR_NAME = 'しょうへい';
+
+// 実際の紙幣・硬貨の色味に寄せたチップ。50円・5円だけ穴あき表現。
+const DENOMS = [
+  { value: 10000, label: '10,000円', color: '#6e4a2e', shape: 'bill' },
+  { value: 5000,  label: '5,000円',  color: '#7a4a86', shape: 'bill' },
+  { value: 1000,  label: '1,000円',  color: '#2f5f8a', shape: 'bill' },
+  { value: 500,   label: '500円',    color: '#8f8355', shape: 'coin' },
+  { value: 100,   label: '100円',    color: '#9aa0a6', shape: 'coin' },
+  { value: 50,    label: '50円',     color: '#9aa0a6', shape: 'coin', hole: true },
+  { value: 10,    label: '10円',     color: '#a56a3c', shape: 'coin' },
+  { value: 5,     label: '5円',      color: '#b8963f', shape: 'coin', hole: true },
+  { value: 1,     label: '1円',      color: '#c7c9cb', shape: 'coin' },
+];
+
+let _theoreticalBalance = 0;
+let _lastResult = null;
+
+function fmt(n){ return (n < 0 ? '-' : '') + '¥' + Math.abs(n).toLocaleString(); }
+
+function renderDenomList(){
+  const wrap = document.getElementById('denomList');
+  wrap.innerHTML = DENOMS.map(d => `
+    <div class="denom-row">
+      <div class="chip ${d.shape}" style="background:${d.color}">${d.shape==='bill' ? d.value : ''}${d.hole ? '<div class="hole"></div>' : ''}</div>
+      <div class="denom-info">
+        <div class="denom-label">${d.label}</div>
+        <div class="denom-sub" id="sub-${d.value}">${d.value.toLocaleString()}円 × 0枚 = ¥0</div>
+      </div>
+      <div class="stepper">
+        <div class="step-btn" onclick="stepDenom(${d.value},-1)">−</div>
+        <input class="step-input" type="number" min="0" inputmode="numeric" id="cd-${d.value}" value="0" oninput="updateTotal()">
+        <div class="step-btn" onclick="stepDenom(${d.value},1)">＋</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function stepDenom(value, delta){
+  const el = document.getElementById('cd-' + value);
+  el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+  updateTotal();
+}
+
+function updateTotal(){
+  let total = 0;
+  DENOMS.forEach(d => {
+    const count = parseInt(document.getElementById('cd-' + d.value).value) || 0;
+    const sub = d.value * count;
+    total += sub;
+    document.getElementById('sub-' + d.value).textContent = d.value.toLocaleString() + '円 × ' + count + '枚 = ¥' + sub.toLocaleString();
+  });
+  document.getElementById('totalValue').textContent = '¥' + total.toLocaleString();
+  return total;
+}
+
+async function callGAS(func, ...args){
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify({ func, args })
+  });
+  const json = await res.json();
+  if (json.status === 'error') throw new Error(json.message);
+  return json.data;
+}
+
+async function loadPrevCheck(){
+  const el = document.getElementById('prevCheck');
+  try{
+    const rows = await callGAS('getCashDenominationHistory', 1);
+    if (!rows || !rows.length){
+      el.innerHTML = '記録はまだありません';
+      return;
+    }
+    const r = rows[0];
+    const diff = Number(r[13] || 0);
+    el.innerHTML = `前回：<b>${r[0]}</b>　実査¥${Number(r[11]||0).toLocaleString()}　差額<b style="color:${diff===0?'#2d6a4f':'#b3432f'}">${diff>0?'+':''}${diff.toLocaleString()}円</b>`;
+  }catch(e){
+    el.textContent = '前回の記録を取得できませんでした';
+  }
+}
+
+async function saveCount(){
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '記録中...';
+  const counts = {};
+  DENOMS.forEach(d => { counts[d.value] = parseInt(document.getElementById('cd-' + d.value).value) || 0; });
+  const memo = document.getElementById('memoInput').value;
+  try{
+    const result = await callGAS('saveCashDenomination', OPERATOR_NAME, counts, memo);
+    _lastResult = { ...result, memo };
+    showResult(result);
+  }catch(e){
+    alert('記録に失敗しました：' + e.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'この内容で記録する';
+  }
+}
+
+function showResult(result){
+  const isOk = result.diff === 0;
+  document.getElementById('resultStatus').className = 'result-status ' + (isOk ? 'ok' : 'ng');
+  document.getElementById('resultStatus').textContent = isOk ? '一致' : '差額あり';
+  document.getElementById('resultTitle').textContent = isOk ? '記録しました。差額なし！' : '記録しました。差額があります';
+  document.getElementById('rActual').textContent = '¥' + result.actualTotal.toLocaleString();
+  document.getElementById('rTheoretical').textContent = '¥' + result.theoreticalBalance.toLocaleString();
+  const diffEl = document.getElementById('rDiff');
+  diffEl.textContent = (result.diff > 0 ? '+' : '') + '¥' + result.diff.toLocaleString();
+  diffEl.style.color = isOk ? '#2d6a4f' : '#b3432f';
+  document.getElementById('reconcileBtn').style.display = isOk ? 'none' : 'block';
+  document.getElementById('reconcileBtn').textContent = result.diff < 0
+    ? '雑費（支出）として記帳する'
+    : '雑費（収入）として記帳する';
+  document.getElementById('resultOverlay').classList.add('active');
+}
+
+async function doReconcile(){
+  if (!_lastResult) return;
+  const isShort = _lastResult.diff < 0;
+  const amount = Math.abs(_lastResult.diff);
+  try{
+    await callGAS('addCashEntry', [new Date().toLocaleDateString('ja-JP'), isShort ? '支出' : '収入', amount, '雑費（過不足）', '現金残高チェックによる自動調整（' + (_lastResult.memo || '実査時に判明') + '）']);
+    document.getElementById('reconcileBtn').textContent = '記帳しました ✓';
+    document.getElementById('reconcileBtn').disabled = true;
+  }catch(e){
+    alert('記帳に失敗しました：' + e.message);
+  }
+}
+
+function resetForNextCount(){
+  document.getElementById('resultOverlay').classList.remove('active');
+  DENOMS.forEach(d => { document.getElementById('cd-' + d.value).value = 0; });
+  document.getElementById('memoInput').value = '';
+  updateTotal();
+  loadPrevCheck();
+}
+
+renderDenomList();
+updateTotal();
+loadPrevCheck();
+</script>
+</body>
+</html>
