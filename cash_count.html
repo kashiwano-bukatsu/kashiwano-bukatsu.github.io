@@ -286,6 +286,23 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
 }
 .pin-pad button:active{background:var(--line);}
 .pin-pad .pin-empty{visibility:hidden;pointer-events:none;}
+
+/* ===== BANKタブ ===== */
+.wallet-card{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:18px 18px;margin-bottom:14px;
+}
+.wallet-label{font-size:11.5px;font-weight:800;color:var(--gold);letter-spacing:1px;margin-bottom:4px;}
+.wallet-name{font-size:16px;font-weight:800;margin-bottom:14px;}
+.wallet-figure-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);}
+.wallet-figure-row:first-of-type{border-top:none;padding-top:0;}
+.wallet-figure-label{font-size:12.5px;color:var(--ink-soft);}
+.wallet-figure-value{font-size:18px;font-weight:800;}
+.wallet-note{font-size:11px;color:var(--ink-faint);margin-top:10px;line-height:1.5;}
+.kinko-entry{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--line);}
+.kinko-entry:last-child{border-bottom:none;}
+.kinko-entry-main{color:var(--ink-soft);}
+.kinko-entry-sub{font-size:10.5px;color:var(--ink-faint);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -320,6 +337,7 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
 <div class="tabbar">
   <button class="tab-btn active" id="tabBtnCount" onclick="switchTab('count')">🧮 棚卸</button>
   <button class="tab-btn" id="tabBtnPlan" onclick="switchTab('plan')">📅 支払い予定</button>
+  <button class="tab-btn" id="tabBtnBank" onclick="switchTab('bank')">🏦 BANK</button>
 </div>
 
 <!-- ===== 棚卸タブ ===== -->
@@ -401,6 +419,31 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
   </div>
 </div>
 
+<!-- ===== BANKタブ ===== -->
+<div id="viewBank" style="display:none">
+  <div class="wrap">
+    <div class="eyebrow">WALLETS</div>
+    <h1>財布の内訳</h1>
+
+    <div class="wallet-card">
+      <div class="wallet-label">財布A</div>
+      <div class="wallet-name">お釣り用持ち出し中</div>
+      <div id="walletACard"><div class="loading-text">読み込み中...</div></div>
+      <div class="wallet-note">「棚卸」タブで数えた実際の現金の状態。現在の想定残高は、最後に棚卸した後の現金出納・活動レポートの増減を反映した見込み額。</div>
+    </div>
+
+    <div class="wallet-card">
+      <div class="wallet-label">財布B</div>
+      <div class="wallet-name">金庫</div>
+      <div id="walletBCard"><div class="loading-text">読み込み中...</div></div>
+      <div class="wallet-note">「支払い予定」タブで個人立替金を精算するたびに、ここへ計上されていく。累計計上額＝これまでに精算・計上された金額の合計（現金として今すぐ使える残高という意味ではなく、精算済みの記録）。</div>
+    </div>
+
+    <div class="section-label">金庫：計上履歴</div>
+    <div id="kinkoHistoryWrap"><div class="loading-text">読み込み中...</div></div>
+  </div>
+</div>
+
 <div class="result-overlay" id="resultOverlay">
   <div class="result-card">
     <div id="resultStatus" class="result-status ok">一致</div>
@@ -438,15 +481,22 @@ async function callGAS(func, ...args){
    タブ切り替え
    ============================================================ */
 let _planLoadedOnce = false;
+let _bankLoadedOnce = false;
 
 function switchTab(tab){
   document.getElementById('viewCount').style.display = tab === 'count' ? 'block' : 'none';
   document.getElementById('viewPlan').style.display = tab === 'plan' ? 'block' : 'none';
+  document.getElementById('viewBank').style.display = tab === 'bank' ? 'block' : 'none';
   document.getElementById('tabBtnCount').classList.toggle('active', tab === 'count');
   document.getElementById('tabBtnPlan').classList.toggle('active', tab === 'plan');
+  document.getElementById('tabBtnBank').classList.toggle('active', tab === 'bank');
   if (tab === 'plan' && !_planLoadedOnce){
     _planLoadedOnce = true;
     loadPlanTab();
+  }
+  if (tab === 'bank' && !_bankLoadedOnce){
+    _bankLoadedOnce = true;
+    loadBankTab();
   }
 }
 
@@ -788,6 +838,66 @@ async function endPlan(rowIndex){
     loadMonthList();
   }catch(e){
     alert('終了処理に失敗しました：' + e.message);
+  }
+}
+
+/* ============================================================
+   BANKタブ（財布A：お釣り用持ち出し中／財布B：金庫）
+   ============================================================ */
+async function loadBankTab(){
+  loadWalletA();
+  loadWalletB();
+}
+
+async function loadWalletA(){
+  const el = document.getElementById('walletACard');
+  try{
+    const [historyRows, theoretical] = await Promise.all([
+      callGAS('getCashDenominationHistory', 1),
+      callGAS('getCashTheoreticalBalance')
+    ]);
+    const last = (historyRows && historyRows.length) ? historyRows[0] : null;
+    let html = '';
+    html += `<div class="wallet-figure-row"><span class="wallet-figure-label">現在の想定残高</span><span class="wallet-figure-value">¥${theoretical.toLocaleString()}</span></div>`;
+    if (last){
+      const lastActual = Number(last[11] || 0);
+      const lastDiff = Number(last[13] || 0);
+      html += `<div class="wallet-figure-row"><span class="wallet-figure-label">最終棚卸（${escapeHtmlP(last[0])}）</span><span class="wallet-figure-value">¥${lastActual.toLocaleString()}</span></div>`;
+      html += `<div class="wallet-figure-row"><span class="wallet-figure-label">その時の差額</span><span class="wallet-figure-value" style="color:${lastDiff===0?'#2d6a4f':'#b3432f'}">${lastDiff>0?'+':''}¥${lastDiff.toLocaleString()}</span></div>`;
+    } else {
+      html += `<div class="wallet-figure-row"><span class="wallet-figure-label">棚卸履歴</span><span class="wallet-figure-value">まだありません</span></div>`;
+    }
+    el.innerHTML = html;
+  }catch(e){
+    el.innerHTML = '<div class="empty-text">読み込みエラー：' + escapeHtmlP(e.message) + '</div>';
+  }
+}
+
+async function loadWalletB(){
+  const cardEl = document.getElementById('walletBCard');
+  const histEl = document.getElementById('kinkoHistoryWrap');
+  try{
+    const summary = await callGAS('getKinkoSummary', 15);
+    cardEl.innerHTML = `
+      <div class="wallet-figure-row"><span class="wallet-figure-label">累計計上額</span><span class="wallet-figure-value">¥${summary.total.toLocaleString()}</span></div>
+      <div class="wallet-figure-row"><span class="wallet-figure-label">今月の計上額</span><span class="wallet-figure-value">¥${summary.thisMonthTotal.toLocaleString()}</span></div>
+    `;
+    if (!summary.entries || !summary.entries.length){
+      histEl.innerHTML = '<div class="empty-text">まだ計上履歴がありません</div>';
+      return;
+    }
+    histEl.innerHTML = summary.entries.map(r => `
+      <div class="kinko-entry">
+        <div>
+          <div class="kinko-entry-main">${escapeHtmlP(r[1])}</div>
+          <div class="kinko-entry-sub">${escapeHtmlP(r[0])}（対象：${escapeHtmlP(r[3])}）</div>
+        </div>
+        <div style="font-weight:800">¥${Number(r[2]).toLocaleString()}</div>
+      </div>
+    `).join('');
+  }catch(e){
+    cardEl.innerHTML = '<div class="empty-text">読み込みエラー：' + escapeHtmlP(e.message) + '</div>';
+    histEl.innerHTML = '';
   }
 }
 
