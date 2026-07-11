@@ -248,10 +248,74 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
   border-radius:8px;padding:5px 10px;cursor:pointer;
 }
 .loading-text{font-size:12.5px;color:var(--ink-faint);padding:10px 0;}
-.empty-text{font-size:12.5px;color:var(--ink-faint);padding:10px 0;}
+/* ===== PINロック画面 ===== */
+.lock-screen{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:1000;
+}
+.lock-inner{max-width:340px;width:100%;padding:0 24px;text-align:center;}
+.lock-inner .eyebrow{display:block;}
+.lock-inner h1{margin-top:6px;margin-bottom:28px;}
+.pin-dots{display:flex;justify-content:center;gap:16px;margin-bottom:14px;}
+.pin-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:1.5px solid var(--ink-faint);
+  background:transparent;
+  transition:background 0.1s;
+}
+.pin-dot.filled{background:var(--ink);border-color:var(--ink);}
+.pin-error{
+  font-size:12.5px;color:var(--danger);height:18px;margin-bottom:18px;
+}
+.pin-pad{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+.pin-pad button{
+  aspect-ratio:1;
+  border-radius:50%;
+  border:1.5px solid var(--line);
+  background:var(--card);
+  font-size:22px;
+  font-weight:700;
+  color:var(--ink);
+  cursor:pointer;
+}
+.pin-pad button:active{background:var(--line);}
+.pin-pad .pin-empty{visibility:hidden;pointer-events:none;}
 </style>
 </head>
 <body>
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-inner">
+    <div class="eyebrow">SECURE</div>
+    <h1>ロック中</h1>
+    <div class="pin-dots" id="pinDots">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div class="pin-error" id="pinError" style="visibility:hidden">PINが違います</div>
+    <div class="pin-pad">
+      <button onclick="pinPress('1')">1</button>
+      <button onclick="pinPress('2')">2</button>
+      <button onclick="pinPress('3')">3</button>
+      <button onclick="pinPress('4')">4</button>
+      <button onclick="pinPress('5')">5</button>
+      <button onclick="pinPress('6')">6</button>
+      <button onclick="pinPress('7')">7</button>
+      <button onclick="pinPress('8')">8</button>
+      <button onclick="pinPress('9')">9</button>
+      <div class="pin-empty"></div>
+      <button onclick="pinPress('0')">0</button>
+      <button onclick="pinBackspace()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none">
 
 <div class="tabbar">
   <button class="tab-btn active" id="tabBtnCount" onclick="switchTab('count')">🧮 棚卸</button>
@@ -351,6 +415,8 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
       <button class="btn btn-outline" onclick="resetForNextCount()">もう一度数える</button>
     </div>
   </div>
+</div>
+
 </div>
 
 <script>
@@ -732,9 +798,63 @@ function escapeHtmlP(s){
 /* ============================================================
    初期化
    ============================================================ */
-renderDenomList();
-updateTotal();
-loadPrevCheck();
+/* ============================================================
+   PINロック
+   ============================================================ */
+const APP_PIN = '8008';
+const UNLOCK_KEY = 'bukatsu_cash_unlocked';
+let _pinBuffer = '';
+
+function checkUnlocked(){
+  if (sessionStorage.getItem(UNLOCK_KEY) === 'true'){
+    unlockApp();
+  }
+}
+
+function pinPress(d){
+  if (_pinBuffer.length >= 4) return;
+  _pinBuffer += d;
+  renderPinDots();
+  if (_pinBuffer.length === 4){
+    setTimeout(verifyPin, 150);
+  }
+}
+
+function pinBackspace(){
+  _pinBuffer = _pinBuffer.slice(0, -1);
+  renderPinDots();
+}
+
+function renderPinDots(){
+  document.querySelectorAll('.pin-dot').forEach((el, i) => {
+    el.classList.toggle('filled', i < _pinBuffer.length);
+  });
+}
+
+function verifyPin(){
+  if (_pinBuffer === APP_PIN){
+    sessionStorage.setItem(UNLOCK_KEY, 'true');
+    unlockApp();
+  } else {
+    document.getElementById('pinError').style.visibility = 'visible';
+    _pinBuffer = '';
+    renderPinDots();
+  }
+}
+
+function unlockApp(){
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'block';
+  initApp();
+}
+
+function initApp(){
+  renderDenomList();
+  updateTotal();
+  loadPrevCheck();
+}
+
+checkUnlocked();
 </script>
 </body>
 </html>
