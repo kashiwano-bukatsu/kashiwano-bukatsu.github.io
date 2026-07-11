@@ -15,8 +15,10 @@
       "purpose": "maskable"
     }
   ],
-  "start_url": "./",
+  "start_url": "cash_count.html",
   "display": "standalone",
   "background_color": "#f5f1e8",
-  "theme_color": "#223464"
+  "theme_color": "#223464",
+  "scope": "./",
+  "id": "./cash_count.html"
 }
