@@ -652,9 +652,9 @@ function _ymLabel(ym){
 }
 
 async function loadPlanTab(){
-  loadSettleBanner();
-  loadMonthList();
-  loadPlanList();
+  await loadSettleBanner();
+  await loadMonthList();
+  await loadPlanList();
 }
 
 async function loadSettleBanner(){
@@ -845,17 +845,15 @@ async function endPlan(rowIndex){
    BANKタブ（財布A：お釣り用持ち出し中／財布B：金庫）
    ============================================================ */
 async function loadBankTab(){
-  loadWalletA();
-  loadWalletB();
+  await loadWalletA();
+  await loadWalletB();
 }
 
 async function loadWalletA(){
   const el = document.getElementById('walletACard');
   try{
-    const [historyRows, theoretical] = await Promise.all([
-      callGAS('getCashDenominationHistory', 1),
-      callGAS('getCashTheoreticalBalance')
-    ]);
+    const historyRows = await callGAS('getCashDenominationHistory', 1);
+    const theoretical = await callGAS('getCashTheoreticalBalance');
     const last = (historyRows && historyRows.length) ? historyRows[0] : null;
     let html = '';
     html += `<div class="wallet-figure-row"><span class="wallet-figure-label">現在の想定残高</span><span class="wallet-figure-value">¥${theoretical.toLocaleString()}</span></div>`;
