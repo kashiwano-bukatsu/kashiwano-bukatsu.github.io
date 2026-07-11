@@ -1,0 +1,13 @@
+{
+  "name": "カシワのBUKATSU 事務局",
+  "short_name": "事務局",
+  "icons": [
+    { "src": "icons_admin/admin_icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons_admin/admin_icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons_admin/admin_icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#6a4a2f"
+}
