@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>現金棚卸 | カシワのBUKATSU</title>
+<title>現金管理 | カシワのBUKATSU</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <style>
 :root{
@@ -29,7 +29,26 @@ body{
   line-height:1.5;
   padding-bottom:150px;
 }
-.wrap{max-width:480px;margin:0 auto;padding:28px 18px 20px;}
+.wrap{max-width:480px;margin:0 auto;padding:20px 18px 20px;}
+
+/* ===== タブ ===== */
+.tabbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;
+  background:var(--card);
+  border-bottom:1px solid var(--line);
+  max-width:480px;margin:0 auto;
+}
+.tab-btn{
+  flex:1;
+  padding:14px 8px;
+  border:none;background:none;
+  font-size:14px;font-weight:700;
+  color:var(--ink-faint);
+  cursor:pointer;
+  border-bottom:3px solid transparent;
+}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--accent);}
 
 /* ===== ヘッダー ===== */
 .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);font-weight:800;}
@@ -114,7 +133,7 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
   background:var(--card);
 }
 
-/* ===== 下部固定：合計・保存 ===== */
+/* ===== 下部固定：合計・保存（棚卸タブのみ） ===== */
 .sticky-total{
   position:fixed;
   left:0;right:0;bottom:0;
@@ -171,29 +190,150 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
 .btn{padding:14px;border-radius:12px;font-size:14.5px;font-weight:700;text-align:center;cursor:pointer;border:none;}
 .btn-primary{background:var(--ink);color:#fff;}
 .btn-outline{background:none;border:1.5px solid var(--line);color:var(--ink);}
+
+/* ===== 支払い予定タブ ===== */
+.section-label{font-size:12.5px;font-weight:800;color:var(--ink-soft);margin:20px 0 10px;letter-spacing:0.5px;}
+.settle-banner{
+  margin-top:14px;
+  padding:14px 16px;
+  border-radius:14px;
+  font-size:13px;
+}
+.settle-banner.ready{background:var(--accent-soft);color:var(--accent);}
+.settle-banner.waiting{background:var(--card);border:1px solid var(--line);color:var(--ink-soft);}
+.settle-banner.empty{background:var(--card);border:1px solid var(--line);color:var(--ink-faint);}
+.settle-banner b{font-size:17px;display:block;margin:4px 0 10px;color:var(--ink);}
+.settle-banner .btn{margin-top:2px;}
+
+.month-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px 16px;
+  margin-bottom:8px;
+}
+.month-card.is-current{border-color:var(--accent);border-width:1.5px;}
+.month-card-header{display:flex;justify-content:space-between;align-items:center;}
+.month-name{font-size:14.5px;font-weight:800;}
+.month-badge{font-size:10px;font-weight:800;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:10px;margin-left:6px;}
+.month-total{font-size:16px;font-weight:800;}
+.month-total.zero{color:var(--ink-faint);font-weight:600;}
+.month-items{margin-top:8px;}
+.month-item{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);padding:3px 0;}
+.month-item-type{font-size:10px;color:var(--ink-faint);margin-left:5px;}
+
+.plan-form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;}
+.form-row{margin-bottom:12px;}
+.form-row label{font-size:11.5px;color:var(--ink-faint);display:block;margin-bottom:5px;}
+.form-row input{
+  width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;background:var(--bg);
+}
+.type-toggle{display:flex;gap:6px;}
+.type-btn{
+  flex:1;padding:10px 4px;border:1.5px solid var(--line);border-radius:9px;background:var(--bg);
+  font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;
+}
+.type-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+.plan-list-item{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;
+}
+.plan-list-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.plan-list-name{font-size:14px;font-weight:700;}
+.plan-list-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;background:var(--warn-soft);color:var(--warn);white-space:nowrap;}
+.plan-list-badge.ended{background:var(--line);color:var(--ink-faint);}
+.plan-list-detail{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+.plan-list-end-btn{
+  margin-top:8px;font-size:11.5px;color:var(--danger);background:none;border:1px solid var(--danger-soft);
+  border-radius:8px;padding:5px 10px;cursor:pointer;
+}
+.loading-text{font-size:12.5px;color:var(--ink-faint);padding:10px 0;}
+.empty-text{font-size:12.5px;color:var(--ink-faint);padding:10px 0;}
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <div class="eyebrow">CASH COUNT</div>
-  <h1>現金棚卸</h1>
-  <div class="prev-check" id="prevCheck">前回の記録を読み込み中...</div>
+<div class="tabbar">
+  <button class="tab-btn active" id="tabBtnCount" onclick="switchTab('count')">🧮 棚卸</button>
+  <button class="tab-btn" id="tabBtnPlan" onclick="switchTab('plan')">📅 支払い予定</button>
+</div>
 
-  <div class="denom-list" id="denomList"></div>
+<!-- ===== 棚卸タブ ===== -->
+<div id="viewCount">
+  <div class="wrap">
+    <div class="eyebrow">CASH COUNT</div>
+    <h1>現金棚卸</h1>
+    <div class="prev-check" id="prevCheck">前回の記録を読み込み中...</div>
 
-  <div class="memo-wrap">
-    <input id="memoInput" type="text" placeholder="メモ（任意：気づいたことがあれば）">
+    <div class="denom-list" id="denomList"></div>
+
+    <div class="memo-wrap">
+      <input id="memoInput" type="text" placeholder="メモ（任意：気づいたことがあれば）">
+    </div>
+  </div>
+
+  <div class="sticky-total">
+    <div class="sticky-total-inner">
+      <div class="total-row">
+        <div class="total-label">実査合計</div>
+        <div class="total-value" id="totalValue">¥0</div>
+      </div>
+      <button class="save-btn" id="saveBtn" onclick="saveCount()">この内容で記録する</button>
+    </div>
   </div>
 </div>
 
-<div class="sticky-total">
-  <div class="sticky-total-inner">
-    <div class="total-row">
-      <div class="total-label">実査合計</div>
-      <div class="total-value" id="totalValue">¥0</div>
+<!-- ===== 支払い予定タブ ===== -->
+<div id="viewPlan" style="display:none">
+  <div class="wrap">
+    <div class="eyebrow">EXPENSE SCHEDULE</div>
+    <h1>支払い予定</h1>
+
+    <div id="settleBanner"></div>
+
+    <div class="section-label">月別の支払い予定</div>
+    <div id="monthList"><div class="loading-text">読み込み中...</div></div>
+    <button class="btn btn-outline" id="expandBtn" onclick="expandMonths()" style="margin-top:6px;margin-bottom:8px">さらに過去を見る（直近12ヶ月まで）</button>
+
+    <div class="section-label">新規登録</div>
+    <div class="plan-form">
+      <div class="form-row">
+        <label>項目名</label>
+        <input id="planName" type="text" placeholder="例：バドミントンネット／ガソリン代">
+      </div>
+      <div class="form-row">
+        <label>種別</label>
+        <div class="type-toggle" id="typeToggle">
+          <button class="type-btn active" data-type="一括" onclick="selectPlanType('一括')">一括</button>
+          <button class="type-btn" data-type="分割" onclick="selectPlanType('分割')">分割</button>
+          <button class="type-btn" data-type="ランニング" onclick="selectPlanType('ランニング')">ランニング</button>
+        </div>
+      </div>
+      <div class="form-row" id="totalAmountRow">
+        <label>総額</label>
+        <input id="planTotal" type="number" min="0" inputmode="numeric" placeholder="0" oninput="recalcMonthly()">
+      </div>
+      <div class="form-row" id="installmentsRow" style="display:none">
+        <label>分割回数</label>
+        <input id="planInstallments" type="number" min="1" inputmode="numeric" placeholder="例：3" oninput="recalcMonthly()">
+      </div>
+      <div class="form-row" id="monthlyRow" style="display:none">
+        <label id="monthlyLabel">月額</label>
+        <input id="planMonthly" type="number" min="0" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="form-row">
+        <label>開始年月</label>
+        <input id="planStartYm" type="month">
+      </div>
+      <div class="form-row">
+        <label>メモ（任意）</label>
+        <input id="planMemo" type="text" placeholder="">
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="submitExpensePlan()">登録する</button>
     </div>
-    <button class="save-btn" id="saveBtn" onclick="saveCount()">この内容で記録する</button>
+
+    <div class="section-label">登録済みの経費予定</div>
+    <div id="planListWrap"><div class="loading-text">読み込み中...</div></div>
   </div>
 </div>
 
@@ -217,6 +357,36 @@ h1{font-size:24px;font-weight:800;margin-top:4px;letter-spacing:0.3px;}
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
 const OPERATOR_NAME = 'しょうへい';
 
+async function callGAS(func, ...args){
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify({ func, args })
+  });
+  const json = await res.json();
+  if (json.status === 'error') throw new Error(json.message);
+  return json.data;
+}
+
+/* ============================================================
+   タブ切り替え
+   ============================================================ */
+let _planLoadedOnce = false;
+
+function switchTab(tab){
+  document.getElementById('viewCount').style.display = tab === 'count' ? 'block' : 'none';
+  document.getElementById('viewPlan').style.display = tab === 'plan' ? 'block' : 'none';
+  document.getElementById('tabBtnCount').classList.toggle('active', tab === 'count');
+  document.getElementById('tabBtnPlan').classList.toggle('active', tab === 'plan');
+  if (tab === 'plan' && !_planLoadedOnce){
+    _planLoadedOnce = true;
+    loadPlanTab();
+  }
+}
+
+/* ============================================================
+   棚卸タブ
+   ============================================================ */
 // 実際の紙幣・硬貨の色味に寄せたチップ。50円・5円だけ穴あき表現。
 const DENOMS = [
   { value: 10000, label: '10,000円', color: '#6e4a2e', shape: 'bill' },
@@ -230,10 +400,7 @@ const DENOMS = [
   { value: 1,     label: '1円',      color: '#c7c9cb', shape: 'coin' },
 ];
 
-let _theoreticalBalance = 0;
 let _lastResult = null;
-
-function fmt(n){ return (n < 0 ? '-' : '') + '¥' + Math.abs(n).toLocaleString(); }
 
 function renderDenomList(){
   const wrap = document.getElementById('denomList');
@@ -271,17 +438,6 @@ function updateTotal(){
   return total;
 }
 
-async function callGAS(func, ...args){
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'text/plain'},
-    body: JSON.stringify({ func, args })
-  });
-  const json = await res.json();
-  if (json.status === 'error') throw new Error(json.message);
-  return json.data;
-}
-
 async function loadPrevCheck(){
   const el = document.getElementById('prevCheck');
   try{
@@ -293,6 +449,13 @@ async function loadPrevCheck(){
     const r = rows[0];
     const diff = Number(r[13] || 0);
     el.innerHTML = `前回：<b>${r[0]}</b>　実査¥${Number(r[11]||0).toLocaleString()}　差額<b style="color:${diff===0?'#2d6a4f':'#b3432f'}">${diff>0?'+':''}${diff.toLocaleString()}円</b>`;
+
+    // 前回の金種別枚数を入力欄に初期値としてセット（そこから増減分だけ触ればいいように）
+    DENOMS.forEach((d, i) => {
+      const prevCount = parseInt(r[2 + i]) || 0; // 列2〜10が金種別枚数（DENOMS配列と同じ並び）
+      document.getElementById('cd-' + d.value).value = prevCount;
+    });
+    updateTotal();
   }catch(e){
     el.textContent = '前回の記録を取得できませんでした';
   }
@@ -355,6 +518,220 @@ function resetForNextCount(){
   loadPrevCheck();
 }
 
+/* ============================================================
+   支払い予定タブ
+   ============================================================ */
+let _monthsBack = 3;
+const MONTHS_FORWARD = 3;
+let _currentPlanType = '一括';
+
+function _clientNowYm(){
+  const d = new Date();
+  return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function _ymLabel(ym){
+  const p = ym.split('/');
+  return p[0] + '年' + parseInt(p[1], 10) + '月';
+}
+
+async function loadPlanTab(){
+  loadSettleBanner();
+  loadMonthList();
+  loadPlanList();
+}
+
+async function loadSettleBanner(){
+  const el = document.getElementById('settleBanner');
+  el.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const status = await callGAS('getSettlementStatus');
+    if (!status.pendingMonths || !status.pendingMonths.length){
+      el.innerHTML = '<div class="settle-banner empty">精算待ちの立替金はありません</div>';
+      return;
+    }
+    if (status.canSettle){
+      el.innerHTML = `<div class="settle-banner ready">
+        未精算：${status.pendingMonths.length}ヶ月分
+        <b>¥${status.grandTotal.toLocaleString()}</b>
+        <button class="btn btn-primary" onclick="doSettle()">個人立替金を金庫へ計上する</button>
+      </div>`;
+    } else {
+      el.innerHTML = `<div class="settle-banner waiting">
+        未精算：${status.pendingMonths.length}ヶ月分（¥${status.grandTotal.toLocaleString()}）<br>
+        毎月${status.settlementDay}日以降に計上できます
+      </div>`;
+    }
+  }catch(e){
+    el.innerHTML = '<div class="settle-banner empty">読み込みエラー：' + escapeHtmlP(e.message) + '</div>';
+  }
+}
+
+async function doSettle(){
+  if (!confirm('未精算分をまとめて金庫へ計上します。よろしいですか？')) return;
+  try{
+    const result = await callGAS('settlePendingMonths', OPERATOR_NAME);
+    if (result.settled){
+      alert(result.months.length + 'ヶ月分（合計¥' + result.grandTotal.toLocaleString() + '）を金庫に計上しました');
+      loadSettleBanner();
+      loadMonthList();
+    } else {
+      alert('計上できませんでした（' + result.reason + '）');
+    }
+  }catch(e){
+    alert('計上に失敗しました：' + e.message);
+  }
+}
+
+async function loadMonthList(){
+  const wrap = document.getElementById('monthList');
+  try{
+    const months = await callGAS('getExpenseSchedule', _monthsBack, MONTHS_FORWARD);
+    const nowYm = _clientNowYm();
+    wrap.innerHTML = months.map(m => {
+      const isCurrent = m.ym === nowYm;
+      const itemsHtml = m.items.length
+        ? '<div class="month-items">' + m.items.map(it => `<div class="month-item"><span>${escapeHtmlP(it.name)}<span class="month-item-type">${escapeHtmlP(it.type)}</span></span><span>¥${it.amount.toLocaleString()}</span></div>`).join('') + '</div>'
+        : '';
+      return `<div class="month-card ${isCurrent ? 'is-current' : ''}">
+        <div class="month-card-header">
+          <div class="month-name">${_ymLabel(m.ym)}${isCurrent ? '<span class="month-badge">今月</span>' : ''}</div>
+          <div class="month-total ${m.total === 0 ? 'zero' : ''}">¥${m.total.toLocaleString()}</div>
+        </div>
+        ${itemsHtml}
+      </div>`;
+    }).join('');
+    document.getElementById('expandBtn').style.display = _monthsBack >= 11 ? 'none' : 'block';
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-text">読み込みエラー：' + escapeHtmlP(e.message) + '</div>';
+  }
+}
+
+function expandMonths(){
+  _monthsBack = 11; // 現在月を含めて直近12ヶ月分まで遡る
+  loadMonthList();
+}
+
+function selectPlanType(type){
+  _currentPlanType = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+
+  const totalRow = document.getElementById('totalAmountRow');
+  const installmentsRow = document.getElementById('installmentsRow');
+  const monthlyRow = document.getElementById('monthlyRow');
+  const monthlyLabel = document.getElementById('monthlyLabel');
+
+  if (type === '一括'){
+    totalRow.style.display = 'block';
+    installmentsRow.style.display = 'none';
+    monthlyRow.style.display = 'none';
+  } else if (type === '分割'){
+    totalRow.style.display = 'block';
+    installmentsRow.style.display = 'block';
+    monthlyRow.style.display = 'block';
+    monthlyLabel.textContent = '月額（自動計算・修正可）';
+  } else if (type === 'ランニング'){
+    totalRow.style.display = 'none';
+    installmentsRow.style.display = 'none';
+    monthlyRow.style.display = 'block';
+    monthlyLabel.textContent = '月額';
+  }
+  recalcMonthly();
+}
+
+function recalcMonthly(){
+  if (_currentPlanType !== '分割') return;
+  const total = parseInt(document.getElementById('planTotal').value) || 0;
+  const count = parseInt(document.getElementById('planInstallments').value) || 0;
+  if (total > 0 && count > 0){
+    document.getElementById('planMonthly').value = Math.round(total / count);
+  }
+}
+
+async function submitExpensePlan(){
+  const name = document.getElementById('planName').value.trim();
+  const startYmRaw = document.getElementById('planStartYm').value; // "2026-07"
+  if (!name){ alert('項目名を入力してください'); return; }
+  if (!startYmRaw){ alert('開始年月を選択してください'); return; }
+  const startYm = startYmRaw.replace('-', '/');
+
+  const total = parseInt(document.getElementById('planTotal').value) || 0;
+  const installments = parseInt(document.getElementById('planInstallments').value) || 0;
+  const monthly = parseInt(document.getElementById('planMonthly').value) || 0;
+  const memo = document.getElementById('planMemo').value;
+
+  if (_currentPlanType === '一括' && total <= 0){ alert('総額を入力してください'); return; }
+  if (_currentPlanType === '分割' && (total <= 0 || installments <= 0)){ alert('総額と分割回数を入力してください'); return; }
+  if (_currentPlanType === 'ランニング' && monthly <= 0){ alert('月額を入力してください'); return; }
+
+  try{
+    await callGAS('addExpensePlan', name, _currentPlanType, total, installments, monthly, startYm, memo);
+    document.getElementById('planName').value = '';
+    document.getElementById('planTotal').value = '';
+    document.getElementById('planInstallments').value = '';
+    document.getElementById('planMonthly').value = '';
+    document.getElementById('planStartYm').value = '';
+    document.getElementById('planMemo').value = '';
+    loadMonthList();
+    loadPlanList();
+    loadSettleBanner();
+  }catch(e){
+    alert('登録に失敗しました：' + e.message);
+  }
+}
+
+async function loadPlanList(){
+  const wrap = document.getElementById('planListWrap');
+  try{
+    const plans = await callGAS('getExpensePlans');
+    if (!plans || !plans.length){
+      wrap.innerHTML = '<div class="empty-text">まだ登録がありません</div>';
+      return;
+    }
+    wrap.innerHTML = plans.map((p, i) => {
+      const [ , name, type, total, installments, monthly, startYm, endYm, status ] = p;
+      const isEnded = status === '終了';
+      let detail = '';
+      if (type === '一括'){
+        detail = `¥${Number(total).toLocaleString()}（${_ymLabel(startYm)}のみ）`;
+      } else if (type === '分割'){
+        detail = `月額¥${Number(monthly).toLocaleString()} ×${installments}回（${_ymLabel(startYm)}〜${_ymLabel(endYm)}）`;
+      } else {
+        detail = `月額¥${Number(monthly).toLocaleString()}（${_ymLabel(startYm)}〜${endYm ? _ymLabel(endYm) + 'で終了' : '継続中'}）`;
+      }
+      const canEnd = type === 'ランニング' && !isEnded;
+      return `<div class="plan-list-item">
+        <div class="plan-list-top">
+          <div class="plan-list-name">${escapeHtmlP(name)}</div>
+          <div class="plan-list-badge ${isEnded ? 'ended' : ''}">${escapeHtmlP(type)}${isEnded ? '・終了' : ''}</div>
+        </div>
+        <div class="plan-list-detail">${detail}</div>
+        ${canEnd ? `<button class="plan-list-end-btn" onclick="endPlan(${i})">このランニングコストを終了する</button>` : ''}
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-text">読み込みエラー：' + escapeHtmlP(e.message) + '</div>';
+  }
+}
+
+async function endPlan(rowIndex){
+  if (!confirm('このランニングコストを終了しますか？（今月分までは支払い予定に残ります）')) return;
+  try{
+    await callGAS('endExpensePlan', rowIndex);
+    loadPlanList();
+    loadMonthList();
+  }catch(e){
+    alert('終了処理に失敗しました：' + e.message);
+  }
+}
+
+function escapeHtmlP(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================================================
+   初期化
+   ============================================================ */
 renderDenomList();
 updateTotal();
 loadPrevCheck();
