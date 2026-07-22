@@ -146,6 +146,8 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 .next-event-row:last-child{border-bottom:none}
 .schedule-item{background:#f8fafc;border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;border-left:4px solid #1a3a5c}
 .member-chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #e0e8f0;border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600;margin:3px}
+@keyframes hatsuBlink{0%,100%{opacity:1}50%{opacity:0.25}}
+.hatsu-badge{color:#e53935;font-weight:800;font-size:12px;margin-left:4px;animation:hatsuBlink 2.4s ease-in-out infinite}
 .new-badge{background:#e53935;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:4px}
 .next-member-card{background:linear-gradient(135deg,#f8fffe,#f0f9ff);border:1px solid rgba(74,197,80,0.2);border-radius:20px;padding:18px;margin-bottom:12px}
 .minor-consent{display:none;background:#fff3e0;border:1.5px solid #f57c00;border-radius:12px;padding:16px;margin-top:12px}
@@ -351,6 +353,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div id="next-member-sport-tabs" style="display:flex;gap:6px;margin-bottom:10px"></div>
       <div id="next-member-info" style="font-size:12px;color:#888;margin-bottom:10px"></div>
       <div id="next-member-list"></div>
+      <div style="text-align:right;margin-top:6px"><span onclick="showChipColorLegend()" style="font-size:11px;color:#4a90d9;cursor:pointer;text-decoration:underline">各カラーについてはこちら</span></div>
       <div id="next-member-count" style="font-size:11px;color:#aaa;margin-top:8px;text-align:right"></div>
     </div>
     <div id="next-member-loading" class="next-member-card" style="display:none">
@@ -1409,6 +1412,23 @@ function selectNextMemberSport(sport){
   renderNextMemberCard(entry.members||[],entry.schedule,entry.capacityInfo);
 }
 
+// ★追加：「各カラーについてはこちら」タップで開く、チップ色の意味説明ポップ
+function showChipColorLegend(){
+  const items=[
+    {label:'体験参加',style:'background:#fff;border-color:#e0e8f0;color:#555;',note:'初めて参加する方（初バッジ付き）'},
+    {label:'運営',style:'background:#fdeaea;border-color:#e39b9b;color:#a83232;',note:'代表・部長・本部も同じ色'},
+    {label:'カシワ・ファミリー会員',style:'background:#e8f1fc;border-color:#9cc0ea;color:#2c5f9e;',note:''},
+    {label:'みんB会員',style:'background:#f4f9f1;border-color:#c3dcb5;color:#4d7a33;',note:''},
+    {label:'ビジター会員',style:'background:#eef1f5;border-color:#b7c2cf;color:#5c6b7a;',note:''},
+  ];
+  const rows=items.map(it=>'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="member-chip" style="'+it.style+'margin:0;flex-shrink:0;border-width:1.5px;border-style:solid">'+it.label+'</span>'+(it.note?'<span style="font-size:12px;color:#888">'+it.note+'</span>':'')+'</div>').join('');
+  const borderRows='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="member-chip" style="background:#fff;border:2px solid #4a90d9;margin:0;flex-shrink:0">⭕ 山田</span><span style="font-size:12px;color:#888">＝参加OK！の状態</span></div>'
+    +'<div style="display:flex;align-items:center;gap:10px"><span class="member-chip" style="background:#f7f7f7;border:1.5px solid #bbb;color:#888;margin:0;flex-shrink:0">①⏳ 山田</span><span style="font-size:12px;color:#888">＝キャンセル待ち（数字は順番）</span></div>';
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:14px;text-align:center">チップの色について</div><div style="margin-bottom:18px">'+rows+'</div><div style="border-top:1px solid #eee;padding-top:16px;margin-bottom:20px">'+borderRows+'</div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
+  document.body.appendChild(ov);
+}
+
 const TYPE_CHIP_COLOR={
   'カシワのBUKATSU会員':{bg:'#e8f1fc',border:'#9cc0ea',text:'#2c5f9e'},
   'ファミリー会員':{bg:'#e8f1fc',border:'#9cc0ea',text:'#2c5f9e'},
@@ -1462,6 +1482,10 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     if(tierDiff!==0)return tierDiff;
     return _nextMemberDtKey(a[0])-_nextMemberDtKey(b[0]);
   });
+  // ★追加：キャンセル待ちの順番は、表示用に種別で並べ替える前の「members」本来の順（＝優先度＋申込が早い順）で採番する。
+  //         表示は種別ごとにグループ化されるため、表示順のまま採番すると早い者順にならないための対策。
+  const waitRankMap=new Map();
+  { let idx=0; members.forEach(r=>{ if(r[11]===true){ idx++; waitRankMap.set(r, idx); } }); }
   document.getElementById('next-member-list').innerHTML=sortedMembers.map(r=>{
     const isMe=r[4]===mypageCurrentUser.fullname;
     const isNew=r[9]==='NEW'||r[9]==='初参加';
@@ -1469,13 +1493,17 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     const type=r[10]||'';
     const tc=TYPE_CHIP_COLOR[type];
     let colorStyle=tc?('background:'+tc.bg+';border-color:'+tc.border+';color:'+tc.text+';'):'';
-    if(isWaitlisted)colorStyle='background:#f5f5f5;border-color:#ddd;color:#999;opacity:0.7;';
-    // ★追加：ビジター会員・体験参加以外は青枠で囲って、ビジター会員との見分けをつきやすくする
+    // ★変更：キャンセル待ちは「グレー枠」で統一表示
+    if(isWaitlisted)colorStyle='background:#f7f7f7;border-color:#bbb;color:#888;';
+    // ★変更：ビジター会員・体験参加以外は青枠＝「参加OK！」の状態として囲む
     const isVisitorOrTrial=type==='ビジター会員'||isNew;
     if(!isVisitorOrTrial&&!isWaitlisted)colorStyle+='border:2px solid #4a90d9;';
     // 苗字だけ表示（スペースや区切りで分割、なければそのまま）
     const displayName=r[5]?r[5].split(/[\s　]/)[0]:r[5];
-    return'<span class="member-chip" style="'+colorStyle+(isMe&&!isWaitlisted?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(isWaitlisted?'⏳':(r[7]||'⭕'))+' '+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+(isWaitlisted?'<span class="new-badge" style="background:#999">待機</span>':'')+(isMe?' 👈':'')+'</span>';
+    // ★追加：キャンセル待ちは早い順に①②③…を名前の前に付与（会員の増減で順位も自動で変わる）
+    let waitRank='';
+    if(isWaitlisted){const n=waitRankMap.get(r)||0;const circled=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];waitRank=(circled[n-1]||('('+n+')'))+' ';}
+    return'<span class="member-chip" style="'+colorStyle+(isMe&&!isWaitlisted?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(isWaitlisted?'⏳':(r[7]||'⭕'))+' '+waitRank+displayName+(isNew?'<span class="hatsu-badge">初</span>':'')+(isWaitlisted?'<span class="new-badge" style="background:#999">待機</span>':'')+(isMe?' 👈':'')+'</span>';
   }).join('');
   const confirmedCount=members.filter(r=>(r[7]||'⭕')!=='❌'&&r[11]!==true).length;
   const waitCount=members.filter(r=>r[11]===true).length;
