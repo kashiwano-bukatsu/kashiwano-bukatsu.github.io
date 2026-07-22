@@ -348,6 +348,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
   <div id="reserve-main" style="display:none">
     <div id="next-member-card" class="next-member-card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>次回の参加予定メンバー</div>
+      <div id="next-member-sport-tabs" style="display:flex;gap:6px;margin-bottom:10px"></div>
       <div id="next-member-info" style="font-size:12px;color:#888;margin-bottom:10px"></div>
       <div id="next-member-list"></div>
       <div id="next-member-count" style="font-size:11px;color:#aaa;margin-top:8px;text-align:right"></div>
@@ -366,6 +367,10 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
         <div id="mypage-schedule-list"><div class="empty">読み込み中...</div></div>
         <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
       </div>
+    </div>
+    <div class="card" id="invited-trials-card" style="display:none">
+      <div class="card-title"><div class="card-title-dot"></div>あなたが招待した体験予定者</div>
+      <div id="invited-trials-list" style="margin-top:8px"></div>
     </div>
     <div class="card" id="trial-card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="onTrialAccordionClick()">
@@ -882,7 +887,7 @@ async function callGAS(func,...args){
 function formatDate(d){return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
 function getDow(s){return['日','月','火','水','木','金','土'][new Date(s.replace(/\//g,'-')).getDay()];}
 function getTypeClass(type){
-  if(['ビジター会員','カシワビジター','ビジター','一般'].includes(type))return'type-visitor';
+  if(['ビジター会員','カシワビジター','ビジター'].includes(type))return'type-visitor';
   if(['カシワ会員','カシワのBUKATSU会員'].includes(type))return'type-kashiwa';
   if(['みんB会員','みんなのBUKATSU会員'].includes(type))return'type-minnb';
   if(type==='応援団')return'type-ouendan';
@@ -891,10 +896,10 @@ function getTypeClass(type){
 }
 function getTypeLabel(type){
   const m={'ビジター会員':'ビジター会員','カシワビジター':'ビジター会員','カシワ会員':'カシワのBUKATSU会員','みんB会員':'みんなのBUKATSU会員','応援団':'応援団会員'};
-  return m[type]||type||'一般';
+  return m[type]||type||'ビジター会員';
 }
 function getMemberRank(n){return n>=50?'プラチナ':n>=30?'ゴールド':n>=10?'シルバー':'ブロンズ';}
-function isVisitor(type){return['ビジター会員','カシワビジター','ビジター','一般'].includes(type);}
+function isVisitor(type){return['ビジター会員','カシワビジター','ビジター'].includes(type);}
 
 function isVideoNew(dateStr){
   if(!dateStr)return false;
@@ -1054,7 +1059,7 @@ async function mypageLogin(){
   try{
     const data=await callGAS('loginAttendee',fullname,dob);
     if(!data){document.getElementById('mypage-login-error').style.display='block';return;}
-    mypageCurrentUser={internalId:data.internalId,fullname:data.fullname,nickname:data.nickname,memberSport:data.sport||'全て',memberNumber:data.memberNumber||'',type:data.type||'一般',gender:data.gender||'',area:data.area||'',status:data.status||'',isApplying:data.status==='会員(申請中)',isPendingPayment:data.status==='会員(支払い確認中)'};
+    mypageCurrentUser={internalId:data.internalId,fullname:data.fullname,nickname:data.nickname,memberSport:data.sport||'全て',memberNumber:data.memberNumber||'',type:data.type||'ビジター会員',gender:data.gender||'',area:data.area||'',status:data.status||'',isApplying:data.status==='会員(申請中)',isPendingPayment:data.status==='会員(支払い確認中)'};
     saveCurrentUser();
     localStorage.setItem('bukatsu_auto_login',remember?'true':'false');
     closeLoginModal();
@@ -1346,6 +1351,11 @@ async function initReserveTab(){
   loadReserveData();
 }
 
+// ★追加：予約タブでワンタップ切替できる種目一覧（表示順：バスケ・バレー・バド）
+const NEXT_MEMBER_SPORTS=['バスケットボール','バレーボール','バドミントン'];
+let _nextBySportData={};
+let _currentNextSport=null;
+
 async function loadReserveData(){
   document.getElementById('mypage-schedule-list').innerHTML='<div class="empty">読み込み中...</div>';
   document.getElementById('next-member-card').style.display='none';
@@ -1356,17 +1366,52 @@ async function loadReserveData(){
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
     renderScheduleList(data.schedules, data.reservations);
     loadTrialData();
-    if(data.nextSchedule){
-      renderNextMemberCard(data.nextMembers||[], data.nextSchedule);
+    loadInvitedTrials();
+    // ★追加：種目ごとの直近予定＋参加予定メンバーをまとめて保持し、ワンタップ切替できるようにする
+    _nextBySportData=data.nextBySport||{};
+    const hasAnySchedule=NEXT_MEMBER_SPORTS.some(sp=>_nextBySportData[sp]&&_nextBySportData[sp].schedule);
+    if(hasAnySchedule){
+      selectNextMemberSport(_pickInitialNextSport());
     }else{
       document.getElementById('next-member-loading').style.display='none';
     }
   }catch(e){document.getElementById('next-member-loading').style.display='none';}
 }
 
+// ★追加：最初に開くタブを決める（自分の登録種目を優先→無ければ開催予定がある種目→それも無ければ先頭）
+function _pickInitialNextSport(){
+  const mySport=(mypageCurrentUser&&mypageCurrentUser.memberSport)||'';
+  const tokens=mySport.split('＋').filter(Boolean);
+  const mine=NEXT_MEMBER_SPORTS.find(sp=>tokens.some(t=>sp.includes(t))&&_nextBySportData[sp]&&_nextBySportData[sp].schedule);
+  if(mine)return mine;
+  const anyScheduled=NEXT_MEMBER_SPORTS.find(sp=>_nextBySportData[sp]&&_nextBySportData[sp].schedule);
+  if(anyScheduled)return anyScheduled;
+  return NEXT_MEMBER_SPORTS[0];
+}
+
+// ★追加：種目タブのボタン列を描画（アクティブなタブをハイライト）
+function renderNextMemberSportTabs(){
+  const wrap=document.getElementById('next-member-sport-tabs');
+  if(!wrap)return;
+  wrap.innerHTML=NEXT_MEMBER_SPORTS.map(sport=>{
+    const active=sport===_currentNextSport;
+    const icon=SPORT_ICON[sport]||'';
+    const label=sport.replace('ボール','').replace('ミントン','');
+    return '<button type="button" onclick="selectNextMemberSport(\''+sport+'\')" style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid '+(active?'#1a3a5c':'#e0e8f0')+';background:'+(active?'#1a3a5c':'#f8fafc')+';color:'+(active?'#fff':'#555')+';font-size:12px;font-weight:700;cursor:pointer">'+icon+' '+label+'</button>';
+  }).join('');
+}
+
+// ★追加：タップされた種目に切り替えて次回メンバーカードを再描画
+function selectNextMemberSport(sport){
+  _currentNextSport=sport;
+  renderNextMemberSportTabs();
+  const entry=_nextBySportData[sport]||{schedule:null,members:[],capacityInfo:null};
+  renderNextMemberCard(entry.members||[],entry.schedule,entry.capacityInfo);
+}
+
 const TYPE_CHIP_COLOR={
-  'カシワのBUKATSU会員':{bg:'#f4f7fb',border:'#c3cfdd',text:'#3a5578'},
-  'ファミリー会員':{bg:'#f4f7fb',border:'#c3cfdd',text:'#3a5578'},
+  'カシワのBUKATSU会員':{bg:'#e8f1fc',border:'#9cc0ea',text:'#2c5f9e'},
+  'ファミリー会員':{bg:'#e8f1fc',border:'#9cc0ea',text:'#2c5f9e'},
   'みんなのBUKATSU会員':{bg:'#f4f9f1',border:'#c3dcb5',text:'#4d7a33'},
   '応援団':{bg:'#fdf9ee',border:'#e6d4a0',text:'#a3821f'},
   '運営':{bg:'#fdeaea',border:'#e39b9b',text:'#a83232'},
@@ -1375,29 +1420,102 @@ const TYPE_CHIP_COLOR={
   '本部':{bg:'#fdeaea',border:'#e39b9b',text:'#a83232'},
   'ビジター会員':{bg:'#eef1f5',border:'#b7c2cf',text:'#5c6b7a'},
 };
-function renderNextMemberCard(members,schedule){
+// ★追加：次回開催予定メンバーの表示順（体験参加→運営→応援団→カシワ/ファミリー→みんB→ビジター→その他）
+function _nextMemberSortTier(r){
+  const isNew=r[9]==='NEW'||r[9]==='初参加';
+  if(isNew)return 0;
+  const type=r[10]||'';
+  if(['運営','代表','部長','本部'].includes(type))return 1;
+  if(type==='応援団')return 2;
+  if(type==='カシワのBUKATSU会員'||type==='ファミリー会員')return 3;
+  if(type==='みんなのBUKATSU会員')return 4;
+  if(type==='ビジター会員')return 5;
+  return 6;
+}
+// ★追加：同じtier内では申込が早い順に並べる（申込日時=r[0]）
+function _nextMemberDtKey(s){
+  const t=new Date(String(s||''));
+  return isNaN(t.getTime())?0:t.getTime();
+}
+function renderNextMemberCard(members,schedule,capacityInfo){
   document.getElementById('next-member-loading').style.display='none';
   const card=document.getElementById('next-member-card');
-  if(!schedule){card.style.display='none';return;}
+  card.style.display='block';
+  renderNextMemberSportTabs();
+  if(!schedule){
+    document.getElementById('next-member-info').textContent='';
+    document.getElementById('next-member-list').innerHTML='<div style="color:#bbb;font-size:13px;padding:4px 0">この種目の開催予定はまだありません</div>';
+    document.getElementById('next-member-count').textContent='';
+    renderCapacityBanner(null);
+    return;
+  }
   document.getElementById('next-member-info').textContent=(SPORT_ICON[schedule[4]]||'')+' '+schedule[4]+' ／ '+schedule[0]+'（'+getDow(schedule[0])+'）';
   if(!members||!members.length){
     document.getElementById('next-member-list').innerHTML='<div style="color:#bbb;font-size:13px;padding:4px 0">まだ予約者がいません</div>';
     document.getElementById('next-member-count').textContent='';
+    renderCapacityBanner(null);
     card.style.display='block';
     return;
   }
-  document.getElementById('next-member-list').innerHTML=members.map(r=>{
+  const sortedMembers=[...members].sort((a,b)=>{
+    const tierDiff=_nextMemberSortTier(a)-_nextMemberSortTier(b);
+    if(tierDiff!==0)return tierDiff;
+    return _nextMemberDtKey(a[0])-_nextMemberDtKey(b[0]);
+  });
+  document.getElementById('next-member-list').innerHTML=sortedMembers.map(r=>{
     const isMe=r[4]===mypageCurrentUser.fullname;
     const isNew=r[9]==='NEW'||r[9]==='初参加';
+    const isWaitlisted=r[11]===true;
     const type=r[10]||'';
     const tc=TYPE_CHIP_COLOR[type];
-    const colorStyle=tc?('background:'+tc.bg+';border-color:'+tc.border+';color:'+tc.text+';'):'';
+    let colorStyle=tc?('background:'+tc.bg+';border-color:'+tc.border+';color:'+tc.text+';'):'';
+    if(isWaitlisted)colorStyle='background:#f5f5f5;border-color:#ddd;color:#999;opacity:0.7;';
+    // ★追加：ビジター会員・体験参加以外は青枠で囲って、ビジター会員との見分けをつきやすくする
+    const isVisitorOrTrial=type==='ビジター会員'||isNew;
+    if(!isVisitorOrTrial&&!isWaitlisted)colorStyle+='border:2px solid #4a90d9;';
     // 苗字だけ表示（スペースや区切りで分割、なければそのまま）
     const displayName=r[5]?r[5].split(/[\s　]/)[0]:r[5];
-    return'<span class="member-chip" style="'+colorStyle+(isMe?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(r[7]||'⭕')+' '+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+(isMe?' 👈':'')+'</span>';
+    return'<span class="member-chip" style="'+colorStyle+(isMe&&!isWaitlisted?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(isWaitlisted?'⏳':(r[7]||'⭕'))+' '+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+(isWaitlisted?'<span class="new-badge" style="background:#999">待機</span>':'')+(isMe?' 👈':'')+'</span>';
   }).join('');
-  document.getElementById('next-member-count').textContent=members.filter(r=>(r[7]||'⭕')!=='❌').length+'人参加予定';
+  const confirmedCount=members.filter(r=>(r[7]||'⭕')!=='❌'&&r[11]!==true).length;
+  const waitCount=members.filter(r=>r[11]===true).length;
+  document.getElementById('next-member-count').textContent=confirmedCount+'人参加予定'+(waitCount?'（キャンセル待ち'+waitCount+'人）':'');
+  renderCapacityBanner(capacityInfo);
   card.style.display='block';
+}
+
+// ===== 定員オーバー時：バナー表示＋「参加予約者について」タップで優先順位の説明を開閉 =====
+function renderCapacityBanner(capacityInfo){
+  let banner=document.getElementById('capacity-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='capacity-banner';
+    const countEl=document.getElementById('next-member-count');
+    countEl.parentNode.insertBefore(banner,countEl.nextSibling);
+  }
+  if(!capacityInfo||!capacityInfo.isOverCapacity){banner.innerHTML='';banner.style.display='none';return;}
+  banner.style.display='block';
+  banner.innerHTML='<div style="margin-top:8px;background:#fff8e6;border:1px solid #f0d78c;border-radius:10px;padding:10px 12px">'+
+    '<div style="font-size:12px;color:#a3821f;font-weight:700">定員（'+capacityInfo.limit+'人）に達しています。会員優先で参加権が決まります。</div>'+
+    '<div style="font-size:12px;color:#1a3a5c;font-weight:700;margin-top:6px;cursor:pointer;text-decoration:underline" onclick="toggleCapacityExplain()">参加予約者について ›</div>'+
+    '<div id="capacity-explain" style="display:none;margin-top:10px">'+
+      capacityExplainRow('#f4f7fb','#c3cfdd','①カシワのBUKATSU会員・ファミリー会員・応援団')+
+      capacityExplainRow('#f5f5f5','#ddd','②新規体験参加')+
+      capacityExplainRow('#f4f9f1','#c3dcb5','③みんなのBUKATSU会員')+
+      capacityExplainRow('#eef1f5','#b7c2cf','④ビジター会員')+
+      '<div style="font-size:11px;color:#999;margin-top:6px">※代表・運営・部長・本部は常に最優先です。同じ枠内では予約が早い順に確定します。</div>'+
+    '</div>'+
+  '</div>';
+}
+function capacityExplainRow(bg,border,label){
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+    '<span style="width:14px;height:14px;border-radius:50%;background:'+bg+';border:2px solid '+border+';flex-shrink:0"></span>'+
+    '<span style="font-size:12px;color:#555">'+label+'</span>'+
+  '</div>';
+}
+function toggleCapacityExplain(){
+  const el=document.getElementById('capacity-explain');
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
 }
 
 // ===== 参加予約：統合リスト（予約済み＋未予約を1つのリストで日付順に表示） =====
@@ -2495,7 +2613,7 @@ async function doTicketRequest(sets,price,overlay){
 function calcTicketPrice(sets,type){
   const isFamily=type==='ファミリー会員';
   const isMinnb=['みんなのBUKATSU会員','みんB会員'].includes(type);
-  const isVisitorType=['ビジター会員','カシワビジター','ビジター','一般'].includes(type);
+  const isVisitorType=['ビジター会員','カシワビジター','ビジター'].includes(type);
   if(isMinnb) return sets*2000;
   if(isFamily){
     if(sets===1)return 4000;
@@ -2956,6 +3074,36 @@ async function cancelSingleReserve(date,sport){
   }catch(e){alert('エラー：'+e.message);}
 }
 
+// ===== 招待した体験予定者一覧（招待者本人がキャンセル操作できる） =====
+async function loadInvitedTrials(){
+  if(!mypageCurrentUser)return;
+  const card=document.getElementById('invited-trials-card');
+  try{
+    const list=await callGAS('getMyInvitedTrials',mypageCurrentUser.fullname);
+    if(!list||!list.length){card.style.display='none';return;}
+    card.style.display='block';
+    document.getElementById('invited-trials-list').innerHTML=list.map(t=>
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0">'
+      +'<div><div style="font-size:14px;font-weight:700">'+t.fullname+'</div>'
+      +'<div style="font-size:12px;color:#888">'+(SPORT_ICON[t.sport]||'')+' '+t.sport+' ／ '+t.scheduleDate+'</div></div>'
+      +'<button onclick="cancelInvitedTrial(\''+t.internalId+'\',\''+t.fullname+'\')" style="background:#fdeaea;color:#a83232;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">キャンセル</button>'
+      +'</div>'
+    ).join('');
+  }catch(e){card.style.display='none';}
+}
+
+async function cancelInvitedTrial(internalId,fullname){
+  if(!mypageCurrentUser)return;
+  if(!confirm(fullname+'さんの体験参加をキャンセルしますか？'))return;
+  try{
+    const result=await callGAS('cancelMyInvitedTrial',mypageCurrentUser.fullname,internalId);
+    if(result==='forbidden'){alert('この方はあなたが招待した体験予定者ではありません');return;}
+    if(result==='not_trial'){alert('すでに体験予定の状態ではないようです');loadInvitedTrials();return;}
+    alert(fullname+'さんの体験参加をキャンセルしました');
+    loadInvitedTrials();
+  }catch(e){alert('エラー：'+e.message);}
+}
+
 // ===== オンラインヨガ部（カミングスーン）=====
 // HOMEに追加
 window.addEventListener('load', function(){
@@ -3028,7 +3176,7 @@ openSettings = function(){
     const t=mypageCurrentUser.type;
     if(['みんなのBUKATSU会員','みんB会員'].includes(t)) pi.innerHTML='2,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
     else if(t==='ファミリー会員') pi.innerHTML='1セット 4,000円・2セット 6,000円・3セット 8,000円（各11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
-    else if(['ビジター会員','カシワビジター','ビジター','一般'].includes(t)) pi.innerHTML='5,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
+    else if(['ビジター会員','カシワビジター','ビジター'].includes(t)) pi.innerHTML='5,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
     else pi.innerHTML='4,000円（11枚）<br><span style="font-size:12px;color:#aaa">当日現金にてお支払いください</span>';
   }
   setTicketCount(1);
