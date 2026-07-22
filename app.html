@@ -1415,15 +1415,15 @@ function selectNextMemberSport(sport){
 // ★追加：「各カラーについてはこちら」タップで開く、チップ色の意味説明ポップ
 function showChipColorLegend(){
   const items=[
-    {label:'体験参加',style:'background:#fff;border-color:#e0e8f0;color:#555;',note:'初めて参加する方（初バッジ付き）'},
-    {label:'運営',style:'background:#fdeaea;border-color:#e39b9b;color:#a83232;',note:'代表・部長・本部も同じ色'},
+    {label:'体験参加',style:'background:#fff;border-color:#e0e8f0;color:#555;',note:''},
+    {label:'運営',style:'background:#fdeaea;border-color:#e39b9b;color:#a83232;',note:''},
     {label:'カシワ・ファミリー会員',style:'background:#e8f1fc;border-color:#9cc0ea;color:#2c5f9e;',note:''},
     {label:'みんB会員',style:'background:#f4f9f1;border-color:#c3dcb5;color:#4d7a33;',note:''},
     {label:'ビジター会員',style:'background:#eef1f5;border-color:#b7c2cf;color:#5c6b7a;',note:''},
   ];
   const rows=items.map(it=>'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="member-chip" style="'+it.style+'margin:0;flex-shrink:0;border-width:1.5px;border-style:solid">'+it.label+'</span>'+(it.note?'<span style="font-size:12px;color:#888">'+it.note+'</span>':'')+'</div>').join('');
-  const borderRows='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="member-chip" style="background:#fff;border:2px solid #4a90d9;margin:0;flex-shrink:0">⭕ 山田</span><span style="font-size:12px;color:#888">＝参加OK！の状態</span></div>'
-    +'<div style="display:flex;align-items:center;gap:10px"><span class="member-chip" style="background:#f7f7f7;border:1.5px solid #bbb;color:#888;margin:0;flex-shrink:0">①⏳ 山田</span><span style="font-size:12px;color:#888">＝キャンセル待ち（数字は順番）</span></div>';
+  const borderRows='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="member-chip" style="background:#fff;border:2px solid #4a90d9;margin:0;flex-shrink:0">⭕ コンペイ</span><span style="font-size:12px;color:#888">＝参加OK！の状態</span></div>'
+    +'<div style="display:flex;align-items:center;gap:10px"><span class="member-chip" style="background:#f7f7f7;border:1.5px solid #bbb;color:#888;margin:0;flex-shrink:0">①⏳ コンペイ</span><span style="font-size:12px;color:#888">＝キャンセル待ち（数字は順番）</span></div>';
   const ov=document.createElement('div');ov.className='ticket-overlay';
   ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:14px;text-align:center">チップの色について</div><div style="margin-bottom:18px">'+rows+'</div><div style="border-top:1px solid #eee;padding-top:16px;margin-bottom:20px">'+borderRows+'</div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
   document.body.appendChild(ov);
@@ -1495,9 +1495,8 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     let colorStyle=tc?('background:'+tc.bg+';border-color:'+tc.border+';color:'+tc.text+';'):'';
     // ★変更：キャンセル待ちは「グレー枠」で統一表示
     if(isWaitlisted)colorStyle='background:#f7f7f7;border-color:#bbb;color:#888;';
-    // ★変更：ビジター会員・体験参加以外は青枠＝「参加OK！」の状態として囲む
-    const isVisitorOrTrial=type==='ビジター会員'||isNew;
-    if(!isVisitorOrTrial&&!isWaitlisted)colorStyle+='border:2px solid #4a90d9;';
+    // ★変更：会員種別を問わず「参加OK！」の状態（＝キャンセル待ちでない）なら青枠で囲む
+    if(!isWaitlisted)colorStyle+='border:2px solid #4a90d9;';
     // 苗字だけ表示（スペースや区切りで分割、なければそのまま）
     const displayName=r[5]?r[5].split(/[\s　]/)[0]:r[5];
     // ★追加：キャンセル待ちは早い順に①②③…を名前の前に付与（会員の増減で順位も自動で変わる）
