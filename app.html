@@ -1465,14 +1465,16 @@ function renderNextMemberCard(members,schedule,capacityInfo){
   if(!schedule){
     document.getElementById('next-member-info').textContent='';
     document.getElementById('next-member-list').innerHTML='<div style="color:#bbb;font-size:13px;padding:4px 0">この種目の開催予定はまだありません</div>';
-    document.getElementById('next-member-count').textContent='';
+    const ce1=document.getElementById('next-member-count');
+    ce1.textContent='';ce1.onclick=null;ce1.style.cursor='';ce1.style.textDecoration='';
     renderCapacityBanner(null);
     return;
   }
   document.getElementById('next-member-info').textContent=(SPORT_ICON[schedule[4]]||'')+' '+schedule[4]+' ／ '+schedule[0]+'（'+getDow(schedule[0])+'）';
   if(!members||!members.length){
     document.getElementById('next-member-list').innerHTML='<div style="color:#bbb;font-size:13px;padding:4px 0">まだ予約者がいません</div>';
-    document.getElementById('next-member-count').textContent='';
+    const ce2=document.getElementById('next-member-count');
+    ce2.textContent='';ce2.onclick=null;ce2.style.cursor='';ce2.style.textDecoration='';
     renderCapacityBanner(null);
     card.style.display='block';
     return;
@@ -1506,9 +1508,39 @@ function renderNextMemberCard(members,schedule,capacityInfo){
   }).join('');
   const confirmedCount=members.filter(r=>(r[7]||'⭕')!=='❌'&&r[11]!==true).length;
   const waitCount=members.filter(r=>r[11]===true).length;
-  document.getElementById('next-member-count').textContent=confirmedCount+'人参加予定'+(waitCount?'（キャンセル待ち'+waitCount+'人）':'');
+  const countEl=document.getElementById('next-member-count');
+  if(capacityInfo&&capacityInfo.limit){
+    countEl.innerHTML=confirmedCount+' / '+capacityInfo.limit+'人'+(waitCount?'（キャンセル待ち'+waitCount+'人）':'')+' <span style="text-decoration:underline;color:#4a90d9">›</span>';
+    countEl.style.cursor='pointer';
+    countEl.style.textDecoration='underline';
+    countEl.onclick=function(){showCapacityExplainPopup(capacityInfo,waitCount);};
+  }else{
+    countEl.textContent=confirmedCount+'人参加予定';
+    countEl.style.cursor='';
+    countEl.style.textDecoration='';
+    countEl.onclick=null;
+  }
   renderCapacityBanner(capacityInfo);
   card.style.display='block';
+}
+
+// ★追加：「○/定員人数」タップで開く、定員オーバー時の優先順位の説明ポップ
+function showCapacityExplainPopup(capacityInfo,waitCount){
+  const rows=capacityExplainRow('#fdeaea','#e39b9b','①代表・運営・部長・本部')
+    +capacityExplainRow('#e8f1fc','#9cc0ea','②カシワのBUKATSU会員・ファミリー会員・応援団')
+    +capacityExplainRow('#f5f5f5','#ddd','③新規体験参加')
+    +capacityExplainRow('#f4f9f1','#c3dcb5','④みんなのBUKATSU会員')
+    +capacityExplainRow('#eef1f5','#b7c2cf','⑤ビジター会員');
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;">'
+    +'<div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:6px;text-align:center">定員と優先順位について</div>'
+    +'<div style="font-size:13px;color:#666;text-align:center;margin-bottom:16px">この種目の定員は '+capacityInfo.limit+' 人です</div>'
+    +'<div style="font-size:12px;color:#a3821f;font-weight:700;background:#fff8e6;border:1px solid #f0d78c;border-radius:10px;padding:10px 12px;margin-bottom:16px">定員人数を超えた場合は、下記の優先順位に応じて順次キャンセル待ちになります。</div>'
+    +'<div style="margin-bottom:10px">'+rows+'</div>'
+    +'<div style="font-size:11px;color:#999;margin-bottom:20px">※同じ優先グループ内では、予約が早い順に確定します。'+(waitCount?'（現在キャンセル待ち '+waitCount+'人）':'')+'</div>'
+    +'<button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button>'
+    +'</div>';
+  document.body.appendChild(ov);
 }
 
 // ===== 定員オーバー時：バナー表示＋「参加予約者について」タップで優先順位の説明を開閉 =====
