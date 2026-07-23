@@ -1526,11 +1526,10 @@ function renderNextMemberCard(members,schedule,capacityInfo){
 
 // ★追加：「○/定員人数」タップで開く、定員オーバー時の優先順位の説明ポップ
 function showCapacityExplainPopup(capacityInfo,waitCount){
-  const rows=capacityExplainRow('#fdeaea','#e39b9b','①代表・運営・部長・本部')
-    +capacityExplainRow('#e8f1fc','#9cc0ea','②カシワのBUKATSU会員・ファミリー会員・応援団')
-    +capacityExplainRow('#f5f5f5','#ddd','③新規体験参加')
-    +capacityExplainRow('#f4f9f1','#c3dcb5','④みんなのBUKATSU会員')
-    +capacityExplainRow('#eef1f5','#b7c2cf','⑤ビジター会員');
+  const rows=capacityExplainRow('#e8f1fc','#9cc0ea','①カシワのBUKATSU会員・ファミリー会員・応援団会員・運営')
+    +capacityExplainRow('#f5f5f5','#ddd','②新規体験参加')
+    +capacityExplainRow('#f4f9f1','#c3dcb5','③みんなのBUKATSU会員')
+    +capacityExplainRow('#eef1f5','#b7c2cf','④ビジター会員');
   const ov=document.createElement('div');ov.className='ticket-overlay';
   ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;max-height:80vh;overflow-y:auto;">'
     +'<div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:6px;text-align:center">定員と優先順位について</div>'
@@ -1558,11 +1557,11 @@ function renderCapacityBanner(capacityInfo){
     '<div style="font-size:12px;color:#a3821f;font-weight:700">定員（'+capacityInfo.limit+'人）に達しています。会員優先で参加権が決まります。</div>'+
     '<div style="font-size:12px;color:#1a3a5c;font-weight:700;margin-top:6px;cursor:pointer;text-decoration:underline" onclick="toggleCapacityExplain()">参加予約者について ›</div>'+
     '<div id="capacity-explain" style="display:none;margin-top:10px">'+
-      capacityExplainRow('#f4f7fb','#c3cfdd','①カシワのBUKATSU会員・ファミリー会員・応援団')+
+      capacityExplainRow('#e8f1fc','#9cc0ea','①カシワのBUKATSU会員・ファミリー会員・応援団会員・運営')+
       capacityExplainRow('#f5f5f5','#ddd','②新規体験参加')+
       capacityExplainRow('#f4f9f1','#c3dcb5','③みんなのBUKATSU会員')+
       capacityExplainRow('#eef1f5','#b7c2cf','④ビジター会員')+
-      '<div style="font-size:11px;color:#999;margin-top:6px">※代表・運営・部長・本部は常に最優先です。同じ枠内では予約が早い順に確定します。</div>'+
+      '<div style="font-size:11px;color:#999;margin-top:6px">※同じ枠内では予約が早い順に確定します。</div>'+
     '</div>'+
   '</div>';
 }
