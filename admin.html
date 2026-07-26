@@ -623,6 +623,12 @@ tr:hover td{background:var(--card-soft);}
             ⛹️‍♀️練習日にする（¥300）
           </label>
         </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <div style="font-size:12.5px;font-weight:700;color:var(--ink-faint);margin-bottom:8px">予約者を追加（任意・既存会員のみ）</div>
+          <input id="sch-reserver-search" type="text" placeholder="名前で検索（部分一致）" style="width:100%;max-width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box" oninput="renderScheduleReserverSearch()">
+          <div id="sch-reserver-search-wrap"></div>
+          <div id="sch-reserver-selected-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+        </div>
         <button class="btn btn-primary btn-sm" onclick="addScheduleAdmin()" style="margin-top:12px">登録する</button>
       </div>
     </div>
@@ -1881,12 +1887,61 @@ async function addStaffMemberAdmin(){
   }
 }
 
+// ===== 新規開催登録：予約者を直接選んで一緒に登録する =====
+let scheduleReservers = []; // [{internalId, fullname, nickname, sport, type}]
+
+async function renderScheduleReserverSearch(){
+  const wrap = document.getElementById('sch-reserver-search-wrap');
+  const keyword = (document.getElementById('sch-reserver-search').value || '').trim();
+  if (!keyword){ wrap.innerHTML = ''; return; }
+  try{
+    const persons = await getPersonMaster();
+    const already = new Set(scheduleReservers.map(r => r.internalId));
+    const list = persons.filter(p => (p.status === '会員' || p.status === '会員(申請中)') && !already.has(p.internalId) &&
+      ((p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword)));
+    if (!list.length){ wrap.innerHTML = '<div class="empty-state" style="padding:10px 0">該当する会員がいません</div>'; return; }
+    wrap.innerHTML = list.slice(0, 15).map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+        <div style="font-size:13px">${escapeHtml(p.nickname||p.fullname)} <span class="badge badge-gold" style="margin-left:6px">${escapeHtml(p.type||'')}</span></div>
+        <button class="btn btn-primary btn-sm" onclick='addScheduleReserver(${JSON.stringify(p.internalId)},${JSON.stringify(p.fullname)},${JSON.stringify(p.nickname||p.fullname)},${JSON.stringify(p.sport||'')},${JSON.stringify(p.type||'')})'>追加</button>
+      </div>`).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+function addScheduleReserver(internalId, fullname, nickname, sport, type){
+  if (scheduleReservers.some(r => r.internalId === internalId)) return;
+  scheduleReservers.push({ internalId, fullname, nickname, sport, type });
+  document.getElementById('sch-reserver-search').value = '';
+  document.getElementById('sch-reserver-search-wrap').innerHTML = '';
+  renderScheduleReserverSelected();
+}
+
+function removeScheduleReserver(internalId){
+  scheduleReservers = scheduleReservers.filter(r => r.internalId !== internalId);
+  renderScheduleReserverSelected();
+}
+
+function renderScheduleReserverSelected(){
+  const wrap = document.getElementById('sch-reserver-selected-wrap');
+  wrap.innerHTML = scheduleReservers.map(r => `
+    <span class="badge badge-accent" style="display:inline-flex;align-items:center;gap:6px">
+      ${escapeHtml(r.nickname)}
+      <span onclick="removeScheduleReserver(${JSON.stringify(r.internalId)})" style="cursor:pointer;font-weight:800">×</span>
+    </span>`).join('');
+}
+
 // ===== 予定・抽選 =====
 async function renderScheduleView(){
   buildScheduleDateSelects();
   loadSchedulePlaces();
   loadScheduleResponsibles();
   renderScheduleList();
+  scheduleReservers = [];
+  const selWrap = document.getElementById('sch-reserver-selected-wrap'); if (selWrap) selWrap.innerHTML = '';
+  const searchWrap = document.getElementById('sch-reserver-search-wrap'); if (searchWrap) searchWrap.innerHTML = '';
+  const searchInput = document.getElementById('sch-reserver-search'); if (searchInput) searchInput.value = '';
 }
 
 async function renderLotteryView(){
@@ -2047,8 +2102,21 @@ async function addScheduleAdmin(){
   try{
     await callGAS('addSchedule', [date, time, place, responsible, sport, fee, shuttle, memo, court, courtFee]);
     logOp('開催予定登録', sport + '／' + date + ' ' + time + '／' + place + (isPracticeDay ? '／練習日' : ''));
-    showToastAdmin('スケジュールを登録しました！');
+    if (scheduleReservers.length){
+      const now = new Date().toLocaleString('ja-JP');
+      const rows = scheduleReservers.map(r => [now, date, sport, place, r.fullname, r.nickname, r.sport || '', '⭕', '', '事務局が直接登録']);
+      try{
+        const added = await callGAS('bulkAddReservations', rows);
+        logOp('予約者を直接登録', sport + '／' + date + '／' + scheduleReservers.map(r => r.nickname).join('・'));
+        showToastAdmin('スケジュールと予約者' + added + '名を登録しました！');
+      }catch(e){
+        showToastAdmin('スケジュールは登録しましたが、予約者の登録に失敗しました：' + e.message);
+      }
+    } else {
+      showToastAdmin('スケジュールを登録しました！');
+    }
     document.getElementById('sch-fee').value = ''; document.getElementById('sch-memo').value = ''; document.getElementById('sch-practice-day').checked = false;
+    scheduleReservers = []; renderScheduleReserverSelected(); document.getElementById('sch-reserver-search-wrap').innerHTML = '';
     renderScheduleList();
   }catch(e){
     alert('登録に失敗しました：' + e.message);
