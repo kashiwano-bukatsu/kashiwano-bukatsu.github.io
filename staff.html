@@ -203,14 +203,17 @@ textarea{min-height:80px;resize:vertical}
       <div class="card-title" style="margin-top:16px">📥 収入</div>
       <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:8px">
         <tr style="color:#aaa"><td style="padding:6px 0">種別</td><td style="padding:6px 0;text-align:right">人数</td><td style="padding:6px 0;text-align:right">小計</td></tr>
-        <tr style="border-top:1px solid #333"><td style="padding:8px 0">一般</td><td style="padding:8px 0;text-align:right" id="r-general-count">-</td><td style="padding:8px 0;text-align:right" id="r-general-income">-</td></tr>
+        <tr style="border-top:1px solid #333"><td style="padding:8px 0">カシワ/ビジター会員</td><td style="padding:8px 0;text-align:right" id="r-general-count">-</td><td style="padding:8px 0;text-align:right" id="r-general-income">-</td></tr>
         <tr style="border-top:1px solid #333"><td style="padding:8px 0">みんB会員</td><td style="padding:8px 0;text-align:right" id="r-minb-count">-</td><td style="padding:8px 0;text-align:right" id="r-minb-income">-</td></tr>
-        <tr style="border-top:1px solid #333"><td style="padding:8px 0">応援団</td><td style="padding:8px 0;text-align:right" id="r-ouendan-count">-</td><td style="padding:8px 0;text-align:right">¥0</td></tr>
-        <tr style="border-top:1px solid #333"><td style="padding:8px 0">回数券</td><td style="padding:8px 0;text-align:right" id="r-ticket-count">-</td><td style="padding:8px 0;text-align:right">¥0</td></tr>
-        <tr style="border-top:1px solid #333"><td style="padding:8px 0">本部・運営</td><td style="padding:8px 0;text-align:right" id="r-staff-count">-</td><td style="padding:8px 0;text-align:right">¥0</td></tr>
+        <tr style="border-top:1px solid #333"><td style="padding:8px 0">ファミリー会員</td><td style="padding:8px 0;text-align:right" id="r-family-count">-</td><td style="padding:8px 0;text-align:right" id="r-family-income">-</td></tr>
+        <tr style="border-top:1px solid #333"><td style="padding:8px 0">体験</td><td style="padding:8px 0;text-align:right" id="r-trial-count">-</td><td style="padding:8px 0;text-align:right" id="r-trial-income">-</td></tr>
+        <tr style="border-top:1px solid #333"><td style="padding:8px 0">応援団</td><td style="padding:8px 0;text-align:right" id="r-ouendan-count">-</td><td style="padding:8px 0;text-align:right" id="r-ouendan-income">-</td></tr>
+        <tr style="border-top:1px solid #333"><td style="padding:8px 0">（内・回数券や無料等で0円処理）</td><td style="padding:8px 0;text-align:right" id="r-ticket-count">-</td><td style="padding:8px 0;text-align:right;color:#888">参考値</td></tr>
+        <tr style="border-top:1px solid #333"><td style="padding:8px 0">本部・運営</td><td style="padding:8px 0;text-align:right" id="r-staff-count">-</td><td style="padding:8px 0;text-align:right" id="r-staff-income">-</td></tr>
         <tr style="border-top:2px solid #fff;font-weight:700;color:#fff"><td style="padding:8px 0">合計</td><td style="padding:8px 0;text-align:right" id="r-total-count">-</td><td style="padding:8px 0;text-align:right" id="r-income-total">-</td></tr>
       </table>
       <input type="hidden" id="r-income" value="0">
+      <input type="hidden" id="r-total-people" value="0">
       <div class="card-title" style="margin-top:16px">📤 支出</div>
       <div class="label">体育館使用料（自動）</div>
       <input type="number" id="r-court-fee" readonly style="background:#2c2c2c;color:#888;border-color:#333">
@@ -497,7 +500,11 @@ function renderHome(d) {
   }
   if (d.nextEvent) {
     const e = d.nextEvent;
-    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">次回開催</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
+    const reserverLine = e.reserverName
+      ? `<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">🏟 予約者：${e.reserverName}</div>`
+      : '';
+    const practiceBadge = e.isPracticeDay ? `<span style="background:linear-gradient(135deg,#f5a623,#e8871e);color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px;margin-left:6px;vertical-align:middle">⛹️‍♀️練習日 ¥${e.fee||300}</span>` : '';
+    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">次回開催</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}${practiceBadge}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}${reserverLine}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
   }
   html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:10px">今月の参加</div><div class="stat-grid"><div class="stat"><div class="stat-label">参加人数</div><div class="stat-val">${d.monthCount}<span style="font-size:14px;color:#aaa">人</span></div></div><div class="stat"><div class="stat-label">開催回数</div><div class="stat-val">${d.sessionCount}<span style="font-size:14px;color:#aaa">回</span></div></div></div></div>`;
   if (d.ranking && d.ranking.length) {
@@ -531,45 +538,54 @@ const TYPE_ORDER = {'代表':0,'運営':1,'部長':2,'応援団':3,'応援団会
 function getTypeOrder(type){ for(const k of Object.keys(TYPE_ORDER)){ if(type&&type.includes(k)) return TYPE_ORDER[k]; } return 8; }
 
 // 種別・利用モードから料金プルダウンの選択肢を組み立てる（チェックイン3画面共通）
+// ★変更：各選択肢に method（支払い方法）を持たせ、出席ログに「なぜその金額か」を記録できるようにした
 function buildPayOptions(type, isBad, usageMode, ticketRemain, isMemberTrial){
   const isFree = ['運営', '代表', '部長', '本部', '特別会員'].includes(type);
-  if (isFree) return [{ label: '¥0（運営）', value: 0 }];
+  if (isFree) return [{ label: '¥0（運営）', value: 0, method: '運営無料' }];
   // ★追加：会員が「体験参加」で予約している場合（他種目お試し・1回無料特典）は自動的に0円固定
-  if (isMemberTrial) return [{ label: '¥0（体験参加・無料特典）', value: 0 }];
+  if (isMemberTrial) return [{ label: '¥0（体験参加・無料特典）', value: 0, method: '体験特典無料' }];
   if (usageMode === '回数券'){
     const remainLabel = '（残り' + (ticketRemain != null ? ticketRemain : '-') + '枚）';
     if (isBad) return [
-      { label: '回数券+¥200' + remainLabel, value: 200, useTicket: true },
-      { label: '回数券のみ' + remainLabel, value: 0, useTicket: true },
-      { label: 'その他（金額を入力）', value: 'custom' }
+      { label: '回数券+¥200' + remainLabel, value: 200, useTicket: true, method: '回数券' },
+      { label: '回数券のみ' + remainLabel, value: 0, useTicket: true, method: '回数券' },
+      { label: 'その他（理由を選択）', value: 'custom' }
     ];
     return [
-      { label: '回数券を使う' + remainLabel, value: 0, useTicket: true },
-      { label: 'その他（金額を入力）', value: 'custom' }
+      { label: '回数券を使う' + remainLabel, value: 0, useTicket: true, method: '回数券' },
+      { label: 'その他（理由を選択）', value: 'custom' }
     ];
   }
   if (['みんB会員', 'みんなのBUKATSU会員'].includes(type)){
-    const base = isBad ? [{ label: '¥400', value: 400 }, { label: '¥200', value: 200 }] : [{ label: '¥200', value: 200 }];
-    return base.concat([{ label: 'その他（金額を入力）', value: 'custom' }]);
+    const base = isBad ? [{ label: '¥400', value: 400, method: '現金' }, { label: '¥200', value: 200, method: '現金' }] : [{ label: '¥200', value: 200, method: '現金' }];
+    return base.concat([{ label: 'その他（理由を選択）', value: 'custom' }]);
   }
-  if (type === '応援団' || type === '応援団会員') return [{ label: '¥0（応援団）', value: 0 }, { label: 'その他（金額を入力）', value: 'custom' }];
+  if (type === '応援団' || type === '応援団会員') return [{ label: '¥0（応援団）', value: 0, method: '応援団月謝込み' }, { label: 'その他（理由を選択）', value: 'custom' }];
   const base = isBad
-    ? [{ label: '¥700', value: 700 }, { label: '¥500', value: 500 }, { label: '¥0', value: 0 }]
-    : [{ label: '¥500', value: 500 }, { label: '¥700', value: 700 }, { label: '¥0', value: 0 }];
-  return base.concat([{ label: 'その他（金額を入力）', value: 'custom' }]);
+    ? [{ label: '¥700', value: 700, method: '現金' }, { label: '¥500', value: 500, method: '現金' }, { label: '¥0', value: 0, method: 'その他' }]
+    : [{ label: '¥500', value: 500, method: '現金' }, { label: '¥700', value: 700, method: '現金' }, { label: '¥0', value: 0, method: 'その他' }];
+  return base.concat([{ label: 'その他（理由を選択）', value: 'custom' }]);
 }
 
-// プルダウンHTML＋「その他」選択時に出すカスタム金額入力欄をまとめて生成
+// プルダウンHTML＋「その他」選択時に出す金額入力欄＋理由選択欄をまとめて生成
+// ★変更：カスタム金額を選んだ時、金額だけでなく「理由」も選んでもらう欄を追加
 function buildPaySelectHtml(safeId, options){
   const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
   return `<select id="pay-sel-${safeId}" onchange="onPaySelChange('${safeId}')" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>
-    <input type="number" id="pay-custom-${safeId}" placeholder="金額" style="display:none;width:64px;padding:6px;font-size:12px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">`;
+    <input type="number" id="pay-custom-${safeId}" placeholder="金額" style="display:none;width:56px;padding:6px;font-size:12px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">
+    <select id="pay-reason-${safeId}" style="display:none;padding:6px;font-size:12px;width:88px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">
+      <option value="現金">現金</option>
+      <option value="半額クーポン">半額クーポン</option>
+      <option value="無料チケット">無料チケット</option>
+      <option value="その他">その他</option>
+    </select>`;
 }
 
-// 「その他（金額を入力）」が選ばれたらカスタム金額の入力欄を表示する
+// 「その他（理由を選択）」が選ばれたらカスタム金額と理由の入力欄を表示する
 function onPaySelChange(safeId){
   const sel = document.getElementById('pay-sel-' + safeId);
   const input = document.getElementById('pay-custom-' + safeId);
+  const reason = document.getElementById('pay-reason-' + safeId);
   const box = document.querySelector('#daily-item-' + safeId + ' .daily-checkin-box');
   if (!sel || !input || !box) return;
   let isCustom = false;
@@ -578,6 +594,7 @@ function onPaySelChange(safeId){
     isCustom = opts[parseInt(sel.value)] && opts[parseInt(sel.value)].value === 'custom';
   } catch(e) {}
   input.style.display = isCustom ? 'inline-block' : 'none';
+  if (reason) reason.style.display = isCustom ? 'inline-block' : 'none';
 }
 
 function renderDailyListFromData(d) {
@@ -596,7 +613,7 @@ function renderDailyListFromData(d) {
     if ((r[7] || '⭕') === '❌') return;
     const master = masterMap[r[4]] || {};
     const isMemberTrial = r[8] === '体験参加'; // ★既存会員の他種目体験参加予約（無料特典）
-    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || '一般', usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
+    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || 'ビジター会員', usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
   });
   const tempUsers = (d.tempAttendees || []).filter(t => t[0] === d.today && !(d.attendees || []).find(a => a[1] === t[1]));
   tempUsers.forEach(u => {
@@ -657,7 +674,7 @@ async function renderDailyList() {
     reservations.forEach(r => {
       if ((r[7] || '⭕') === '❌') return;
       const master = masterMap[r[4]] || {};
-      const type = master[2] || '一般';
+      const type = master[2] || 'ビジター会員';
       const isMemberTrial = r[8] === '体験参加'; // ★既存会員の他種目体験参加予約（無料特典）
       allItems.push({ fullname: r[4], nickname: r[5] || r[4], type, usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
     });
@@ -705,17 +722,21 @@ async function saveDailyCheckins() {
     const sel = document.getElementById('pay-sel-' + safeId);
     const selected = options[parseInt(sel ? sel.value : 0)];
     let amount = selected ? selected.value : 0;
+    let method = selected ? (selected.method || '') : '';
     if (amount === 'custom') {
       const customInput = document.getElementById('pay-custom-' + safeId);
+      const reasonSel = document.getElementById('pay-reason-' + safeId);
       amount = parseInt(customInput ? customInput.value : 0) || 0;
+      method = reasonSel ? reasonSel.value : '現金';
     }
     const useTicket = selected ? (selected.useTicket || false) : false;
-    const logRow = [todayFmt, '沼南体育館', sport, nickname, fullname, type, amount];
+    // ★変更：8列目（H列）に支払い方法を追加。金額だけでなく「なぜその金額か」を記録する
+    const logRow = [todayFmt, '沼南体育館', sport, nickname, fullname, type, amount, method];
     try {
       if (useTicket) {
         const ticket = await callGAS('getTicket', fullname);
         if (ticket && ticket[3] > 0) await callGAS('useTicket', fullname);
-        else logRow[6] = 500;
+        else { logRow[6] = 500; logRow[7] = '回数券なし・現金振替'; }
       }
       await callGAS('addAttendanceLog', logRow);
       done++;
@@ -781,7 +802,7 @@ async function addNewModalMember() {
   const sport = window._todaySport || '';
   try {
     await callGAS('addTempAttendee', name, '', sport, todayFmt, '');
-    await callGAS('addAttendanceLog', [todayFmt, '沼南体育館', sport, name, name, '体験', fee]);
+    await callGAS('addAttendanceLog', [todayFmt, '沼南体育館', sport, name, name, '体験', fee, '現金']);
     showToast('🆕 ' + name + ' チェックイン！');
     document.getElementById('modal-new-lastname').value = '';
     document.getElementById('modal-new-firstname').value = '';
@@ -1010,13 +1031,25 @@ function toggleReferrerSearch() {
 }
 
 // 紹介者をニックネーム/フルネームで検索し、内部IDを確定する
-async function searchReferrerCandidate() {
+// ★修正：1文字ごとにリクエストが飛んで古い応答が新しい応答を上書きするレース条件があったため、
+//         デバウンス＋リクエストトークンで「最新の入力に対応する結果」だけを反映するように変更
+let _referrerSearchToken = 0;
+let _referrerSearchTimer = null;
+
+function searchReferrerCandidate() {
+  clearTimeout(_referrerSearchTimer);
+  _referrerSearchTimer = setTimeout(_doSearchReferrerCandidate, 300);
+}
+
+async function _doSearchReferrerCandidate() {
   const val = document.getElementById('rec-referrer-search').value.trim();
   const resultEl = document.getElementById('rec-referrer-result');
   document.getElementById('rec-referrer-search').dataset.internalId = '';
   if (!val) { resultEl.textContent = ''; return; }
+  const myToken = ++_referrerSearchToken;
   try {
     const all = await callGAS('getPersonMasterAll');
+    if (myToken !== _referrerSearchToken) return; // 自分より後の入力があれば古い結果は捨てる
     const found = all.filter(p => (p.status === '会員' || p.status === '会員(申請中)') && ((p.nickname||'').includes(val) || (p.fullname||'').includes(val)));
     if (!found.length) { resultEl.innerHTML = '<span style="color:#e53935">該当する会員が見つかりません</span>'; return; }
     if (found.length === 1) {
@@ -1025,7 +1058,7 @@ async function searchReferrerCandidate() {
     } else {
       resultEl.innerHTML = '候補が複数あります。フルネームをもう少し詳しく入力してください：' + found.map(f => f.nickname).join('、');
     }
-  } catch(e) { resultEl.textContent = '検索エラー：' + e.message; }
+  } catch(e) { if (myToken === _referrerSearchToken) resultEl.textContent = '検索エラー：' + e.message; }
 }
 
 async function submitRecruit() {
@@ -1083,13 +1116,15 @@ async function loadScheduleListTab() {
 // ===== レポート =====
 async function loadReportTab() {
   try {
-    const [pending, staffs] = await Promise.all([
-      callGAS('getPendingSchedules'),
+    // ★変更：以前は「未提出」のスケジュールしか選べず、済フラグが立った回は二度と再計算できなかった。
+    // 全スケジュールを新しい順に出し、済/未をマークして選べるようにする（再計算・修正がいつでもできる）。
+    const [all, staffs] = await Promise.all([
+      callGAS('getAllSchedulesForReport'),
       callGAS('getStaffMembers')
     ]);
-    pendingSchedules = pending;
+    pendingSchedules = all;
     const sel = document.getElementById('r-schedule');
-    sel.innerHTML = '<option value="">-- 選択してください --</option>' + pending.map((r, i) => `<option value="${i}">${r[0]} ${r[1]} ${r[4]} @ ${r[2]}</option>`).join('');
+    sel.innerHTML = '<option value="">-- 選択してください --</option>' + all.map((r, i) => `<option value="${i}">${r[10] === '済' ? '✅' : '⚠️'} ${r[0]} ${r[1]} ${r[4]} @ ${r[2]}</option>`).join('');
     document.getElementById('r-staff-select').innerHTML = '<option value="">-- 選択 --</option>' + staffs.map(s => `<option value="${s[0]}">${s[0]}</option>`).join('');
   } catch(e) {}
 }
@@ -1104,7 +1139,7 @@ async function fillReport() {
   // ★変更：スプレッドシートに直接書き込む運用のため、J列（コート料金）が未入力でも
   // I列（コート面数：A・AB・CDなど）から自動計算する。J列に値があってもI列を優先する（面数と料金の食い違いを防ぐ）。
   const courtFee = courtLetters ? (courtLetters.length >= 2 ? 2650 : 1320) : (parseInt(r[9]) || 0);
-  document.getElementById('r-info').innerHTML = `${SPORT_ICON[sport]||''} ${sport} ${date} ${r[1]} ／ 📍${r[2]}（${r[8]||''}面）`;
+  document.getElementById('r-info').innerHTML = `${SPORT_ICON[sport]||''} ${sport} ${date} ${r[1]} ／ 📍${r[2]}（${r[8]||''}面）${r[10] === '済' ? ' <span style="color:#68d391;font-size:12px">（提出済・再計算中）</span>' : ''}`;
   document.getElementById('r-court-fee').value = courtFee;
   document.getElementById('r-shuttle-cost').dataset.price = shuttlePrice;
   document.getElementById('r-shuttle-select').value = '0';
@@ -1112,29 +1147,57 @@ async function fillReport() {
   document.getElementById('r-other').value = '';
   document.getElementById('r-other-memo').value = '';
   document.getElementById('r-memo').value = '';
+  document.getElementById('r-staff-select').value = '';
   document.getElementById('r-shuttle-area').style.display = sport === 'バドミントン' ? 'block' : 'none';
   try {
-    const logs = await callGAS('getAttendanceLog');
+    const [logs, existing] = await Promise.all([
+      callGAS('getAttendanceLog'),
+      r[10] === '済' ? callGAS('getReportForSchedule', date, sport) : Promise.resolve(null)
+    ]);
     const filtered = logs.filter(l => l[0] === date && l[2] === sport);
-    const fee = parseFloat(r[5]) || 0;
-    let general = 0, minb = 0, ticket = 0, staff = 0, ouendan = 0;
+    // ★修正：以前は「人数×固定参加費」で収入を再計算していたため、回数券利用・割引クーポン・
+    // ファミリー会員2人目以降などチェックイン時に確定した実際の金額（log[6]）が反映されず、
+    // レポートの数字と実際の集金額がズレる原因になっていた。出席ログに記録済みの実額をそのまま
+    // 積み上げる方式に変更（＝受付で確定した金額＝正）。あわせて、集計から漏れていた
+    // 「ファミリー会員」「体験」もカウント対象に追加。
+    // ★変更：支払い方法（log[7]）が記録されていればそれを優先して回数券・無料利用を判定。
+    // 旧データ（この列がない）は金額0円かどうかで代替判定する。
+    let general = 0, minb = 0, family = 0, trial = 0, staff = 0, ouendan = 0, zeroPay = 0;
+    let generalIncome = 0, minbIncome = 0, familyIncome = 0, trialIncome = 0, staffIncome = 0, ouendanIncome = 0;
     filtered.forEach(log => {
       const type = log[5];
-      if (type === '一般' || type === 'ビジター会員' || type === 'カシワのBUKATSU会員') general++;
-      else if (type === 'みんB会員' || type === 'みんなのBUKATSU会員') minb++;
-      else if (type.includes('回数券')) ticket++;
-      else if (['運営', '代表', '部長', '本部', '特別会員'].includes(type)) staff++;
-      else if (type === '応援団' || type === '応援団会員') ouendan++;
+      const amt = Number(log[6]) || 0;
+      const method = log[7] || '';
+      const isZeroPay = method === '回数券' || method === '半額クーポン' || method === '無料チケット' || (!method && amt === 0);
+      if (type === 'ビジター会員' || type === 'カシワのBUKATSU会員') { general++; generalIncome += amt; if (isZeroPay) zeroPay++; }
+      else if (type === 'みんB会員' || type === 'みんなのBUKATSU会員') { minb++; minbIncome += amt; if (isZeroPay) zeroPay++; }
+      else if (type === 'ファミリー会員') { family++; familyIncome += amt; }
+      else if (type === '体験') { trial++; trialIncome += amt; }
+      else if (['運営', '代表', '部長', '本部', '特別会員'].includes(type)) { staff++; staffIncome += amt; }
+      else if (type === '応援団' || type === '応援団会員') { ouendan++; ouendanIncome += amt; }
     });
-    const totalPeople = general + minb + ticket + staff + ouendan;
-    const generalIncome = general * fee, minbIncome = minb * (sport === 'バドミントン' ? 400 : 200), income = generalIncome + minbIncome;
+    const totalPeople = general + minb + family + trial + staff + ouendan;
+    const income = generalIncome + minbIncome + familyIncome + trialIncome + staffIncome + ouendanIncome;
     document.getElementById('r-general-count').textContent = general + '人'; document.getElementById('r-general-income').textContent = '¥' + generalIncome.toLocaleString();
     document.getElementById('r-minb-count').textContent = minb + '人'; document.getElementById('r-minb-income').textContent = '¥' + minbIncome.toLocaleString();
-    document.getElementById('r-ticket-count').textContent = ticket + '人';
-    document.getElementById('r-staff-count').textContent = staff + '人';
-    document.getElementById('r-ouendan-count').textContent = ouendan + '人';
+    document.getElementById('r-family-count').textContent = family + '人'; document.getElementById('r-family-income').textContent = '¥' + familyIncome.toLocaleString();
+    document.getElementById('r-trial-count').textContent = trial + '人'; document.getElementById('r-trial-income').textContent = '¥' + trialIncome.toLocaleString();
+    document.getElementById('r-ouendan-count').textContent = ouendan + '人'; document.getElementById('r-ouendan-income').textContent = '¥' + ouendanIncome.toLocaleString();
+    document.getElementById('r-ticket-count').textContent = zeroPay + '人';
+    document.getElementById('r-staff-count').textContent = staff + '人'; document.getElementById('r-staff-income').textContent = '¥' + staffIncome.toLocaleString();
     document.getElementById('r-total-count').textContent = totalPeople + '人'; document.getElementById('r-income-total').textContent = '¥' + income.toLocaleString();
     document.getElementById('r-income').value = income;
+    document.getElementById('r-total-people').value = totalPeople;
+    // ★追加：既に提出済みのレポートを選んだ場合、シャトル使用数・その他支出・メモ・運営担当は
+    // 手入力データなので出席ログから再現できない。保存済みの値を読み込んで復元する。
+    if (existing) {
+      document.getElementById('r-shuttle-select').value = existing[6] || '0';
+      calcShuttle();
+      document.getElementById('r-other').value = existing[9] || '';
+      document.getElementById('r-other-memo').value = existing[10] || '';
+      document.getElementById('r-memo').value = existing[13] || '';
+      document.getElementById('r-staff-select').value = existing[14] || '';
+    }
     calcReportPL();
   } catch(e) {}
 }
@@ -1150,9 +1213,11 @@ async function saveReport() {
   const idx = document.getElementById('r-schedule').value;
   if (idx === '') return alert('スケジュールを選択してください');
   const s = pendingSchedules[parseInt(idx)];
+  // ★修正：参加人数が常に0固定で保存されていたバグを修正。fillReportで計算した実数を使う。
+  const totalPeople = parseInt(document.getElementById('r-total-people').value) || 0;
   const inc = parseInt(document.getElementById('r-income').value) || 0, cFee = parseInt(document.getElementById('r-court-fee').value) || 0, sUsed = parseInt(document.getElementById('r-shuttle-select').value) || 0, sCost = parseInt(document.getElementById('r-shuttle-cost').value) || 0, oth = parseInt(document.getElementById('r-other').value) || 0, oMemo = document.getElementById('r-other-memo').value, memo = document.getElementById('r-memo').value, sName = document.getElementById('r-staff-select').value;
   try {
-    await callGAS('addReport', [s[0], s[2], s[3], s[4], 0, inc, sUsed, s[6], sCost, oth, oMemo, inc - cFee - sCost - oth, cFee, memo, sName]);
+    await callGAS('addReport', [s[0], s[2], s[3], s[4], totalPeople, inc, sUsed, s[6], sCost, oth, oMemo, inc - cFee - sCost - oth, cFee, memo, sName]);
     showToast('レポートを保存しました！🎉');
     loadReportTab();
   } catch(e) { alert('エラー：' + e.message); }
