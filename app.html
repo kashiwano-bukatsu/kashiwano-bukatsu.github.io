@@ -752,7 +752,7 @@ function showMaintenancePopup(){
 }
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
 // ===== 練習日（半面開放など、事務局アプリの新規開催登録で「練習日」チェックを付けた枠）=====
-const PRACTICE_DAY_TAG='【練習日】';
+const PRACTICE_DAY_TAG='練習日';
 function isPracticeDay(memo){ return (memo||'').indexOf(PRACTICE_DAY_TAG)!==-1; }
 function practiceDayBadge(memo,fee){ return isPracticeDay(memo) ? '<span class="practice-badge">⛹️‍♀️練習日 ¥'+(fee||300)+'</span>' : ''; }
 

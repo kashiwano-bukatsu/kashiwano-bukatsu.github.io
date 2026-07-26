@@ -2080,7 +2080,7 @@ function calcScheduleCourtFee(){ const court = document.getElementById('sch-cour
 
 // 「練習日にする」チェック時は参加費を自動で¥300にする（手動での上書きは可能）
 const PRACTICE_DAY_FEE = 300;
-const PRACTICE_DAY_TAG = '【練習日】';
+const PRACTICE_DAY_TAG = '練習日';
 function togglePracticeDayFee(){
   const cb = document.getElementById('sch-practice-day');
   if (cb.checked) document.getElementById('sch-fee').value = PRACTICE_DAY_FEE;
