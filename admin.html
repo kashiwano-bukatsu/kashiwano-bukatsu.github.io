@@ -618,6 +618,10 @@ tr:hover td{background:var(--card-soft);}
           <div id="sch-shuttle-field" style="display:none;flex:1;min-width:120px"><input id="sch-shuttle" type="number" placeholder="シャトル単価" style="width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;box-sizing:border-box"></div>
           <select id="sch-responsible" style="flex:1;min-width:140px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px"></select>
           <input id="sch-memo" type="text" placeholder="メモ（任意）" style="flex:2;min-width:200px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
+          <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;cursor:pointer;background:#fff8e6">
+            <input id="sch-practice-day" type="checkbox" onchange="togglePracticeDayFee()" style="width:18px;height:18px;flex-shrink:0">
+            ⛹️‍♀️練習日にする（¥300）
+          </label>
         </div>
         <button class="btn btn-primary btn-sm" onclick="addScheduleAdmin()" style="margin-top:12px">登録する</button>
       </div>
@@ -1981,15 +1985,17 @@ async function renderScheduleList(){
       const active = reservations.filter(r => (r[7] || '⭕') !== '❌');
       const reservedNames = new Set(active.map(r => r[4]));
       const tempMembers = tempAttendees.filter(t => t[2] === s[4] && t[3] === s[0] && !reservedNames.has(t[1])).map(t => t[1]);
-      results[s[4]] = { date: s[0], place: s[2], members: [...active.map(r => r[5] || r[4]), ...tempMembers] };
+      const isPracticeDay = (s[7] || '').indexOf(PRACTICE_DAY_TAG) !== -1;
+      results[s[4]] = { date: s[0], place: s[2], fee: s[5], isPracticeDay, members: [...active.map(r => r[5] || r[4]), ...tempMembers] };
     }));
     wrap.innerHTML = SPORTS.map(sp => {
       const data = results[sp]; if (!data) return '';
+      const practiceBadge = data.isPracticeDay ? `<span class="badge" style="background:#fff3cd;color:#a3821f;margin-left:8px">⛹️‍♀️練習日 ¥${escapeHtml(data.fee||PRACTICE_DAY_FEE)}</span>` : '';
       return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:20px">${SPORT_ICON_ADMIN[sp]||''}</span>
-            <div><div style="font-weight:700;font-size:14px">${escapeHtml(sp)}</div><div style="font-size:11.5px;color:var(--ink-faint)">${escapeHtml(data.date)} ／ ${escapeHtml(data.place)}</div></div>
+            <div><div style="font-weight:700;font-size:14px">${escapeHtml(sp)}${practiceBadge}</div><div style="font-size:11.5px;color:var(--ink-faint)">${escapeHtml(data.date)} ／ ${escapeHtml(data.place)}</div></div>
           </div>
           <div style="font-size:18px;font-weight:800">${data.members.length}<span style="font-size:11.5px;color:var(--ink-faint)">人</span></div>
         </div>
@@ -2017,6 +2023,14 @@ async function loadScheduleResponsibles(){ try{ const data = await callGAS('getS
 function checkScheduleShuttle(){ document.getElementById('sch-shuttle-field').style.display = document.getElementById('sch-sport').value === 'バドミントン' ? 'block' : 'none'; }
 function calcScheduleCourtFee(){ const court = document.getElementById('sch-court').value; if (court) document.getElementById('sch-court-fee').value = (court === 'AB' || court === 'CD') ? 2650 : 1320; }
 
+// 「練習日にする」チェック時は参加費を自動で¥300にする（手動での上書きは可能）
+const PRACTICE_DAY_FEE = 300;
+const PRACTICE_DAY_TAG = '【練習日】';
+function togglePracticeDayFee(){
+  const cb = document.getElementById('sch-practice-day');
+  if (cb.checked) document.getElementById('sch-fee').value = PRACTICE_DAY_FEE;
+}
+
 async function addScheduleAdmin(){
   const date = getScheduleSelectedDate(), time = getScheduleSelectedTime();
   const place = document.getElementById('sch-place').value;
@@ -2026,13 +2040,15 @@ async function addScheduleAdmin(){
   const fee = document.getElementById('sch-fee').value;
   const shuttle = sport === 'バドミントン' ? document.getElementById('sch-shuttle').value : '';
   const responsible = document.getElementById('sch-responsible').value;
-  const memo = document.getElementById('sch-memo').value;
+  const isPracticeDay = document.getElementById('sch-practice-day').checked;
+  let memo = document.getElementById('sch-memo').value.trim();
+  if (isPracticeDay) memo = (memo ? memo + '　' : '') + PRACTICE_DAY_TAG;
   if (!place) return alert('場所を選択してください');
   try{
     await callGAS('addSchedule', [date, time, place, responsible, sport, fee, shuttle, memo, court, courtFee]);
-    logOp('開催予定登録', sport + '／' + date + ' ' + time + '／' + place);
+    logOp('開催予定登録', sport + '／' + date + ' ' + time + '／' + place + (isPracticeDay ? '／練習日' : ''));
     showToastAdmin('スケジュールを登録しました！');
-    document.getElementById('sch-fee').value = ''; document.getElementById('sch-memo').value = '';
+    document.getElementById('sch-fee').value = ''; document.getElementById('sch-memo').value = ''; document.getElementById('sch-practice-day').checked = false;
     renderScheduleList();
   }catch(e){
     alert('登録に失敗しました：' + e.message);
