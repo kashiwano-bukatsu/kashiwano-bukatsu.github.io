@@ -1142,29 +1142,37 @@ function sporologColorAt(t){
 function buildSporlogBoard(progress, lap){
   const MASCOT = '<img src="konpei.gif" style="width:24px;height:30px;object-fit:contain;display:block">'; // コンペイ歩行GIF
   const squares = [1,2,3,4,5,6,7,8,9,10];
+  // ★0.5pt対応：スタンプ自体は整数個で数え、半端(0.5)分は「次のスタンプ」を半分だけ着色する。
+  //   コンペイ（マスコット）は完全に貯まったスタンプの上にとどまり、1貯まると次に進む。
+  const floorProgress = Math.floor(progress);
+  const hasHalf = (progress - floorProgress) > 0; // 0.5刻み運用なので実質「端数あり」＝0.5
   const pct = Math.max(0, Math.min(100, (progress/10*100)));
   const lineGradient = SPOROLOG_COLOR_STOPS.map(c => 'rgb(' + c.join(',') + ')').join(',');
   const circleHtml = squares.map(n=>{
-    const done = n <= progress;
+    const done = n <= floorProgress;
+    const isHalf = hasHalf && n === floorProgress + 1;
     const isMilestone = (n === 5 || n === 10);
     const size = isMilestone ? 34 : 26;
     const fontSize = isMilestone ? 13 : 11;
     const stepColor = sporologColorAt(n/10);
     const prevColor = sporologColorAt((n-1)/10);
-    const bg = done ? 'linear-gradient(135deg,' + prevColor + ',' + stepColor + ')' : '#fff';
-    const border = done ? '2px solid ' + stepColor : '2px solid #dde3ec';
-    const color = done ? '#fff' : '#a9b2bf';
+    let bg = '#fff';
+    if (done) bg = 'linear-gradient(135deg,' + prevColor + ',' + stepColor + ')';
+    else if (isHalf) bg = 'linear-gradient(90deg,' + stepColor + ' 50%, #fff 50%)';
+    const border = (done || isHalf) ? '2px solid ' + stepColor : '2px solid #dde3ec';
+    const color = done ? '#fff' : (isHalf ? stepColor : '#a9b2bf');
     const glow = (done && n === 10) ? 'box-shadow:0 0 10px rgba(255,215,0,0.8);' : '';
     let badge='';
     if(n===5) badge='<div style="position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);background:#ff9800;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">200円引</div>';
     if(n===10) badge='<div style="position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">🎟️無料</div>';
-    const mascotHtml = (n===progress && progress>0) ? '<div style="position:absolute;z-index:3;top:-'+(size+12)+'px;left:50%;transform:translateX(-50%);width:26px;line-height:1">'+MASCOT+'</div>' : '';
+    const mascotHtml = (n===floorProgress && floorProgress>0) ? '<div style="position:absolute;z-index:3;top:-'+(size+12)+'px;left:50%;transform:translateX(-50%);width:26px;line-height:1">'+MASCOT+'</div>' : '';
     return '<div style="position:relative;z-index:2;width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:'+fontSize+'px;font-weight:800;color:'+color+';flex-shrink:0;'+glow+'">'+mascotHtml+n+badge+'</div>';
   }).join('');
-  const startMascot = progress===0 ? '<div style="position:absolute;z-index:3;top:-38px;left:13px;width:26px;line-height:1">'+MASCOT+'</div>' : '';
-  // 次の特典までの残り回数とラベル（5回目=200円引きチケット／10回目=無料チケット）
+  const startMascot = floorProgress===0 ? '<div style="position:absolute;z-index:3;top:-38px;left:13px;width:26px;line-height:1">'+MASCOT+'</div>' : '';
+  // 次の特典までの残り回数とラベル（5回目=200円引きチケット／10回目=無料チケット）。0.5刻みなら「あと2.5回」のように表示。
   const nextMilestone = progress < 5 ? 5 : 10;
   const remaining = nextMilestone - progress;
+  const remainingLabel = (remaining % 1 === 0) ? String(remaining) : remaining.toFixed(1);
   const nextRewardLabel = nextMilestone === 5 ? '200円引きチケット' : '無料チケット';
   // 10回達成直後（progress===0）はまだ前の周回扱いにして、11回目（progress>=1）になってから「○周目」を表示する
   const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
@@ -1180,7 +1188,7 @@ function buildSporlogBoard(progress, lap){
       '<div style="position:absolute;left:13px;top:59px;height:3px;background:linear-gradient(90deg,'+lineGradient+');border-radius:2px;z-index:1;width:'+pct+'%;max-width:calc(100% - 26px)"></div>'+
       circleHtml+
     '</div>'+
-    '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remaining+'回で'+nextRewardLabel+'</div>'+
+    '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remainingLabel+'回で'+nextRewardLabel+'</div>'+
     '<div style="display:flex;justify-content:center;gap:14px;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button>'+replayBtn+'</div>';
 }
 
@@ -2332,9 +2340,10 @@ function renderMonthCalendar(date){
     if(p.length<3||p.some(isNaN))return;
     if(p[0]===year&&p[1]===month+1){
       if(!evMap[p[2]])evMap[p[2]]=[];
-      evMap[p[2]].push(s[4]);
+      evMap[p[2]].push(s);
     }
   });
+  window._calendarEvMap=evMap; // タップ時の詳細表示用に保持
   const firstDay=new Date(year,month,1).getDay();
   const lastDate=new Date(year,month+1,0).getDate();
   const DOW=['日','月','火','水','木','金','土'];
@@ -2348,10 +2357,12 @@ function renderMonthCalendar(date){
   for(let i=0;i<firstDay;i++)html+='<div></div>';
   for(let d=1;d<=lastDate;d++){
     const isToday=year===today.getFullYear()&&month===today.getMonth()&&d===today.getDate();
-    const icons=evMap[d]?evMap[d].map(s=>ICON[s]||'🏟').join(''):'';
+    const dayEvents=evMap[d]||[];
+    const icons=dayEvents.map(s=>ICON[s[4]]||'🏟').join('');
     const dow=(firstDay+d-1)%7;
     const dc=dow===0?'#e53935':dow===6?'#1976d2':'#1a1a2e';
-    html+=`<div style="padding:4px 2px;border-radius:8px;${isToday?'background:#1a3a5c;':''}">
+    const tapAttr=dayEvents.length?` onclick="showCalendarDayDetail(${d})" style="cursor:pointer"`:'';
+    html+=`<div style="padding:4px 2px;border-radius:8px;${isToday?'background:#1a3a5c;':''}"${tapAttr}>
       <div style="font-size:13px;font-weight:${isToday?'800':'600'};color:${isToday?'#fff':dc}">${d}</div>
       <div style="font-size:12px;line-height:1.2;min-height:16px">${icons}</div>
     </div>`;
@@ -2360,6 +2371,30 @@ function renderMonthCalendar(date){
   el.innerHTML=html;
   // 次回開催予定も同時に更新
   renderNextEventsInCalendar();
+}
+
+// ===== カレンダーの日付タップ：その日に開催される種目の詳細をポップアップ表示 =====
+function showCalendarDayDetail(day){
+  const events=(window._calendarEvMap&&window._calendarEvMap[day])||[];
+  if(!events.length)return;
+  const dateLabel=events[0][0];
+  const rows=events.map(s=>{
+    const sport=s[4],time=s[1],place=s[2],memo=s[7],fee=s[5],court=s[8];
+    const badge=practiceDayBadge(memo,fee);
+    const courtLabel=court?(' ／ '+court+'面'):'';
+    return `<div style="padding:12px 0;border-bottom:1px solid #f0f4f8">
+      <div style="font-size:15px;font-weight:700">${SPORT_ICON[sport]||'🏟'} ${sport}${badge}</div>
+      <div style="font-size:13px;color:#888;margin-top:4px">${time?time+' ／ ':''}${place}${courtLabel}</div>
+    </div>`;
+  }).join('');
+  const ov=document.createElement('div');ov.className='ticket-overlay';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;">'
+    +'<div style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:4px;text-align:center">'+dateLabel+'（'+getDow(dateLabel)+'）</div>'
+    +'<div style="font-size:12.5px;color:#aaa;text-align:center;margin-bottom:14px">開催予定</div>'
+    +rows
+    +'<button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;">閉じる</button>'
+    +'</div>';
+  document.body.appendChild(ov);
 }
 function renderNextEventsInCalendar(){
   const el=document.getElementById('home-next-events');if(!el)return;
