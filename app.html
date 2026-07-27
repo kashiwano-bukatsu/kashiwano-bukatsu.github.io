@@ -2358,7 +2358,7 @@ function renderMonthCalendar(date){
   for(let d=1;d<=lastDate;d++){
     const isToday=year===today.getFullYear()&&month===today.getMonth()&&d===today.getDate();
     const dayEvents=evMap[d]||[];
-    const icons=dayEvents.map(s=>ICON[s[4]]||'🏟').join('');
+    const icons=dayEvents.map(s=>isPracticeDay(s[7])?'⛹️‍♀️':(ICON[s[4]]||'🏀')).join('');
     const dow=(firstDay+d-1)%7;
     const dc=dow===0?'#e53935':dow===6?'#1976d2':'#1a1a2e';
     const tapAttr=dayEvents.length?` onclick="showCalendarDayDetail(${d})" style="cursor:pointer"`:'';
