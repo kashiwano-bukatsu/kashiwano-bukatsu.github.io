@@ -354,6 +354,7 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       <div id="next-member-sport-tabs" style="display:flex;gap:6px;margin-bottom:10px"></div>
       <div id="next-member-info" style="font-size:12px;color:#888;margin-bottom:10px"></div>
       <div id="next-member-list"></div>
+      <div id="next-member-practice-notice" style="display:none"></div>
       <div style="text-align:right;margin-top:6px"><span onclick="showChipColorLegend()" style="font-size:11px;color:#4a90d9;cursor:pointer;text-decoration:underline">各カラーについてはこちら</span></div>
       <div id="next-member-count" style="font-size:11px;color:#aaa;margin-top:8px;text-align:right"></div>
     </div>
@@ -1470,6 +1471,16 @@ function _nextMemberDtKey(s){
   const t=new Date(String(s||''));
   return isNaN(t.getTime())?0:t.getTime();
 }
+function _renderPracticeNoticeBox(schedule){
+  const el=document.getElementById('next-member-practice-notice');
+  if(schedule&&isPracticeDay(schedule[7])){
+    el.style.display='block';
+    el.innerHTML='<div style="margin-top:10px;padding:12px;background:#fff8e6;border:1px solid #f0d78c;border-radius:12px;font-size:12px;color:#a3821f;line-height:1.7"><div style="font-weight:800;text-align:center;margin-bottom:4px">-練習日-</div>この日は練習日です。体験参加はできません。コートは半面（1/4コート）。参加料金200円（みんB会員100円）。回数券使用不可。5名以下の場合は開催中止する場合がございます。スポログは0.5p溜まります。</div>';
+  }else{
+    el.style.display='none';
+    el.innerHTML='';
+  }
+}
 function renderNextMemberCard(members,schedule,capacityInfo){
   document.getElementById('next-member-loading').style.display='none';
   const card=document.getElementById('next-member-card');
@@ -1481,6 +1492,7 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     const ce1=document.getElementById('next-member-count');
     ce1.textContent='';ce1.onclick=null;ce1.style.cursor='';ce1.style.textDecoration='';
     renderCapacityBanner(null);
+    _renderPracticeNoticeBox(null);
     return;
   }
   document.getElementById('next-member-info').innerHTML=(SPORT_ICON[schedule[4]]||'')+' '+schedule[4]+' ／ '+schedule[0]+'（'+getDow(schedule[0])+'）'+practiceDayBadge(schedule[7],schedule[5]);
@@ -1489,18 +1501,24 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     const ce2=document.getElementById('next-member-count');
     ce2.textContent='';ce2.onclick=null;ce2.style.cursor='';ce2.style.textDecoration='';
     renderCapacityBanner(null);
+    _renderPracticeNoticeBox(schedule);
     card.style.display='block';
     return;
   }
-  const sortedMembers=[...members].sort((a,b)=>{
-    const tierDiff=_nextMemberSortTier(a)-_nextMemberSortTier(b);
-    if(tierDiff!==0)return tierDiff;
-    return _nextMemberDtKey(a[0])-_nextMemberDtKey(b[0]);
-  });
+  // ★追加：練習日は会員種別によるグループ分けをやめ、申込が早い順のまま表示する
+  const isPracticeSchedule=isPracticeDay(schedule[7]);
+  const sortedMembers=isPracticeSchedule
+    ?[...members].sort((a,b)=>_nextMemberDtKey(a[0])-_nextMemberDtKey(b[0]))
+    :[...members].sort((a,b)=>{
+      const tierDiff=_nextMemberSortTier(a)-_nextMemberSortTier(b);
+      if(tierDiff!==0)return tierDiff;
+      return _nextMemberDtKey(a[0])-_nextMemberDtKey(b[0]);
+    });
   // ★追加：キャンセル待ちの順番は、表示用に種別で並べ替える前の「members」本来の順（＝優先度＋申込が早い順）で採番する。
   //         表示は種別ごとにグループ化されるため、表示順のまま採番すると早い者順にならないための対策。
   const waitRankMap=new Map();
   { let idx=0; members.forEach(r=>{ if(r[11]===true){ idx++; waitRankMap.set(r, idx); } }); }
+  let confirmedIdx=0;
   document.getElementById('next-member-list').innerHTML=sortedMembers.map(r=>{
     const isMe=r[4]===mypageCurrentUser.fullname;
     const isNew=r[9]==='NEW'||r[9]==='初参加';
@@ -1517,7 +1535,10 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     // ★追加：キャンセル待ちは早い順に①②③…を名前の前に付与（会員の増減で順位も自動で変わる）
     let waitRank='';
     if(isWaitlisted){const n=waitRankMap.get(r)||0;const circled=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];waitRank=(circled[n-1]||('('+n+')'))+' ';}
-    return'<span class="member-chip" style="'+colorStyle+(isMe&&!isWaitlisted?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(isWaitlisted?'⏳':(r[7]||'⭕'))+' '+waitRank+displayName+(isNew?'<span class="hatsu-badge">初</span>':'')+(isWaitlisted?'<span class="new-badge" style="background:#999">待機</span>':'')+(isMe?' 👈':'')+'</span>';
+    // ★追加：練習日は確定メンバーに申込順の番号を振る
+    let orderNum='';
+    if(isPracticeSchedule&&!isWaitlisted){confirmedIdx++;orderNum=confirmedIdx+'. ';}
+    return'<span class="member-chip" style="'+colorStyle+(isMe&&!isWaitlisted?'border-color:#4CAF50;background:#f0fdf4;':'')+'">'+(isWaitlisted?'⏳':(r[7]||'⭕'))+' '+waitRank+orderNum+displayName+(isNew?'<span class="hatsu-badge">初</span>':'')+(isWaitlisted?'<span class="new-badge" style="background:#999">待機</span>':'')+(isMe?' 👈':'')+'</span>';
   }).join('');
   const confirmedCount=members.filter(r=>(r[7]||'⭕')!=='❌'&&r[11]!==true).length;
   const waitCount=members.filter(r=>r[11]===true).length;
@@ -1534,6 +1555,7 @@ function renderNextMemberCard(members,schedule,capacityInfo){
     countEl.onclick=null;
   }
   renderCapacityBanner(capacityInfo);
+  _renderPracticeNoticeBox(schedule);
   card.style.display='block';
 }
 
