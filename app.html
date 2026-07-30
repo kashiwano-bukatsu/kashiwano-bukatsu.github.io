@@ -1436,7 +1436,18 @@ async function loadMypageData(checkNotice,updateRankCache){
     else if(ptCard){ptCard.style.display='none';}
     // 会員向けお知らせ
     loadMemberNotices();
-  }catch(e){document.getElementById('mypage-progress-area').innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';}
+  }catch(e){
+    const area=document.getElementById('mypage-progress-area');
+    if(e.message==='処理中です'){
+      // ★同時に別の読み込みが進行中なだけ（エラーではない）ので、ぐるぐる+読み込み中メッセージを表示。
+      //   先に走っている方の読み込みが終われば同じ場所に正しいデータが反映されるが、
+      //   念のため少し待ってからもう一度だけ読み込みを試みる
+      area.innerHTML='<div style="text-align:center;padding:24px 0"><div class="prep-spinner" style="border-color:rgba(255,255,255,0.15);border-top-color:#FFD93D;margin:0 auto 10px"></div><div style="font-size:13px;color:rgba(255,255,255,0.6)">読み込み中…</div></div>';
+      setTimeout(()=>{ if(mypageCurrentUser) loadMypageData(); }, 1200);
+    } else {
+      area.innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';
+    }
+  }
 }
 
 async function initReserveTab(){
