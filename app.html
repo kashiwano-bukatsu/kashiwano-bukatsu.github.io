@@ -12,21 +12,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Helvetica Neue',sans-serif}
-body{background:#f0f4f8;color:#1a1a2e;font-size:16px}
-.wrapper{width:100%;max-width:600px;margin:0 auto;background:#f0f4f8}
-.header{background:linear-gradient(135deg,#2d4a7a 0%,#1a3a5c 50%,#0f2744 100%);color:#fff;padding:20px 16px 14px;text-align:center;position:relative;overflow:hidden}
-.header::before{content:'';position:absolute;top:-40px;right:-20px;width:130px;height:130px;border-radius:50%;background:rgba(74,197,80,0.12)}
-.header h1{font-size:22px;font-weight:800;letter-spacing:1px;position:relative}
-.header p{font-size:12px;color:rgba(255,255,255,0.65);margin-top:5px;position:relative}
-.header-ver{text-align:right;font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;position:relative}
+:root{--header-h:84px}
+/* ★背景：v11プロトタイプの質感(スペックル+斜めグレイン)を採用。会場の床のような落ち着いた質感 */
+body{
+  color:#1a1a2e;font-size:16px;
+  background:
+    radial-gradient(circle at 18% 12%,rgba(255,255,255,.06) 0 2px,transparent 3px),
+    radial-gradient(circle at 55% 38%,rgba(255,255,255,.05) 0 2px,transparent 3px),
+    radial-gradient(circle at 82% 70%,rgba(0,0,0,.05) 0 2px,transparent 3px),
+    radial-gradient(circle at 32% 82%,rgba(0,0,0,.04) 0 2px,transparent 3px),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.5) 0 3px,transparent 3px 7px),
+    repeating-linear-gradient(25deg,rgba(26,58,92,.02) 0 3px,transparent 3px 7px),
+    linear-gradient(160deg,#eef2f7,#e4eaf1);
+  background-size:38px 38px,44px 44px,50px 50px,42px 42px,auto,auto,auto;
+  background-attachment:fixed;
+}
+.wrapper{width:100%;max-width:600px;margin:0 auto;padding-top:var(--header-h)}
 
-/* タブ */
-.tabs{display:flex;background:#fff;border-bottom:1px solid #e8ecf0;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.tab{flex:1;padding:12px 2px;font-size:12px;text-align:center;cursor:pointer;color:#999;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:600;transition:color 0.2s}
-.tab.active{color:#1a3a5c;border-bottom-color:#4CAF50}
+/* ★ヘッダー：常に画面最上部に固定・横幅いっぱい・白背景 */
+.header{background:#fff;padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top,0px));text-align:center;position:fixed;top:0;left:0;right:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,0.06)}
+.header img{height:38px;display:block;margin:0 auto;object-fit:contain}
+.header p{font-size:11.5px;color:#8a97a8;margin-top:6px;font-weight:600}
+.header-ver{text-align:center;font-size:9px;color:#c3ccd6;margin-top:2px}
+
+/* タブ：ヘッダー直下に固定表示。ピル型のセグメントコントロール */
+.tabs{display:flex;gap:6px;background:transparent;position:sticky;top:var(--header-h);z-index:40;padding:10px 12px 8px;backdrop-filter:blur(2px)}
+.tab{flex:1;padding:10px 2px;font-size:12px;text-align:center;cursor:pointer;color:#7a8aa0;border:none;background:#fff;border-radius:999px;font-weight:700;transition:all 0.2s;box-shadow:0 1px 4px rgba(26,58,92,0.08)}
+.tab.active{color:#fff;background:linear-gradient(135deg,#1a3a5c,#0f2744);box-shadow:0 3px 10px rgba(26,58,92,0.35)}
 .tab.hidden{display:none}
 .section{display:none;padding:14px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 .section.active{display:block}
+
 
 /* カード */
 .card{background:#fff;border-radius:20px;padding:20px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.07)}
@@ -155,31 +171,50 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 .view-members-btn{width:100%;padding:12px;background:#f0f4f8;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;color:#555}
 .reserve-member-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f4f8;font-size:14px}
 .reserve-member-item:last-child{border-bottom:none}
-@keyframes bar{from{width:0}to{width:40px}}
-@keyframes splashLogo{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
+@keyframes splashFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes prepSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 @keyframes newBlink{0%,100%{opacity:1}50%{opacity:0.35}}
 .new-pulse-badge{display:inline-block;background:linear-gradient(135deg,#ff6b6b,#ee3344);color:#fff;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;vertical-align:middle;animation:newBlink 1.6s ease-in-out infinite}
 .prep-spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#1a3a5c;border-radius:50%;animation:prepSpin 1s linear infinite;margin:0 auto 8px}
 @keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes spolog-pip-pulse{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 10px rgba(255,193,7,0.7)}}
+.spolog-pip-pulse{animation:spolog-pip-pulse 1.2s infinite}
 @media(min-width:600px){.wrapper{box-shadow:0 0 40px rgba(0,0,0,0.1)}}
 
 /* キャンペーンバナー */
 .campaign-banner{background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5d060;border-radius:14px;padding:14px;margin-top:12px;text-align:center}
+
+/* ===== スポログ専用ページ：V10のダーク×赤金アリーナ演出。ヘッダー非表示・背景は画面いっぱいに（フェード切替） ===== */
+#dark-bg-overlay{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% -10%,#3a1410,#100504 68%);opacity:0;transition:opacity .4s ease;pointer-events:none}
+body.sporolog-page #dark-bg-overlay{opacity:1}
+.wrapper{position:relative;z-index:1;transition:padding-top .35s ease}
+.header{transition:opacity .3s ease,transform .3s ease}
+body.sporolog-page .header{opacity:0;transform:translateY(-6px);pointer-events:none}
+body.sporolog-page .wrapper{padding-top:0}
+#section-sporolog{
+  margin:-14px -14px 0;padding:0;
+}
+.sporolog-arena{position:relative;padding:22px 18px 40px;padding-top:calc(22px + env(safe-area-inset-top,0px));overflow:hidden}
+.sporolog-arena::before{
+  content:'';position:absolute;inset:0;opacity:.15;pointer-events:none;
+  background:repeating-linear-gradient(115deg,#FF5C33 0 3px,transparent 3px 40px);
+}
+.sporolog-eyebrow{position:relative;text-align:center;font-size:11px;font-weight:900;letter-spacing:.35em;color:#FF9A5C}
+.sporolog-arenatitle{position:relative;text-align:center;font-size:22px;font-weight:900;letter-spacing:.06em;color:#fff;margin-top:4px}
+.sporolog-arenasub{position:relative;text-align:center;font-size:11.5px;color:#e8a88a;margin-top:2px;margin-bottom:8px}
+#section-sporolog #sporolog-card{position:relative;margin-top:18px}
 </style>
 </head>
 <body>
+<div id="dark-bg-overlay"></div>
 
-<div id="splash" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;transition:opacity 0.6s ease;">
-  <img src="logo.png" style="width:90px;height:90px;object-fit:contain;margin-bottom:16px;animation:splashLogo 0.8s ease forwards;opacity:0" alt="ロゴ">
-  <div style="font-size:13px;color:#888;letter-spacing:3px;margin-bottom:6px;font-weight:500">Kashiwa no</div>
-  <div style="font-size:32px;font-weight:900;letter-spacing:4px;color:#1a1a2e">BUKATSU</div>
-  <div style="margin-top:20px;width:40px;height:3px;background:linear-gradient(90deg,#4CAF50,#1a3a5c);border-radius:2px;animation:bar 1.5s ease forwards;"></div>
+<div id="splash" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;transition:opacity 1.1s ease;overflow:hidden">
+  <img src="opening.jpg" style="width:100%;height:100%;object-fit:cover;display:block;animation:splashFadeIn 1.6s ease forwards;opacity:0" alt="カシワのBUKATSU">
 </div>
 
 <div class="wrapper">
 <div class="header">
-  <h1>カシワのBUKATSU</h1>
+  <img src="bukatsu-logo.png" alt="カシワのBUKATSU">
   <p id="today-info">読み込み中...</p>
   <div id="app-version" class="header-ver"></div>
 </div>
@@ -313,15 +348,15 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
       </div>
     </div>
 
-    <div class="card" id="sporolog-card">
-      <div class="card-title"><div class="card-title-dot"></div>スポログ</div>
-      <div style="display:flex;gap:6px;margin-bottom:12px">
-        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-total-count">0</div><div style="font-size:9px;color:#888;margin-top:2px">累計参加</div></div>
-        <div style="flex:1;background:#f5f7ff;border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(26,58,92,0.07)"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-month-count">0</div><div style="font-size:9px;color:#888;margin-top:2px">今月</div></div>
-        <div id="ticket-stat-box" onclick="openTicketModal()" style="flex:1;background:linear-gradient(135deg,#f0fdf4,#e8f5e9);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(74,197,80,0.15);cursor:pointer"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-ticket-count">0枚</div><div style="font-size:9px;color:#888;margin-top:2px">無料チケット</div></div>
-        <div id="halfprice-stat-box" onclick="openHalfPriceModal()" style="flex:1;background:linear-gradient(135deg,#fff8e1,#ffecd2);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(245,124,0,0.15);cursor:pointer"><div style="font-size:20px;font-weight:800;color:#1a1a2e" id="mypage-halfprice-count">0枚</div><div style="font-size:9px;color:#888;margin-top:2px">200円引</div></div>
+    <div class="card" id="sporolog-link-card" onclick="goSporlogTab()" style="cursor:pointer;background:linear-gradient(135deg,#fff9e6,#fff4d6);border:1.5px solid rgba(246,201,69,0.5)">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="font-size:30px">🎫</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800;color:#1a1a2e">スポログ</div>
+          <div style="font-size:12px;color:#8a7030;margin-top:2px">参加記録・獲得チケットはこちら</div>
+        </div>
+        <div style="font-size:20px;color:#c8a415">›</div>
       </div>
-      <div id="mypage-progress-area"></div>
     </div>
     <!-- 活動記録 -->
     <div id="videos-card" class="card" style="display:none">
@@ -339,6 +374,34 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
   </div>
 </div>
 
+<!-- スポログタブ（下タブ中央のダイヤボタンから遷移）：V10のダーク×赤金アリーナ演出に寄せたデザイン -->
+<div id="section-sporolog" class="section">
+  <div class="sporolog-arena">
+    <div class="sporolog-eyebrow">SPOROLOG</div>
+    <div class="sporolog-arenatitle">参加ログ</div>
+    <div class="sporolog-arenasub">参加するたびに、記録が積み上がる</div>
+
+    <div style="position:relative;margin-top:8px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,217,61,0.3);box-shadow:0 6px 18px rgba(0,0,0,0.4)">
+      <img src="sporolog-banner.jpg" alt="" style="width:100%;display:block;aspect-ratio:4/3;object-fit:cover">
+    </div>
+
+    <div id="sporolog-visitor-note" style="display:none;text-align:center;padding:30px 16px">
+      <div style="font-size:28px">🔒</div>
+      <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.75);margin-top:8px">スポログは会員限定機能です</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px">本会員登録でご利用いただけます</div>
+    </div>
+
+    <div id="sporolog-card">
+      <div style="display:flex;gap:6px;margin-bottom:18px">
+        <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,217,61,0.18);border-radius:12px;padding:10px 6px;text-align:center"><div style="font-size:19px;font-weight:800;color:#FFD93D" id="mypage-total-count">0</div><div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px">累計参加</div></div>
+        <div style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,217,61,0.18);border-radius:12px;padding:10px 6px;text-align:center"><div style="font-size:19px;font-weight:800;color:#FFD93D" id="mypage-month-count">0</div><div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px">今月</div></div>
+        <div id="ticket-stat-box" onclick="openTicketModal()" style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(255,217,61,0.18);cursor:pointer"><div style="font-size:19px;font-weight:800;color:#FFD93D" id="mypage-ticket-count">0枚</div><div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px">無料チケット</div></div>
+        <div id="halfprice-stat-box" onclick="openHalfPriceModal()" style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(255,217,61,0.18);cursor:pointer"><div style="font-size:19px;font-weight:800;color:#FFD93D" id="mypage-halfprice-count">0枚</div><div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px">200円引</div></div>
+      </div>
+      <div id="mypage-progress-area"></div>
+    </div>
+  </div>
+</div>
 <!-- 予約タブ -->
 <div id="section-reserve" class="section">
   <div id="reserve-login-required" class="card" style="display:none">
@@ -954,8 +1017,8 @@ window.addEventListener('load',()=>{
   const splash=document.getElementById('splash');
   const skipSplash=sessionStorage.getItem('bukatsu_skip_splash')==='true';
   sessionStorage.removeItem('bukatsu_skip_splash');
-  const splashDelay=skipSplash?0:1800;
-  const fadeDelay=skipSplash?0:600;
+  const splashDelay=skipSplash?0:2600;
+  const fadeDelay=skipSplash?0:1100;
   setTimeout(()=>{
     splash.style.opacity='0';
     setTimeout(()=>{
@@ -972,7 +1035,7 @@ window.addEventListener('load',()=>{
 });
 
 function showTab(t){
-  if(MAINTENANCE_MODE&&!mypageCurrentUser&&(t==='mypage'||t==='reserve'||t==='referral')){
+  if(MAINTENANCE_MODE&&!mypageCurrentUser&&(t==='mypage'||t==='reserve'||t==='referral'||t==='sporolog')){
     showMaintenancePopup();
     return;
   }
@@ -980,9 +1043,18 @@ function showTab(t){
     document.getElementById('tab-'+x).classList.toggle('active',x===t);
     document.getElementById('section-'+x).classList.toggle('active',x===t);
   });
+  const sporologSection=document.getElementById('section-sporolog');
+  if(sporologSection)sporologSection.classList.toggle('active',t==='sporolog');
   if(t==='home')loadHomeData();
   if(t==='reserve'){initReserveTab();}
   if(t==='referral'){initReferralTab();}
+  if(t==='sporolog'){loadMypageData();}
+}
+
+// ★下タブ中央のダイヤボタン用：未ログインならマイページ（ログイン画面）へ誘導
+function goSporlogTab(){
+  if(!mypageCurrentUser){showTab('mypage');return;}
+  showTab('sporolog');
 }
 
 function updateTabVisibility(){
@@ -1110,7 +1182,12 @@ function showMypageMain(){
   const ub=document.getElementById('upgrade-banner');
   if(ub)ub.style.display=isVisitor(mypageCurrentUser.type)?'block':'none';
   const sc=document.getElementById('sporolog-card');
-  if(sc)sc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
+  const slc=document.getElementById('sporolog-link-card');
+  const svn=document.getElementById('sporolog-visitor-note');
+  const isVisitorNow=isVisitor(mypageCurrentUser.type);
+  if(sc)sc.style.display=isVisitorNow?'none':'block';
+  if(slc)slc.style.display=isVisitorNow?'none':'block';
+  if(svn)svn.style.display=isVisitorNow?'block':'none';
   // 活動記録ボタン（誰でもタップ可能、限定判定はvideos.html側）
   const vc=document.getElementById('videos-card');
   if(vc){
@@ -1126,7 +1203,7 @@ function showMypageMain(){
 
 // スタンプカード風に進捗を表示（丸を線でつなぎ、現在地にマスコットを配置）
 // 進捗の色を「緑→黄緑→アンバー→ゴールド」へ滑らかに補間する
-const SPOROLOG_COLOR_STOPS = [[56,142,60],[124,179,66],[251,192,45],[255,193,7],[255,215,0]];
+const SPOROLOG_COLOR_STOPS = [[196,30,20],[230,74,42],[255,124,51],[255,180,61],[255,217,61]];
 function sporologColorAt(t){
   t = Math.max(0, Math.min(1, t));
   const segs = SPOROLOG_COLOR_STOPS.length - 1;
@@ -1141,56 +1218,68 @@ function sporologColorAt(t){
 }
 
 function buildSporlogBoard(progress, lap){
-  const MASCOT = '<img src="konpei.gif" style="width:24px;height:30px;object-fit:contain;display:block">'; // コンペイ歩行GIF
+  const MASCOT = '<img src="konpei.gif" style="width:22px;height:27px;object-fit:contain;display:block">'; // コンペイ歩行GIF
   const squares = [1,2,3,4,5,6,7,8,9,10];
   // ★0.5pt対応：スタンプ自体は整数個で数え、半端(0.5)分は「次のスタンプ」を半分だけ着色する。
   //   コンペイ（マスコット）は完全に貯まったスタンプの上にとどまり、1貯まると次に進む。
   const floorProgress = Math.floor(progress);
   const hasHalf = (progress - floorProgress) > 0; // 0.5刻み運用なので実質「端数あり」＝0.5
-  const pct = Math.max(0, Math.min(100, (progress/10*100)));
-  const lineGradient = SPOROLOG_COLOR_STOPS.map(c => 'rgb(' + c.join(',') + ')').join(',');
-  const circleHtml = squares.map(n=>{
+  // ★V10アレンジ：スキュー(斜め)タイルグリッド、ダーク×赤金アリーナ配色（進捗ロジックは既存踏襲）
+  const tilesHtml = squares.map(n=>{
     const done = n <= floorProgress;
     const isHalf = hasHalf && n === floorProgress + 1;
+    const isNext = !done && !isHalf && n === floorProgress + 1;
     const isMilestone = (n === 5 || n === 10);
-    const size = isMilestone ? 34 : 26;
-    const fontSize = isMilestone ? 13 : 11;
     const stepColor = sporologColorAt(n/10);
     const prevColor = sporologColorAt((n-1)/10);
-    let bg = '#fff';
-    if (done) bg = 'linear-gradient(135deg,' + prevColor + ',' + stepColor + ')';
-    else if (isHalf) bg = 'linear-gradient(90deg,' + stepColor + ' 50%, #fff 50%)';
-    const border = (done || isHalf) ? '2px solid ' + stepColor : '2px solid #dde3ec';
-    const color = done ? '#fff' : (isHalf ? stepColor : '#a9b2bf');
-    const glow = (done && n === 10) ? 'box-shadow:0 0 10px rgba(255,215,0,0.8);' : '';
-    let badge='';
-    if(n===5) badge='<div style="position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);background:#ff9800;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">200円引</div>';
-    if(n===10) badge='<div style="position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:1px 4px;white-space:nowrap">🎟️無料</div>';
-    const mascotHtml = (n===floorProgress && floorProgress>0) ? '<div style="position:absolute;z-index:3;top:-'+(size+12)+'px;left:50%;transform:translateX(-50%);width:26px;line-height:1">'+MASCOT+'</div>' : '';
-    return '<div style="position:relative;z-index:2;width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+bg+';border:'+border+';display:flex;align-items:center;justify-content:center;font-size:'+fontSize+'px;font-weight:800;color:'+color+';flex-shrink:0;'+glow+'">'+mascotHtml+n+badge+'</div>';
+    let bg = 'rgba(255,255,255,0.05)', border = '2px solid rgba(255,217,61,0.25)', color = 'rgba(255,217,61,0.35)', boxShadow = '';
+    if (done) { bg = 'linear-gradient(155deg,' + prevColor + ',' + stepColor + ')'; border = '2px solid ' + stepColor; color = '#3a1400'; boxShadow = '0 3px 8px rgba(255,92,51,0.35)'; }
+    else if (isHalf) { bg = 'linear-gradient(90deg,' + stepColor + ' 50%, rgba(255,255,255,0.05) 50%)'; border = '2px solid ' + stepColor; color = stepColor; }
+    else if (isNext) { border = '2px solid ' + stepColor; color = stepColor; }
+    if (done && n === 10) boxShadow = '0 0 10px rgba(255,217,61,0.7)';
+    // ★マイルストーン(5・10)はタイル自体を大きく拡大して目立たせる（文字バッジ・アイコンは無し、番号のみ）
+    //   5は上段の最後・10は下段の最後なので、拡大時に隣の段と被らないよう伸びる向きを分ける
+    //   （5＝下辺を基準に上へ伸ばす／10＝上辺を基準に下へ伸ばす）
+    const scaleStyle = isMilestone ? ' scale(1.3)' : '';
+    const transformOrigin = n===5 ? 'left bottom' : (n===10 ? 'left top' : 'center');
+    const zIndexStyle = isMilestone ? 'z-index:2;' : '';
+    const tileContent = '<span style="display:inline-block;transform:skewX(8deg)">'+n+'</span>';
+    const mascotOnTile = (n===floorProgress && floorProgress>0) ? '<div style="position:absolute;z-index:3;top:-30px;left:50%;transform:translateX(-50%) skewX(8deg);width:22px;line-height:1">'+MASCOT+'</div>' : '';
+    const pulseClass = isNext ? ' spolog-pip-pulse' : '';
+    return '<div class="'+pulseClass.trim()+'" style="position:relative;'+zIndexStyle+'aspect-ratio:1;background:'+bg+';border:'+border+';transform:skewX(-8deg)'+scaleStyle+';transform-origin:'+transformOrigin+';border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:'+(isMilestone?16:12)+'px;font-weight:800;color:'+color+';box-shadow:'+boxShadow+'">'
+      + tileContent
+      + mascotOnTile
+      + '</div>';
   }).join('');
-  const startMascot = floorProgress===0 ? '<div style="position:absolute;z-index:3;top:-38px;left:13px;width:26px;line-height:1">'+MASCOT+'</div>' : '';
+  const startMascot = floorProgress===0 ? '<div style="position:absolute;z-index:3;top:8px;left:8px;width:22px;line-height:1">'+MASCOT+'</div>' : '';
   // 次の特典までの残り回数とラベル（5回目=200円引きチケット／10回目=無料チケット）。0.5刻みなら「あと2.5回」のように表示。
   const nextMilestone = progress < 5 ? 5 : 10;
   const remaining = nextMilestone - progress;
   const remainingLabel = (remaining % 1 === 0) ? String(remaining) : remaining.toFixed(1);
   const nextRewardLabel = nextMilestone === 5 ? '200円引きチケット' : '無料チケット';
   // 10回達成直後（progress===0）はまだ前の周回扱いにして、11回目（progress>=1）になってから「○周目」を表示する
-  const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
+  const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:rgba(255,217,61,0.15);border:1px solid rgba(255,217,61,0.35);color:#FFD93D;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
   // 5回目（200円引きチケット獲得）・10回目（無料チケット獲得）に到達している時だけ、動画を見返せるボタンを出す
-  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#f57c00;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>'
-    : (progress===10) ? '<button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#b8860b;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
+  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#FFB23D;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>'
+    : (progress===10) ? '<button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#FFD93D;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
+  // ★V10踏襲：獲得済みの無料チケットがあればグリッド下にワンタップで見られるボタンを出す（3D立体風ピルボタン）
+  const ticketQuickBtn = (currentTicketCount>0) ? '<button onclick="openTicketModal()" style="display:flex;align-items:center;justify-content:center;gap:6px;margin:16px auto 0;background:linear-gradient(135deg,#FFD93D,#FF9A3D);color:#5a2a00;border:none;border-radius:999px;padding:11px 22px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #C97a1e">🎟️ 獲得チケットを見る（'+currentTicketCount+'枚）</button>' : '';
+  // ★V10踏襲：FINISH MOVE風の特典案内ボックス
+  const finishBox = '<div style="margin-top:22px;border:2px solid #FF5C33;border-radius:10px;padding:14px 16px;position:relative;background:rgba(255,92,51,0.08)">'
+    + '<div style="font:900 10px/1 sans-serif;letter-spacing:.22em;color:#FF9A5C">NEXT REWARD</div>'
+    + '<div style="font-size:17px;font-weight:900;margin-top:6px;color:#FFD93D;text-shadow:1px 1px 0 rgba(122,26,10,0.6)">'+nextMilestone+'回参加で '+nextRewardLabel+'</div>'
+    + '<div style="font-size:11.5px;color:#e8a88a;margin-top:4px">あと'+remainingLabel+'回で達成！</div>'
+    + '</div>';
   return ''+
     '<div style="text-align:center">'+lapLabel+'</div>'+
-    '<div style="font-size:13px;color:#888;margin-bottom:4px">次の無料チケットまで</div>'+
-    '<div style="position:relative;display:flex;justify-content:space-between;align-items:center;padding:46px 13px 20px;overflow-x:auto">'+
+    '<div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-bottom:10px;text-align:center;letter-spacing:.05em">HEAT GAUGE</div>'+
+    '<div style="position:relative;padding:0 4px">'+
       startMascot+
-      '<div style="position:absolute;left:13px;right:13px;top:59px;height:3px;background:#e4e8ee;border-radius:2px;z-index:1"></div>'+
-      '<div style="position:absolute;left:13px;top:59px;height:3px;background:linear-gradient(90deg,'+lineGradient+');border-radius:2px;z-index:1;width:'+pct+'%;max-width:calc(100% - 26px)"></div>'+
-      circleHtml+
+      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:300px;margin:0 auto">'+tilesHtml+'</div>'+
     '</div>'+
-    '<div style="font-size:14px;font-weight:700;margin-top:14px;text-align:center;color:#f57c00">あと'+remainingLabel+'回で'+nextRewardLabel+'</div>'+
-    '<div style="display:flex;justify-content:center;gap:14px;margin-top:8px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button>'+replayBtn+'</div>';
+    finishBox+
+    '<div style="display:flex;justify-content:center;gap:14px;margin-top:10px"><button onclick="openSporlogInfo()" style="font-size:13px;color:rgba(255,255,255,0.6);background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button>'+replayBtn+'</div>'+
+    ticketQuickBtn;
 }
 
 // 5回目・10回目に到達した「最初の1回だけ」動画を見せる（同じ周回内では2回目以降出さない）
@@ -1274,13 +1363,7 @@ async function loadMypageData(checkNotice,updateRankCache){
     currentHalfPriceCount=d.halfPriceTicketCount||0;
     const hpBox=document.getElementById('halfprice-stat-box');
     document.getElementById('mypage-halfprice-count').textContent=currentHalfPriceCount+'枚';
-    if(hpBox){
-      if(currentHalfPriceCount>0){hpBox.style.background='linear-gradient(135deg,#ffe0b2,#ffcc80)';hpBox.style.border='2px solid #f57c00';}
-      else{hpBox.style.background='linear-gradient(135deg,#fff8e1,#ffecd2)';hpBox.style.border='1px solid rgba(245,124,0,0.15)';}
-    }
     const tb=document.getElementById('ticket-stat-box');
-    if(tickets>0){tb.style.background='linear-gradient(135deg,#e8f5e9,#c8e6c9)';tb.style.border='2px solid #4CAF50';}
-    else{tb.style.background='linear-gradient(135deg,#f0fdf4,#e8f5e9)';tb.style.border='1px solid rgba(74,197,80,0.15)';}
     const rank=d.rank||getMemberRank(d.totalCount);
     if(updateRankCache){
       mypageCurrentUser.rank=rank;
@@ -1295,25 +1378,30 @@ async function loadMypageData(checkNotice,updateRankCache){
       mypageCurrentUser.familyPartner=d.familyPartner||null;
       saveCurrentUser();
       const sc=document.getElementById('sporolog-card');
-      if(sc)sc.style.display=isVisitor(mypageCurrentUser.type)?'none':'block';
+      const slc=document.getElementById('sporolog-link-card');
+      const svn=document.getElementById('sporolog-visitor-note');
+      const isVisitorNow=isVisitor(mypageCurrentUser.type);
+      if(sc)sc.style.display=isVisitorNow?'none':'block';
+      if(slc)slc.style.display=isVisitorNow?'none':'block';
+      if(svn)svn.style.display=isVisitorNow?'block':'none';
     }
     applyRankStyle(document.getElementById('mc-main-card'),'mc-card-stars',rank);
     const isMaxed=tickets>0;
     const renderMaxedUI=()=>{
       document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="font-size:13px;color:#b8860b;margin-bottom:6px;font-weight:700">無料チケットあり。タップして使おう！</div>'+
-        '<div class="progress-bar-bg" style="box-shadow:0 0 10px rgba(255,215,0,0.7)"><div class="progress-bar-fill" style="width:100%;background:linear-gradient(90deg,#c8a415,#f5d060,#ffe97a,#f5d060,#c8a415);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite"></div></div>'+
-        '<div style="display:flex;justify-content:space-between;font-size:12px;color:#aaa;margin-top:4px"><span>チケット '+tickets+'枚</span><span>10回で1枚GET</span></div>'+
-        '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:#b8860b">次回参加が無料になります</div>'+
-        '<div style="display:flex;justify-content:center;gap:14px;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:#1a3a5c;background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#b8860b;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button></div>';
+        '<div style="font-size:13px;color:#FFD93D;margin-bottom:6px;font-weight:700;text-align:center">無料チケットあり。タップして使おう！</div>'+
+        '<div style="height:10px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,0.08);box-shadow:0 0 10px rgba(255,217,61,0.5)"><div style="height:100%;background:linear-gradient(90deg,#FF9A3D,#FFD93D,#FFE97A,#FFD93D,#FF9A3D);background-size:300% 100%;animation:goldShimmer 1.5s linear infinite"></div></div>'+
+        '<div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px"><span>チケット '+tickets+'枚</span><span>10回で1枚GET</span></div>'+
+        '<div style="font-size:14px;font-weight:700;margin-top:8px;text-align:center;color:#FFD93D">次回参加が無料になります</div>'+
+        '<div style="display:flex;justify-content:center;gap:14px;margin-top:12px"><button onclick="openSporlogInfo()" style="font-size:13px;color:rgba(255,255,255,0.6);background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button><button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#FFD93D;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button></div>';
     };
     const renderBoardUI=()=>{ document.getElementById('mypage-progress-area').innerHTML = buildSporlogBoard(progress, lap); };
     if(mypageCurrentUser.isApplying){
       document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner"></div><div style="font-size:14px;font-weight:700;color:#888">準備中です</div><div style="font-size:12px;color:#aaa;margin-top:4px">事務局の確認が完了するとご利用いただけます</div></div>';
+        '<div style="text-align:center;padding:8px 0"><div class="prep-spinner" style="border-color:rgba(255,255,255,0.15);border-top-color:#FFD93D"></div><div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7)">準備中です</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px">事務局の確認が完了するとご利用いただけます</div></div>';
     } else if(mypageCurrentUser.isPendingPayment){
       document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px">🔒</div><div style="font-size:14px;font-weight:700;color:#888;margin-top:6px">会員限定コンテンツ</div><div style="font-size:12px;color:#aaa;margin-top:4px">入会費のお支払い確認後、スポログ機能が解放されます</div></div>';
+        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px">🔒</div><div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7);margin-top:6px">会員限定コンテンツ</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px">入会費のお支払い確認後、スポログ機能が解放されます</div></div>';
     } else if(isMaxed){
       renderMaxedUI();
       if(shouldShowSporlogAnim(10,lap)) playSporlogAnim('achievement10.mp4', ()=>{});
@@ -2892,15 +2980,23 @@ getTypeClass=function(type){
 /* 下タブ */
 body{padding-bottom:70px}
 .tabs{display:none !important}
-.bottom-tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e0e8f0;display:flex;z-index:100;max-width:600px;margin:0 auto;box-shadow:0 -2px 12px rgba(0,0,0,0.08);padding-bottom:env(safe-area-inset-bottom,0px)}
-.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:none;background:none;padding:8px 2px;gap:3px;-webkit-tap-highlight-color:transparent}
-.bottom-tab svg{width:26px;height:26px;transition:transform 0.15s}
-.bottom-tab span{font-size:10px;font-weight:600;color:#aaa;transition:color 0.15s}
-.bottom-tab.active span{color:#4CAF50}
+.bottom-tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid #e8ecf0;border-radius:20px 20px 0 0;display:flex;z-index:100;max-width:600px;margin:0 auto;box-shadow:0 -4px 16px rgba(26,58,92,0.1);padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px))}
+.bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:none;background:none;border-radius:14px;padding:6px 2px;gap:2px;-webkit-tap-highlight-color:transparent;transition:background 0.2s}
+.bottom-tab.active{background:linear-gradient(135deg,rgba(76,197,80,0.14),rgba(26,58,92,0.08))}
+.bottom-tab svg{width:24px;height:24px;transition:transform 0.15s}
+.bottom-tab span{font-size:10px;font-weight:700;color:#aaa;transition:color 0.15s}
+.bottom-tab.active span{color:#1a3a5c}
 .bottom-tab.active svg path,.bottom-tab.active svg circle,.bottom-tab.active svg rect,.bottom-tab.active svg ellipse{fill:#4CAF50 !important}
 .bottom-tab.hidden{display:none}
-/* ヘッダーにログアウトボタン */
-.header-logout{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;display:none;z-index:2}
+.bottom-tabs .spacer{flex:0.9}
+/* ★v11踏襲：中央せり出しスポログボタン（ひし形） */
+.center-btn{position:absolute;left:50%;top:-26px;transform:translateX(-50%) rotate(45deg);width:56px;height:56px;border-radius:16px;background:radial-gradient(circle at 30% 25%,#FFDE73,#F6C945 60%,#E5B32E);border:4px solid #fff;box-shadow:0 6px 14px rgba(26,58,92,0.35);z-index:2;cursor:pointer;animation:centerBtnBreathe 2.6s ease-in-out infinite;-webkit-tap-highlight-color:transparent}
+.center-btn::before{content:'';position:absolute;inset:-8px;border-radius:18px;border:2px solid rgba(246,201,69,0.55)}
+.center-inner{position:absolute;inset:0;transform:rotate(-45deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:9px;font-weight:900;color:#1a3a5c}
+.center-btn.on-page{animation:none;background:radial-gradient(circle at 30% 25%,#FFDE73,#F6C945 55%,#D9A322)}
+@keyframes centerBtnBreathe{0%,100%{transform:translateX(-50%) rotate(45deg) scale(1)}50%{transform:translateX(-50%) rotate(45deg) scale(1.07)}}
+/* ヘッダーにログアウトボタン（★白背景ヘッダーに合わせて色調整） */
+.header-logout{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#f0f4f8;border:1px solid #e0e8f0;color:#5a6b80;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;display:none;z-index:2}
 /* 会員証ボタン */
 .member-card-open-btn{display:block;width:100%;margin-bottom:12px;padding:14px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:0.5px}
 </style>
@@ -2912,22 +3008,26 @@ document.addEventListener('DOMContentLoaded', function(){
   const userSVG = `<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5.5" fill="#aaa"/><path d="M5 25c0-5.5 4-9 9-9s9 3.5 9 9z" fill="#aaa"/></svg>`;
   const calSVG = `<svg viewBox="0 0 28 28" fill="none"><rect x="3" y="6" width="22" height="19" rx="2" fill="#aaa"/><rect x="3" y="6" width="22" height="6" rx="1" fill="#888"/><path d="M3 12h22" stroke="white" stroke-width="0.5"/><path d="M9 3v5M19 3v5" stroke="#aaa" stroke-width="2" stroke-linecap="round"/><rect x="7" y="16" width="4" height="4" rx="1" fill="white"/><rect x="12" y="16" width="4" height="4" rx="1" fill="white"/><rect x="17" y="16" width="4" height="4" rx="1" fill="white"/></svg>`;
   const refSVG = `<svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="10" r="4.5" fill="#aaa"/><circle cx="20" cy="10" r="4.5" fill="#aaa"/><path d="M2 25c0-4 3.5-7 8-7s8 3 8 7z" fill="#aaa"/><path d="M18 18.5c.6-.3 1.3-.5 2-.5 3.5 0 6 2.5 6 6" stroke="#aaa" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+  // ★v11踏襲：中央に盛り上げるスポログボタン用アイコン（ペナント+丸バッジ）
+  const sporologSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-1 0-2 .5-2.4 1.4L4.5 15.5c-.4.9.3 1.9 1.3 1.9h12.4c1 0 1.7-1 1.3-1.9L14.4 4.4C14 3.5 13 3 12 3z"/><circle cx="12" cy="19" r="2.4" fill="#F6C945" stroke="#1a3a5c" stroke-width="1.5"/></svg>`;
 
   const tabs = document.createElement('div');
   tabs.className = 'bottom-tabs';
   tabs.id = 'bottom-tabs';
   tabs.innerHTML = `
     <button class="bottom-tab" id="btab-home" onclick="showTab('home')">${leafSVG}<span>HOME</span></button>
-    <button class="bottom-tab active" id="btab-mypage" onclick="showTab('mypage')">${userSVG}<span>マイページ</span></button>
     <button class="bottom-tab hidden" id="btab-reserve" onclick="showTab('reserve')">${calSVG}<span>予約</span></button>
+    <div class="spacer"></div>
+    <div class="center-btn" id="center-sporolog-btn" onclick="goSporlogTab()" style="display:none"><div class="center-inner">${sporologSVG}<span>スポログ</span></div></div>
+    <div class="spacer"></div>
+    <button class="bottom-tab active" id="btab-mypage" onclick="showTab('mypage')">${userSVG}<span>マイページ</span></button>
     <button class="bottom-tab hidden" id="btab-referral" onclick="showTab('referral')">${refSVG}<span>紹介</span></button>
   `;
   document.body.appendChild(tabs);
 
-  // ヘッダーにログアウトボタン追加
+  // ヘッダーにログアウトボタン追加（★ヘッダーは常にfixedなので position 上書きは不要）
   const header = document.querySelector('.header');
   if(header){
-    header.style.position = 'relative';
     const logoutBtn = document.createElement('button');
     logoutBtn.className = 'header-logout';
     logoutBtn.id = 'header-logout-btn';
@@ -2945,8 +3045,12 @@ const _origShowTab = showTab;
 showTab = function(t){
   _origShowTab(t);
   document.querySelectorAll('.bottom-tab').forEach((b,i)=>{
-    b.classList.toggle('active',['home','mypage','reserve','referral'][i]===t);
+    b.classList.toggle('active',['home','reserve','mypage','referral'][i]===t);
   });
+  const centerBtn=document.getElementById('center-sporolog-btn');
+  if(centerBtn)centerBtn.classList.toggle('on-page',t==='sporolog');
+  // ★スポログページはヘッダー非表示・背景全画面のダーク演出にする
+  document.body.classList.toggle('sporolog-page',t==='sporolog');
 };
 
 // ===== タブ表示更新 =====
@@ -2958,6 +3062,9 @@ updateTabVisibility = function(){
     const el = document.getElementById('btab-'+t);
     if(el) el.classList.toggle('hidden', !loggedIn);
   });
+  // ★未ログイン時は下タブ中央のスポログボタン自体を出さない
+  const centerBtn = document.getElementById('center-sporolog-btn');
+  if(centerBtn) centerBtn.style.display = loggedIn ? '' : 'none';
   // ヘッダーログアウトボタン
   const lb = document.getElementById('header-logout-btn');
   if(lb) lb.style.display = loggedIn ? 'block' : 'none';
@@ -3328,4 +3435,18 @@ mypageLogout = function(){
   const lb = document.getElementById('header-logout-btn');
   if(lb) lb.style.display = 'none';
 };
+</script>
+<script>
+// ===== ヘッダー高さを実測して --header-h に反映（ロゴ画像の読み込み後もズレないように） =====
+function adjustHeaderOffset(){
+  const header = document.querySelector('.header');
+  if(!header) return;
+  const h = header.getBoundingClientRect().height;
+  if (h > 0) document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+document.addEventListener('DOMContentLoaded', adjustHeaderOffset);
+window.addEventListener('load', adjustHeaderOffset);
+window.addEventListener('resize', adjustHeaderOffset);
+const _headerLogoImg = document.querySelector('.header img');
+if (_headerLogoImg) _headerLogoImg.addEventListener('load', adjustHeaderOffset);
 </script>
