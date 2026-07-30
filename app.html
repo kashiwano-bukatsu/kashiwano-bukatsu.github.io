@@ -334,6 +334,7 @@ body.sporolog-page .wrapper{padding-top:0}
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           <button class="open-card-btn" onclick="openMemberCard()">会員証</button>
           <button class="open-card-btn" onclick="openSettings()">設定</button>
+          <button class="open-card-btn" id="mypage-logout-btn" onclick="mypageLogout()">ログアウト</button>
         </div>
       </div>
     </div>
@@ -1219,10 +1220,8 @@ function sporologColorAt(t){
 }
 
 function buildSporlogBoard(progress, lap){
-  const MASCOT = '<img src="konpei.gif" style="width:22px;height:27px;object-fit:contain;display:block">'; // コンペイ歩行GIF
   const squares = [1,2,3,4,5,6,7,8,9,10];
   // ★0.5pt対応：スタンプ自体は整数個で数え、半端(0.5)分は「次のスタンプ」を半分だけ着色する。
-  //   コンペイ（マスコット）は完全に貯まったスタンプの上にとどまり、1貯まると次に進む。
   const floorProgress = Math.floor(progress);
   const hasHalf = (progress - floorProgress) > 0; // 0.5刻み運用なので実質「端数あり」＝0.5
   // ★V10アレンジ：スキュー(斜め)タイルグリッド、ダーク×赤金アリーナ配色（進捗ロジックは既存踏襲）
@@ -1245,14 +1244,11 @@ function buildSporlogBoard(progress, lap){
     const transformOrigin = n===5 ? 'left bottom' : (n===10 ? 'left top' : 'center');
     const zIndexStyle = isMilestone ? 'z-index:2;' : '';
     const tileContent = '<span style="display:inline-block;transform:skewX(8deg)">'+n+'</span>';
-    const mascotOnTile = (n===floorProgress && floorProgress>0) ? '<div style="position:absolute;z-index:3;top:-30px;left:50%;transform:translateX(-50%) skewX(8deg);width:22px;line-height:1">'+MASCOT+'</div>' : '';
     const pulseClass = isNext ? ' spolog-pip-pulse' : '';
     return '<div class="'+pulseClass.trim()+'" style="position:relative;'+zIndexStyle+'aspect-ratio:1;background:'+bg+';border:'+border+';transform:skewX(-8deg)'+scaleStyle+';transform-origin:'+transformOrigin+';border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:'+(isMilestone?16:12)+'px;font-weight:800;color:'+color+';box-shadow:'+boxShadow+'">'
       + tileContent
-      + mascotOnTile
       + '</div>';
   }).join('');
-  const startMascot = floorProgress===0 ? '<div style="position:absolute;z-index:3;top:8px;left:8px;width:22px;line-height:1">'+MASCOT+'</div>' : '';
   // 次の特典までの残り回数とラベル（5回目=200円引きチケット／10回目=無料チケット）。0.5刻みなら「あと2.5回」のように表示。
   const nextMilestone = progress < 5 ? 5 : 10;
   const remaining = nextMilestone - progress;
@@ -1275,7 +1271,6 @@ function buildSporlogBoard(progress, lap){
     '<div style="text-align:center">'+lapLabel+'</div>'+
     '<div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-bottom:10px;text-align:center;letter-spacing:.05em">HEAT GAUGE</div>'+
     '<div style="position:relative;padding:0 4px">'+
-      startMascot+
       '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:300px;margin:0 auto">'+tilesHtml+'</div>'+
     '</div>'+
     finishBox+
@@ -2996,8 +2991,6 @@ body{padding-bottom:70px}
 .center-inner{position:absolute;inset:0;transform:rotate(-45deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:10px;font-weight:900;color:#1a3a5c}
 .center-btn.on-page{animation:none;background:radial-gradient(circle at 30% 25%,#FFDE73,#F6C945 55%,#D9A322)}
 @keyframes centerBtnBreathe{0%,100%{transform:translateX(-50%) rotate(45deg) scale(1)}50%{transform:translateX(-50%) rotate(45deg) scale(1.07)}}
-/* ヘッダーにログアウトボタン（★白背景ヘッダーに合わせて色調整） */
-.header-logout{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:#f0f4f8;border:1px solid #e0e8f0;color:#5a6b80;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;display:none;z-index:2}
 /* 会員証ボタン */
 .member-card-open-btn{display:block;width:100%;margin-bottom:12px;padding:14px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:0.5px}
 </style>
@@ -3025,17 +3018,6 @@ document.addEventListener('DOMContentLoaded', function(){
     <button class="bottom-tab hidden" id="btab-referral" onclick="showTab('referral')">${refSVG}<span>紹介</span></button>
   `;
   document.body.appendChild(tabs);
-
-  // ヘッダーにログアウトボタン追加（★ヘッダーは常にfixedなので position 上書きは不要）
-  const header = document.querySelector('.header');
-  if(header){
-    const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'header-logout';
-    logoutBtn.id = 'header-logout-btn';
-    logoutBtn.textContent = 'ログアウト';
-    logoutBtn.onclick = function(){ mypageLogout(); };
-    header.appendChild(logoutBtn);
-  }
 
   // 設定ボタンのバグ修正：会員カード内のログアウト・設定ボタンを再配置
   // 設定ボタン → openSettings呼び出し確認
@@ -3066,20 +3048,13 @@ updateTabVisibility = function(){
   // ★未ログイン時は下タブ中央のスポログボタン自体を出さない
   const centerBtn = document.getElementById('center-sporolog-btn');
   if(centerBtn) centerBtn.style.display = loggedIn ? '' : 'none';
-  // ヘッダーログアウトボタン
-  const lb = document.getElementById('header-logout-btn');
-  if(lb) lb.style.display = loggedIn ? 'block' : 'none';
 };
 
 // ===== showMypageMainに会員証ボタン追加 =====
 const _origShowMypageMain = showMypageMain;
 showMypageMain = function(){
   _origShowMypageMain();
-  // 会員カードの上に会員証ボタンを追加（重複防止）
   // 会員証ボタンはHTML内に固定済み
-  // 会員カード内のログアウト・設定ボタンを非表示（ヘッダーとの重複回避）
-  const logoutInCard = document.querySelector('.member-card .logout-btn');
-  if(logoutInCard) logoutInCard.style.display = 'none';
 };
 
 
@@ -3417,24 +3392,6 @@ closeSettings = function(){
   const el = document.getElementById('section-settings');
   if(el) el.style.display = 'none';
   document.body.style.overflow = '';
-};
-
-// ヘッダーログアウトを確実に表示
-const _fixShowMypageMain = showMypageMain;
-showMypageMain = function(){
-  _fixShowMypageMain();
-  // ヘッダーログアウトボタン表示
-  const lb = document.getElementById('header-logout-btn');
-  if(lb) lb.style.display = 'block';
-  // 会員カード内のログアウトボタン非表示
-  document.querySelectorAll('.logout-btn').forEach(b => b.style.display = 'none');
-};
-
-const _fixMypageLogout = mypageLogout;
-mypageLogout = function(){
-  _fixMypageLogout();
-  const lb = document.getElementById('header-logout-btn');
-  if(lb) lb.style.display = 'none';
 };
 </script>
 <script>
