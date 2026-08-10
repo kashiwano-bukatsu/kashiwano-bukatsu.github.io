@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>カシワのBUKATSU 受付</title>
+<meta name="theme-color" content="#EFEDE7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BUKATSU受付">
+<style>
+:root{
+  --paper:#EFEDE7;      /* 体育館の床の色みを薄めた紙 */
+  --paper-2:#FBFAF7;
+  --ink:#1C1B19;
+  --ink-3:#6B675F;
+  --line:#DCD8CE;
+  --red:#C0342B;        /* スポログのアリーナ赤 */
+  --gold:#B8912F;
+  --green:#2F6B4A;
+  --shadow:0 1px 0 rgba(28,27,25,.06), 0 8px 24px -12px rgba(28,27,25,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","BIZ UDPGothic",system-ui,sans-serif;
+  font-feature-settings:"palt" 1;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
+}
+button{font-family:inherit}
+.num{font-variant-numeric:tabular-nums}
+
+/* ===== ログイン ===== */
+#login{position:fixed;inset:0;background:var(--paper);z-index:60;display:flex;flex-direction:column;justify-content:center;padding:32px 24px}
+.brand{font-size:11px;letter-spacing:.28em;color:var(--ink-3);margin-bottom:10px}
+.title{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin:0 0 6px}
+.title em{font-style:normal;color:var(--red)}
+.sub{font-size:13px;color:var(--ink-3);margin:0 0 32px;line-height:1.7}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--ink-3);margin-bottom:6px}
+.field input{width:100%;padding:16px;font-size:17px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper-2);color:var(--ink)}
+.field input:focus{outline:none;border-color:var(--ink)}
+.btn-primary{width:100%;padding:18px;font-size:17px;font-weight:800;border:none;border-radius:12px;background:var(--ink);color:var(--paper);cursor:pointer}
+.btn-primary:disabled{opacity:.45}
+.err{display:none;color:var(--red);font-size:13px;font-weight:700;margin-top:12px;text-align:center}
+
+/* ===== ヘッダー ===== */
+header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);padding:14px 18px 10px}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.hdr-date{font-size:12px;letter-spacing:.16em;color:var(--ink-3);margin-bottom:2px}
+.hdr-sport{font-size:24px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.hdr-place{font-size:12px;color:var(--ink-3);margin-top:3px}
+.tally{text-align:right;flex-shrink:0;line-height:1}
+.tally b{font-size:34px;font-weight:800;letter-spacing:-.03em}
+.tally span{font-size:15px;color:var(--ink-3);font-weight:700}
+.tally small{display:block;font-size:10px;letter-spacing:.14em;color:var(--ink-3);margin-top:5px}
+.chips{display:flex;gap:8px;margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chip{flex-shrink:0;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;font-size:13px;font-weight:700;color:var(--ink-3);cursor:pointer}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.practice-flag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;color:var(--gold);border:1.5px solid var(--gold);border-radius:6px;padding:3px 8px}
+
+/* ===== 名簿 ===== */
+.section-label{font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--ink-3);padding:22px 18px 8px}
+.person{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  padding:16px 18px;background:var(--paper-2);border:none;border-bottom:1px solid var(--line);
+  cursor:pointer;position:relative;
+}
+.person:active{background:#F1EFE8}
+.pname{flex:1;min-width:0}
+.pname .n{font-size:19px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname .t{font-size:12px;color:var(--ink-3);margin-top:3px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.04em}
+.b-free{background:var(--gold);color:#fff}
+.b-half{background:#EDE2C4;color:#7A5E14}
+.b-new{background:var(--green);color:#fff}
+.b-warn{background:var(--red);color:#fff}
+.b-tkt{background:#DCE6EA;color:#2A4A57}
+.chev{font-size:22px;color:#C8C3B8;flex-shrink:0}
+
+/* 済 */
+.person.done{background:transparent;pointer-events:none}
+.person.done .pname .n{color:#A7A296;text-decoration:line-through;text-decoration-color:#D3CEC2}
+.person.done .pname .t,.person.done .badges{display:none}
+.stamp{
+  flex-shrink:0;font-size:12px;font-weight:800;color:var(--red);
+  border:2px solid var(--red);border-radius:6px;padding:4px 9px;
+  transform:rotate(-7deg);letter-spacing:.1em;
+}
+.stamp.pop{animation:pop .42s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:rotate(-7deg) scale(2.6);opacity:0}55%{opacity:1}100%{transform:rotate(-7deg) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.stamp.pop{animation:none}}
+
+.empty{padding:48px 24px;text-align:center;color:var(--ink-3);font-size:14px;line-height:1.8}
+.loading{padding:56px;text-align:center;color:var(--ink-3);font-size:14px}
+
+/* ===== フッター ===== */
+footer{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--paper);
+  border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+  display:flex;gap:10px;
+}
+.btn-add{flex:1;padding:16px;font-size:15px;font-weight:800;border:1.5px solid var(--ink);border-radius:12px;background:transparent;color:var(--ink);cursor:pointer}
+.btn-reload{width:56px;border:1.5px solid var(--line);border-radius:12px;background:transparent;font-size:19px;cursor:pointer;color:var(--ink-3)}
+
+/* ===== シート ===== */
+.scrim{position:fixed;inset:0;background:rgba(28,27,25,.5);z-index:40;display:none}
+.scrim.open{display:block}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--paper-2);
+  border-radius:22px 22px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));
+  transform:translateY(101%);transition:transform .26s cubic-bezier(.3,.9,.3,1);
+  max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);
+}
+.sheet.open{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.sheet{transition:none}}
+.sheet h3{margin:0;font-size:23px;font-weight:800;letter-spacing:-.01em}
+.sheet .who-type{font-size:13px;color:var(--ink-3);margin-top:4px}
+.sheet-hint{font-size:12px;color:var(--ink-3);margin:16px 0 10px;font-weight:700;letter-spacing:.1em}
+.opt{
+  display:flex;justify-content:space-between;align-items:center;width:100%;
+  padding:18px;margin-bottom:9px;border:1.5px solid var(--line);border-radius:13px;
+  background:var(--paper-2);cursor:pointer;text-align:left;
+}
+.opt:active{background:#F1EFE8}
+.opt .ol{font-size:16px;font-weight:700}
+.opt .oa{font-size:21px;font-weight:800;letter-spacing:-.02em}
+.opt.tkt{border-color:var(--gold);background:#FCF7EA}
+.opt.tkt .oa{color:var(--gold)}
+.btn-cancel{width:100%;padding:15px;margin-top:6px;background:transparent;border:none;color:var(--ink-3);font-size:15px;font-weight:700;cursor:pointer}
+.custom-row{display:flex;gap:9px;margin-bottom:9px}
+.custom-row input,.custom-row select{flex:1;padding:15px;font-size:16px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper-2);color:var(--ink)}
+.kana-note{font-size:12px;color:var(--ink-3);line-height:1.7;margin:0 0 14px}
+.oc-box{margin-top:18px;padding:16px;border:1.5px dashed var(--gold);border-radius:13px;background:#FCF7EA}
+.oc-box p{margin:0 0 10px;font-size:13px;line-height:1.7;font-weight:700}
+.oc-box a{display:block;text-align:center;padding:15px;background:var(--gold);color:#fff;border-radius:11px;font-weight:800;text-decoration:none;font-size:15px}
+
+/* ===== トースト ===== */
+#toast{
+  position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);
+  background:var(--ink);color:var(--paper);padding:13px 22px;border-radius:999px;font-size:14px;font-weight:700;
+  z-index:70;opacity:0;transition:.24s;pointer-events:none;white-space:nowrap;max-width:92vw;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#blocker{position:fixed;inset:0;background:rgba(239,237,231,.6);z-index:65;display:none}
+#blocker.on{display:block}
+</style>
+</head>
+<body>
+
+<!-- ================= ログイン ================= -->
+<div id="login">
+  <div class="brand">カシワのBUKATSU</div>
+  <h1 class="title">当日<em>受付</em></h1>
+  <p class="sub">お手伝いリーダー専用。<br>このアプリでできるのは当日のチェックインだけです。</p>
+  <div class="field">
+    <label for="li-name">お名前（フルネーム）</label>
+    <input id="li-name" type="text" autocomplete="off" placeholder="山田太郎">
+  </div>
+  <div class="field">
+    <label for="li-pass">合言葉</label>
+    <input id="li-pass" type="password" autocomplete="off" inputmode="text">
+  </div>
+  <button class="btn-primary" id="li-btn" onclick="doLogin()">はじめる</button>
+  <div class="err" id="li-err">お名前か合言葉が違います</div>
+</div>
+
+<!-- ================= メイン ================= -->
+<div id="app" style="display:none">
+  <header>
+    <div class="hdr-top">
+      <div style="min-width:0">
+        <div class="hdr-date num" id="h-date">—</div>
+        <div class="hdr-sport" id="h-sport">—</div>
+        <div class="hdr-place" id="h-place"></div>
+        <div id="h-practice"></div>
+      </div>
+      <div class="tally">
+        <b class="num" id="h-done">0</b><span class="num" id="h-total">/0</span>
+        <small>チェックイン</small>
+      </div>
+    </div>
+    <div class="chips" id="h-chips" style="display:none"></div>
+  </header>
+
+  <div id="list-wrap"><div class="loading">読み込み中…</div></div>
+
+  <footer>
+    <button class="btn-add" onclick="openAdd()">＋ 当日参加を追加</button>
+    <button class="btn-reload" onclick="load()" aria-label="再読み込み">↻</button>
+  </footer>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeSheets()"></div>
+
+<!-- 支払いシート -->
+<div class="sheet" id="pay-sheet">
+  <h3 id="ps-name">—</h3>
+  <div class="who-type" id="ps-type"></div>
+  <div class="sheet-hint">受け取る金額を選ぶ</div>
+  <div id="ps-opts"></div>
+  <button class="btn-cancel" onclick="closeSheets()">閉じる</button>
+</div>
+
+<!-- 当日参加シート -->
+<div class="sheet" id="add-sheet">
+  <h3>当日参加を追加</h3>
+  <p class="kana-note">はじめて来た方を、お名前だけで受付します。<br>カタカナで入力してください。</p>
+  <div class="custom-row">
+    <input id="ad-last" type="text" placeholder="ミョウジ" autocomplete="off">
+    <input id="ad-first" type="text" placeholder="ナマエ" autocomplete="off">
+  </div>
+  <div class="custom-row">
+    <select id="ad-fee">
+      <option value="500">¥500</option>
+      <option value="700">¥700</option>
+      <option value="200">¥200</option>
+      <option value="0">¥0</option>
+    </select>
+  </div>
+  <button class="btn-primary" id="ad-btn" onclick="submitAdd()">受付する</button>
+  <div class="oc-box">
+    <p>受付できたら、この方にオープンチャットをご案内ください。</p>
+    <a id="ad-oc" href="#" target="_blank" rel="noopener">新規さん用オープンチャットを開く</a>
+  </div>
+  <button class="btn-cancel" onclick="closeSheets()">閉じる</button>
+</div>
+
+<div id="blocker"></div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   設定
+   ========================================================= */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+
+/* ▼▼▼ 新規さん用オープンチャットのURLをここに入れてください ▼▼▼ */
+const OPENCHAT_URL = 'https://line.me/ti/g2/XXXXXXXXXXXXXXXX';
+/* ▲▲▲ ここだけ差し替えればOK ▲▲▲ */
+
+/* 料金表：staff.html と完全に同じロジックを移植 */
+const PRACTICE_DAY_FEE = {
+  'カシワのBUKATSU会員': 200, 'ファミリー会員': 200,
+  'みんなのBUKATSU会員': 100, '応援団': 0, '応援団会員': 0
+};
+const PRACTICE_DAY_FREE_TYPES = ['運営','代表','部長','本部','特別会員'];
+const FREE_TYPES = ['運営','代表','部長','本部','特別会員'];
+const TYPE_ORDER = {'代表':0,'運営':1,'部長':2,'応援団':3,'応援団会員':3,'カシワのBUKATSU会員':4,'カシワ会員':4,'みんなのBUKATSU会員':5,'みんB会員':5,'ビジター会員':6,'体験':7};
+
+/* =========================================================
+   共通
+   ========================================================= */
+async function callGAS(func, ...args){
+  const attempt = async () => {
+    const res = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
+    const json = await res.json();
+    if (json.status === 'error') throw new Error(json.message);
+    return json.data;
+  };
+  for (let i=0;i<3;i++){
+    try { return await attempt(); }
+    catch(e){ if(i===2) throw e; await new Promise(r=>setTimeout(r,1000*(i+1))); }
+  }
+}
+function dk(s){ const p=String(s||'').split('/').map(n=>parseInt(n,10)); if(p.length<3||p.some(isNaN)) return 0; return p[0]*10000+p[1]*100+p[2]; }
+function typeOrder(t){ for(const k of Object.keys(TYPE_ORDER)){ if(t&&t.includes(k)) return TYPE_ORDER[k]; } return 8; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2400); }
+function block(on){ document.getElementById('blocker').classList.toggle('on',!!on); }
+
+/* =========================================================
+   ログイン
+   ========================================================= */
+let leader = null;
+
+(function boot(){
+  const saved = localStorage.getItem('bukatsu_leader');
+  if (saved){ try { leader = JSON.parse(saved); showApp(); return; } catch(e){} }
+  document.getElementById('li-name').focus();
+})();
+
+async function doLogin(){
+  const name = document.getElementById('li-name').value.trim();
+  const pass = document.getElementById('li-pass').value.trim();
+  const err  = document.getElementById('li-err');
+  const btn  = document.getElementById('li-btn');
+  err.style.display='none';
+  if(!name || !pass){ err.textContent='お名前と合言葉を入力してください'; err.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='確認中…';
+  try{
+    const r = await callGAS('loginLeader', name, pass);
+    if(!r){ err.textContent='お名前か合言葉が違います'; err.style.display='block'; return; }
+    leader = r;
+    localStorage.setItem('bukatsu_leader', JSON.stringify(r));
+    showApp();
+  }catch(e){
+    err.textContent='つながりませんでした。電波を確認してもう一度お試しください';
+    err.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='はじめる';
+  }
+}
+function showApp(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('ad-oc').href = OPENCHAT_URL;
+  load();
+}
+
+/* =========================================================
+   当日データ
+   ========================================================= */
+let state = { date:'', sport:'', place:'', isBad:false, isPractice:false, sports:[], items:[], done:new Set() };
+
+async function load(){
+  document.getElementById('list-wrap').innerHTML='<div class="loading">読み込み中…</div>';
+  try{
+    const args = state.sport ? [null, state.sport] : [];
+    const [d, tickets, frees, halves] = await Promise.all([
+      callGAS('getStaffDailyData', ...args),
+      callGAS('getAllTickets'),
+      callGAS('getAllFreeTickets'),
+      callGAS('getAllHalfPriceTickets')
+    ]);
+    applyData(d, tickets, frees, halves);
+  }catch(e){
+    document.getElementById('list-wrap').innerHTML='<div class="empty">読み込めませんでした。<br>↻ をタップしてもう一度お試しください。</div>';
+  }
+}
+
+function applyData(d, tickets, frees, halves){
+  const ticketMap={}, freeMap={}, halfMap={};
+  (tickets||[]).forEach(r=>{ ticketMap[r[0]]=Number(r[3]||0); });
+  (frees||[]).forEach(r=>{ freeMap[r[1]]=true; });
+  (halves||[]).forEach(r=>{ halfMap[r[1]]=true; });
+
+  const date  = d.date || d.today;
+  const sport = d.sport || (d.todaySchedule ? d.todaySchedule[4] : '');
+  state.date = date;
+  state.sport = sport;
+  state.place = d.todaySchedule ? (d.todaySchedule[2] || '沼南体育館') : '沼南体育館';
+  state.isBad = sport === 'バドミントン';
+  state.isPractice = !!d.isPracticeDay;
+  state.done = new Set(d.checkedInNames||[]);
+
+  /* 同じ日に複数種目があれば切り替えチップを出す */
+  const todayKey = dk(date);
+  const sportsToday = [];
+  (d.pendingSchedules||[]).forEach(r=>{ if(dk(r[0])===todayKey && r[4] && !sportsToday.includes(r[4])) sportsToday.push(r[4]); });
+  if(sport && !sportsToday.includes(sport)) sportsToday.unshift(sport);
+  state.sports = sportsToday;
+
+  /* 名簿を組み立て */
+  const masterMap={};
+  (d.attendees||[]).forEach(a=>{ masterMap[a[1]]=a; });
+  const items=[];
+  (d.reservations||[]).forEach(r=>{
+    if((r[7]||'⭕')==='❌') return;
+    const m = masterMap[r[4]] || {};
+    items.push({
+      fullname:r[4], nickname:r[5]||r[4],
+      type:m[2]||'ビジター会員', usageMode:m[14]||'スポログ',
+      isNew:false, isMemberTrial:r[8]==='体験参加',
+      remain:ticketMap[r[4]], hasFree:!!freeMap[r[4]], hasHalf:!!halfMap[r[4]]
+    });
+  });
+  (d.tempAttendees||[]).forEach(t=>{
+    if(dk(t[0])!==todayKey) return;
+    if(items.find(i=>i.fullname===t[1])) return;
+    if((d.attendees||[]).find(a=>a[1]===t[1])) return;
+    items.push({ fullname:t[1], nickname:t[1], type:'体験', usageMode:'スポログ', isNew:true, isMemberTrial:false, remain:undefined, hasFree:false, hasHalf:false });
+  });
+  items.sort((a,b)=>typeOrder(a.type)-typeOrder(b.type));
+  state.items = items;
+
+  render();
+}
+
+function render(){
+  const y=state.date||'';
+  document.getElementById('h-date').textContent = y;
+  document.getElementById('h-sport').textContent = state.sport || '開催の予定なし';
+  document.getElementById('h-place').textContent = state.sport ? state.place : '';
+  document.getElementById('h-practice').innerHTML = state.isPractice ? '<span class="practice-flag">⛹️‍♀️ 練習日</span>' : '';
+
+  const chips=document.getElementById('h-chips');
+  if(state.sports.length>1){
+    chips.style.display='flex';
+    chips.innerHTML = state.sports.map(s=>`<button class="chip ${s===state.sport?'on':''}" onclick="switchSport('${esc(s)}')">${esc(s)}</button>`).join('');
+  } else chips.style.display='none';
+
+  const doneCount = state.items.filter(i=>state.done.has(i.fullname)).length;
+  document.getElementById('h-done').textContent = doneCount;
+  document.getElementById('h-total').textContent = '/'+state.items.length;
+
+  const wrap=document.getElementById('list-wrap');
+  if(!state.items.length){
+    wrap.innerHTML = '<div class="empty">' + (state.sport
+      ? '予約している人がいません。<br>下の「＋ 当日参加を追加」から受付できます。'
+      : '今日は開催の予定がありません。') + '</div>';
+    return;
+  }
+
+  const yet  = state.items.filter(i=>!state.done.has(i.fullname));
+  const done = state.items.filter(i=>state.done.has(i.fullname));
+  let html='';
+  html += '<div class="section-label">これから（'+yet.length+'人）</div>';
+  html += yet.length ? yet.map(rowHtml).join('') : '<div class="empty">全員チェックイン済みです。</div>';
+  if(done.length){
+    html += '<div class="section-label">チェックイン済み（'+done.length+'人）</div>';
+    html += done.map(i=>`<div class="person done"><div class="pname"><div class="n">${esc(i.nickname)}</div></div><div class="stamp">済</div></div>`).join('');
+  }
+  wrap.innerHTML=html;
+}
+
+function rowHtml(i){
+  const badges=[];
+  if(i.isNew) badges.push('<span class="badge b-new">はじめて</span>');
+  if(state.isPractice && i.type==='ビジター会員') badges.push('<span class="badge b-warn">練習日は対象外</span>');
+  if(!state.isPractice){
+    if(i.hasFree) badges.push('<span class="badge b-free">🎟️ 無料券</span>');
+    if(i.hasHalf) badges.push('<span class="badge b-half">🎟️ 200円引き</span>');
+    if(i.usageMode==='回数券') badges.push('<span class="badge b-tkt">回数券 残'+(i.remain!=null?i.remain:'?')+'</span>');
+  }
+  return `<button class="person" onclick="openPay('${esc(i.fullname).replace(/'/g,"\\'")}')">
+    <div class="pname">
+      <div class="n">${esc(i.nickname)}</div>
+      <div class="t">${esc(i.type)}</div>
+      ${badges.length?'<div class="badges">'+badges.join('')+'</div>':''}
+    </div>
+    <div class="chev">›</div>
+  </button>`;
+}
+
+function switchSport(s){ state.sport=s; load(); }
+
+/* =========================================================
+   料金の選択肢（staff.html の buildPayOptions と同じ）
+   ========================================================= */
+function buildPayOptions(i){
+  if(state.isPractice){
+    if(PRACTICE_DAY_FREE_TYPES.includes(i.type)) return [{label:'運営',amount:0,method:'運営無料'}];
+    const fee = PRACTICE_DAY_FEE[i.type];
+    if(fee===undefined) return [{label:'練習日は対象外・要確認',amount:'custom'}];
+    return [{label:'練習日',amount:fee,method:'練習日'}];
+  }
+  if(FREE_TYPES.includes(i.type)) return [{label:'運営',amount:0,method:'運営無料'}];
+  if(i.isMemberTrial) return [{label:'体験参加の無料特典',amount:0,method:'体験特典無料'}];
+
+  if(i.usageMode==='回数券'){
+    const rl = '残り'+(i.remain!=null?i.remain:'-')+'枚';
+    if(state.isBad) return [
+      {label:'回数券 ＋ 現金（'+rl+'）',amount:200,useTicket:true,method:'回数券'},
+      {label:'回数券のみ（'+rl+'）',amount:0,useTicket:true,method:'回数券'},
+      {label:'その他',amount:'custom'}
+    ];
+    return [
+      {label:'回数券を使う（'+rl+'）',amount:0,useTicket:true,method:'回数券'},
+      {label:'その他',amount:'custom'}
+    ];
+  }
+
+  const isMinB = ['みんB会員','みんなのBUKATSU会員'].includes(i.type);
+  const isOuen = (i.type==='応援団'||i.type==='応援団会員');
+  let base;
+  if(isMinB){
+    base = state.isBad ? [{label:'現金',amount:400,method:'現金'},{label:'現金',amount:200,method:'現金'}]
+                       : [{label:'現金',amount:200,method:'現金'}];
+  } else if(isOuen){
+    base = [{label:'応援団（月謝に含む）',amount:0,method:'応援団月謝込み'}];
+  } else {
+    base = state.isBad ? [{label:'現金',amount:700,method:'現金'},{label:'現金',amount:500,method:'現金'}]
+                       : [{label:'現金',amount:500,method:'現金'},{label:'現金',amount:700,method:'現金'}];
+  }
+  const baseAmount = isMinB ? 200 : (state.isBad ? 700 : 500);
+  const tkts=[];
+  if(i.hasFree) tkts.push({label:'🎟️ 無料券を使う',amount:0,method:'無料チケット',useFree:true});
+  if(i.hasHalf) tkts.push({label:'🎟️ 200円引きを使う',amount:Math.max(baseAmount-200,0),method:'200円引きクーポン',useHalf:true});
+  return [...base,...tkts,{label:'その他',amount:'custom'}];
+}
+
+/* =========================================================
+   チェックイン
+   ========================================================= */
+let payTarget=null, payOpts=[];
+
+function openPay(fullname){
+  const i = state.items.find(x=>x.fullname===fullname);
+  if(!i) return;
+  payTarget=i;
+  payOpts=buildPayOptions(i);
+  document.getElementById('ps-name').textContent=i.nickname;
+  document.getElementById('ps-type').textContent=i.type+(i.nickname!==i.fullname?'　/　'+i.fullname:'');
+  document.getElementById('ps-opts').innerHTML = payOpts.map((o,n)=>{
+    if(o.amount==='custom') return `<button class="opt" onclick="showCustom()"><span class="ol">${esc(o.label)}</span><span class="oa">…</span></button>`;
+    const cls = (o.useFree||o.useHalf) ? 'opt tkt' : 'opt';
+    return `<button class="${cls}" onclick="checkIn(${n})"><span class="ol">${esc(o.label)}</span><span class="oa num">¥${o.amount}</span></button>`;
+  }).join('') + `<div id="ps-custom" style="display:none">
+      <div class="custom-row">
+        <input id="ps-amt" type="number" inputmode="numeric" placeholder="金額">
+        <select id="ps-reason"><option value="現金">現金</option><option value="無料チケット">無料チケット</option><option value="半額クーポン">半額クーポン</option><option value="その他">その他</option></select>
+      </div>
+      <button class="btn-primary" onclick="checkInCustom()">この金額で受付する</button>
+    </div>`;
+  openSheet('pay-sheet');
+}
+function showCustom(){
+  document.getElementById('ps-custom').style.display='block';
+  document.getElementById('ps-amt').focus();
+}
+
+async function checkIn(n){
+  const o=payOpts[n];
+  if(!o||!payTarget) return;
+  await saveCheckin(payTarget, o.amount, o.method||'現金', o);
+}
+async function checkInCustom(){
+  const amt=parseInt(document.getElementById('ps-amt').value)||0;
+  const reason=document.getElementById('ps-reason').value;
+  await saveCheckin(payTarget, amt, reason, {});
+}
+
+async function saveCheckin(i, amount, method, opt){
+  closeSheets(); block(true);
+  const name=i.nickname;
+  try{
+    /* チケットは先に消費する。無ければ通常料金に切り替えて記録する */
+    if(opt.useFree){
+      const r = await callGAS('useFreeTicket', i.fullname);
+      if(r!=='ok'){ amount = state.isBad?700:500; method='無料券なし・現金振替'; toast('無料券が見つかりません。現金に切り替えました'); }
+    } else if(opt.useHalf){
+      const r = await callGAS('useHalfPriceTicket', i.fullname);
+      if(r!=='ok'){ amount = state.isBad?700:500; method='200円引きなし・現金振替'; toast('200円引きが見つかりません。現金に切り替えました'); }
+    } else if(opt.useTicket){
+      const t = await callGAS('getTicket', i.fullname);
+      if(t && Number(t[3])>0) await callGAS('useTicket', i.fullname);
+      else { amount=500; method='回数券なし・現金振替'; toast('回数券がありません。¥500に切り替えました'); }
+    }
+    await callGAS('addAttendanceLog',
+      [state.date, state.place, state.sport, i.nickname, i.fullname, i.type, amount, method, leader.name]);
+
+    state.done.add(i.fullname);
+    if(opt.useFree) i.hasFree=false;
+    if(opt.useHalf) i.hasHalf=false;
+    render();
+    const st=document.querySelector('.person.done .stamp'); if(st) st.classList.add('pop');
+    toast(name+' さん チェックイン');
+  }catch(e){
+    toast('保存できませんでした。もう一度お試しください');
+  }finally{ block(false); }
+}
+
+/* =========================================================
+   当日参加
+   ========================================================= */
+function openAdd(){
+  if(!state.sport){ toast('今日は開催の予定がありません'); return; }
+  document.getElementById('ad-last').value='';
+  document.getElementById('ad-first').value='';
+  document.getElementById('ad-fee').value = state.isBad?'700':'500';
+  openSheet('add-sheet');
+}
+async function submitAdd(){
+  const last=document.getElementById('ad-last').value.trim();
+  const first=document.getElementById('ad-first').value.trim();
+  const fee=parseInt(document.getElementById('ad-fee').value)||0;
+  if(!last||!first){ toast('ミョウジとナマエを入力してください'); return; }
+  if(!/^[ァ-ヶー]+$/.test(last)||!/^[ァ-ヶー]+$/.test(first)){ toast('カタカナで入力してください'); return; }
+  const name=last+first;
+  const btn=document.getElementById('ad-btn');
+  btn.disabled=true; btn.textContent='受付中…';
+  try{
+    await callGAS('addTempAttendee', name, '', state.sport, state.date, '');
+    await callGAS('addAttendanceLog',
+      [state.date, state.place, state.sport, name, name, '体験', fee, '現金', leader.name]);
+    toast(name+' さん 受付しました');
+    closeSheets();
+    load();
+  }catch(e){
+    toast('受付できませんでした。もう一度お試しください');
+  }finally{ btn.disabled=false; btn.textContent='受付する'; }
+}
+
+/* =========================================================
+   シート開閉
+   ========================================================= */
+function openSheet(id){
+  document.getElementById('scrim').classList.add('open');
+  document.getElementById(id).classList.add('open');
+}
+function closeSheets(){
+  document.getElementById('scrim').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
+}
+document.getElementById('li-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
