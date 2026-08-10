@@ -569,6 +569,9 @@ footer{
     </div>
   </div>
 
+  <div class="sec">うんえい コスト</div>
+  <div class="stats" id="costArea"></div>
+
   <div class="sec">うりあげ すいい（6ヶ月）</div>
   <div class="chart-wrap">
     <div class="chart" id="chartArea"></div>
@@ -624,7 +627,7 @@ setTimeout(()=>{opening.addEventListener('click',enterApp);},11800);
 
 // --- month switcher ---
 // idx=0 は「累計」、それ以降は直近から遡って月を切替
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyAY3AySOTvWK9lRtaP-dhpAn3hFT5mGda91YAOdcEipd0wJhrc9xDJv2YmZpawXTKG/exec';
 
 const now = new Date();
 let curYear = now.getFullYear();
@@ -682,6 +685,7 @@ bT.onclick=()=>{
 // --- fetch + render ---
 function setLoading(){
   document.getElementById('statsArea').innerHTML = '<div class="loading-msg">📡 データ よみこみちゅう…</div>';
+  document.getElementById('costArea').innerHTML='';
   document.getElementById('chartArea').innerHTML='';
   document.getElementById('salesArea').innerHTML='';
   document.getElementById('rankArea').innerHTML='';
@@ -769,6 +773,25 @@ function render(data){
       <div class="lbl">🎟️ チケット販売</div>
       <div class="val">${t.sold}<small>セット</small></div>
       <div class="diff"></div>
+    </div>
+  `;
+
+  // --- うんえい コスト ---
+  const cf = data.courtFee || {total:0};
+  const sh = data.shuttle || {used:0};
+  const ex = data.expense || {total:0};
+  document.getElementById('costArea').innerHTML = `
+    <div class="card">
+      <div class="lbl">体育館代</div>
+      <div class="val">${yen(cf.total)}</div>
+    </div>
+    <div class="card">
+      <div class="lbl">シャトル使用本数</div>
+      <div class="val">${sh.used}<small>本</small></div>
+    </div>
+    <div class="card">
+      <div class="lbl">経費合計</div>
+      <div class="val">${yen(ex.total)}</div>
     </div>
   `;
 
