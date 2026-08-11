@@ -259,6 +259,7 @@ async function callGAS(func, ...args){
   }
 }
 function dk(s){ const p=String(s||'').split('/').map(n=>parseInt(n,10)); if(p.length<3||p.some(isNaN)) return 0; return p[0]*10000+p[1]*100+p[2]; }
+function courtLabel(letters){ if(!letters) return ''; return String(letters).toUpperCase().split('').join('・')+'コート'; }
 function typeOrder(t){ for(const k of Object.keys(TYPE_ORDER)){ if(t&&t.includes(k)) return TYPE_ORDER[k]; } return 8; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2400); }
@@ -329,6 +330,8 @@ function applyData(d, tickets, frees, halves){
   state.date = date;
   state.sport = sport;
   state.place = d.todaySchedule ? (d.todaySchedule[2] || '沼南体育館') : '沼南体育館';
+  state.court = d.todaySchedule ? (d.todaySchedule[8] || '') : '';
+  state.reserver = d.todaySchedule ? (d.todaySchedule[3] || '') : '';
   state.isBad = sport === 'バドミントン';
   state.isPractice = !!d.isPracticeDay;
   state.done = new Set(d.checkedInNames||[]);
@@ -377,7 +380,9 @@ function applyData(d, tickets, frees, halves){
 function render(){
   document.getElementById('h-date').textContent = state.date||'';
   document.getElementById('h-sport').textContent = state.sport || '開催の予定なし';
-  document.getElementById('h-place').textContent = state.sport ? state.place : '';
+  document.getElementById('h-place').textContent = state.sport
+    ? [state.place, courtLabel(state.court), state.reserver ? '予約者：'+state.reserver : ''].filter(Boolean).join('　')
+    : '';
   document.getElementById('h-practice').innerHTML = state.isPractice ? '<span class="practice-flag">⛹️‍♀️ 練習日</span>' : '';
   document.getElementById('h-leader').textContent = leader ? '本日の担当：'+leader.name : '';
 
