@@ -9,12 +9,12 @@
 <meta name="apple-mobile-web-app-title" content="BUKATSU受付">
 <style>
 :root{
-  --paper:#EFEDE7;      /* 体育館の床の色みを薄めた紙 */
+  --paper:#EFEDE7;
   --paper-2:#FBFAF7;
   --ink:#1C1B19;
   --ink-3:#6B675F;
   --line:#DCD8CE;
-  --red:#C0342B;        /* スポログのアリーナ赤 */
+  --red:#C0342B;
   --gold:#B8912F;
   --green:#2F6B4A;
   --shadow:0 1px 0 rgba(28,27,25,.06), 0 8px 24px -12px rgba(28,27,25,.35);
@@ -31,7 +31,6 @@ body{
 button{font-family:inherit}
 .num{font-variant-numeric:tabular-nums}
 
-/* ===== ログイン ===== */
 #login{position:fixed;inset:0;background:var(--paper);z-index:60;display:flex;flex-direction:column;justify-content:center;padding:32px 24px}
 .brand{font-size:11px;letter-spacing:.28em;color:var(--ink-3);margin-bottom:10px}
 .title{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin:0 0 6px}
@@ -45,7 +44,6 @@ button{font-family:inherit}
 .btn-primary:disabled{opacity:.45}
 .err{display:none;color:var(--red);font-size:13px;font-weight:700;margin-top:12px;text-align:center}
 
-/* ===== ヘッダー ===== */
 header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);padding:14px 18px 10px}
 .hdr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .hdr-date{font-size:12px;letter-spacing:.16em;color:var(--ink-3);margin-bottom:2px}
@@ -59,8 +57,8 @@ header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1p
 .chip{flex-shrink:0;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;font-size:13px;font-weight:700;color:var(--ink-3);cursor:pointer}
 .chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 .practice-flag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;color:var(--gold);border:1.5px solid var(--gold);border-radius:6px;padding:3px 8px}
+.leader-tag{display:inline-block;margin-top:8px;margin-left:6px;font-size:11px;font-weight:800;color:var(--ink-3);border:1.5px solid var(--line);border-radius:6px;padding:3px 8px}
 
-/* ===== 名簿 ===== */
 .section-label{font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--ink-3);padding:22px 18px 8px}
 .person{
   display:flex;align-items:center;gap:14px;width:100%;text-align:left;
@@ -80,8 +78,7 @@ header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1p
 .b-tkt{background:#DCE6EA;color:#2A4A57}
 .chev{font-size:22px;color:#C8C3B8;flex-shrink:0}
 
-/* 済 */
-.person.done{background:transparent;pointer-events:none}
+.person.done{background:transparent}
 .person.done .pname .n{color:#A7A296;text-decoration:line-through;text-decoration-color:#D3CEC2}
 .person.done .pname .t,.person.done .badges{display:none}
 .stamp{
@@ -96,7 +93,6 @@ header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1p
 .empty{padding:48px 24px;text-align:center;color:var(--ink-3);font-size:14px;line-height:1.8}
 .loading{padding:56px;text-align:center;color:var(--ink-3);font-size:14px}
 
-/* ===== フッター ===== */
 footer{
   position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--paper);
   border-top:1px solid var(--line);padding:12px 18px calc(12px + env(safe-area-inset-bottom));
@@ -105,7 +101,6 @@ footer{
 .btn-add{flex:1;padding:16px;font-size:15px;font-weight:800;border:1.5px solid var(--ink);border-radius:12px;background:transparent;color:var(--ink);cursor:pointer}
 .btn-reload{width:56px;border:1.5px solid var(--line);border-radius:12px;background:transparent;font-size:19px;cursor:pointer;color:var(--ink-3)}
 
-/* ===== シート ===== */
 .scrim{position:fixed;inset:0;background:rgba(28,27,25,.5);z-index:40;display:none}
 .scrim.open{display:block}
 .sheet{
@@ -130,6 +125,7 @@ footer{
 .opt.tkt{border-color:var(--gold);background:#FCF7EA}
 .opt.tkt .oa{color:var(--gold)}
 .btn-cancel{width:100%;padding:15px;margin-top:6px;background:transparent;border:none;color:var(--ink-3);font-size:15px;font-weight:700;cursor:pointer}
+.btn-danger{width:100%;padding:17px;font-size:16px;font-weight:800;border:none;border-radius:12px;background:var(--red);color:#fff;cursor:pointer;margin-top:16px}
 .custom-row{display:flex;gap:9px;margin-bottom:9px}
 .custom-row input,.custom-row select{flex:1;padding:15px;font-size:16px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper-2);color:var(--ink)}
 .kana-note{font-size:12px;color:var(--ink-3);line-height:1.7;margin:0 0 14px}
@@ -137,7 +133,6 @@ footer{
 .oc-box p{margin:0 0 10px;font-size:13px;line-height:1.7;font-weight:700}
 .oc-box a{display:block;text-align:center;padding:15px;background:var(--gold);color:#fff;border-radius:11px;font-weight:800;text-decoration:none;font-size:15px}
 
-/* ===== トースト ===== */
 #toast{
   position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(14px);
   background:var(--ink);color:var(--paper);padding:13px 22px;border-radius:999px;font-size:14px;font-weight:700;
@@ -150,24 +145,22 @@ footer{
 </head>
 <body>
 
-<!-- ================= ログイン ================= -->
 <div id="login">
   <div class="brand">カシワのBUKATSU</div>
   <h1 class="title">当日<em>受付</em></h1>
-  <p class="sub">お手伝いリーダー専用。<br>このアプリでできるのは当日のチェックインだけです。</p>
+  <p class="sub">カシワのBUKATSU公式<br>リーダー専用チェックインアプリです</p>
   <div class="field">
-    <label for="li-name">お名前（フルネーム）</label>
-    <input id="li-name" type="text" autocomplete="off" placeholder="山田太郎">
+    <label for="li-name">ニックネーム</label>
+    <input id="li-name" type="text" autocomplete="off" placeholder="こんぺい">
   </div>
   <div class="field">
-    <label for="li-pass">合言葉</label>
-    <input id="li-pass" type="password" autocomplete="off" inputmode="text">
+    <label for="li-pass">パスワード</label>
+    <input id="li-pass" type="password" autocomplete="off" inputmode="text" maxlength="4">
   </div>
   <button class="btn-primary" id="li-btn" onclick="doLogin()">はじめる</button>
-  <div class="err" id="li-err">お名前か合言葉が違います</div>
+  <div class="err" id="li-err">ニックネームかパスワードが違います</div>
 </div>
 
-<!-- ================= メイン ================= -->
 <div id="app" style="display:none">
   <header>
     <div class="hdr-top">
@@ -176,6 +169,7 @@ footer{
         <div class="hdr-sport" id="h-sport">—</div>
         <div class="hdr-place" id="h-place"></div>
         <div id="h-practice"></div>
+        <span class="leader-tag" id="h-leader"></span>
       </div>
       <div class="tally">
         <b class="num" id="h-done">0</b><span class="num" id="h-total">/0</span>
@@ -195,7 +189,6 @@ footer{
 
 <div class="scrim" id="scrim" onclick="closeSheets()"></div>
 
-<!-- 支払いシート -->
 <div class="sheet" id="pay-sheet">
   <h3 id="ps-name">—</h3>
   <div class="who-type" id="ps-type"></div>
@@ -204,7 +197,13 @@ footer{
   <button class="btn-cancel" onclick="closeSheets()">閉じる</button>
 </div>
 
-<!-- 当日参加シート -->
+<div class="sheet" id="undo-sheet">
+  <h3 id="us-name">—</h3>
+  <div class="who-type" id="us-detail"></div>
+  <button class="btn-danger" onclick="confirmUndo()">チェックインを取り消す</button>
+  <button class="btn-cancel" onclick="closeSheets()">閉じる</button>
+</div>
+
 <div class="sheet" id="add-sheet">
   <h3>当日参加を追加</h3>
   <p class="kana-note">はじめて来た方を、お名前だけで受付します。<br>カタカナで入力してください。</p>
@@ -232,27 +231,21 @@ footer{
 <div id="toast"></div>
 
 <script>
-/* =========================================================
-   設定
-   ========================================================= */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
 
 /* ▼▼▼ 新規さん用オープンチャットのURLをここに入れてください ▼▼▼ */
 const OPENCHAT_URL = 'https://line.me/ti/g2/XXXXXXXXXXXXXXXX';
 /* ▲▲▲ ここだけ差し替えればOK ▲▲▲ */
 
-/* 料金表：staff.html と完全に同じロジックを移植 */
 const PRACTICE_DAY_FEE = {
   'カシワのBUKATSU会員': 200, 'ファミリー会員': 200,
   'みんなのBUKATSU会員': 100, '応援団': 0, '応援団会員': 0
 };
 const PRACTICE_DAY_FREE_TYPES = ['運営','代表','部長','本部','特別会員'];
-const FREE_TYPES = ['運営','代表','部長','本部','特別会員'];
+/* ★選択肢を出さず、タップ即チェックインにする種別（運営系＋応援団） */
+const INSTANT_TYPES = ['運営','代表','部長','本部','特別会員','応援団','応援団会員'];
 const TYPE_ORDER = {'代表':0,'運営':1,'部長':2,'応援団':3,'応援団会員':3,'カシワのBUKATSU会員':4,'カシワ会員':4,'みんなのBUKATSU会員':5,'みんB会員':5,'ビジター会員':6,'体験':7};
 
-/* =========================================================
-   共通
-   ========================================================= */
 async function callGAS(func, ...args){
   const attempt = async () => {
     const res = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
@@ -271,9 +264,6 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;'
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2400); }
 function block(on){ document.getElementById('blocker').classList.toggle('on',!!on); }
 
-/* =========================================================
-   ログイン
-   ========================================================= */
 let leader = null;
 
 (function boot(){
@@ -288,11 +278,11 @@ async function doLogin(){
   const err  = document.getElementById('li-err');
   const btn  = document.getElementById('li-btn');
   err.style.display='none';
-  if(!name || !pass){ err.textContent='お名前と合言葉を入力してください'; err.style.display='block'; return; }
+  if(!name || !pass){ err.textContent='ニックネームとパスワードを入力してください'; err.style.display='block'; return; }
   btn.disabled=true; btn.textContent='確認中…';
   try{
     const r = await callGAS('loginLeader', name, pass);
-    if(!r){ err.textContent='お名前か合言葉が違います'; err.style.display='block'; return; }
+    if(!r){ err.textContent='ニックネームかパスワードが違います'; err.style.display='block'; return; }
     leader = r;
     localStorage.setItem('bukatsu_leader', JSON.stringify(r));
     showApp();
@@ -310,10 +300,7 @@ function showApp(){
   load();
 }
 
-/* =========================================================
-   当日データ
-   ========================================================= */
-let state = { date:'', sport:'', place:'', isBad:false, isPractice:false, sports:[], items:[], done:new Set() };
+let state = { date:'', sport:'', place:'', isBad:false, isPractice:false, sports:[], items:[], done:new Set(), doneInfo:{} };
 
 async function load(){
   document.getElementById('list-wrap').innerHTML='<div class="loading">読み込み中…</div>';
@@ -346,14 +333,22 @@ function applyData(d, tickets, frees, halves){
   state.isPractice = !!d.isPracticeDay;
   state.done = new Set(d.checkedInNames||[]);
 
-  /* 同じ日に複数種目があれば切り替えチップを出す */
   const todayKey = dk(date);
+
+  /* チェックイン済みの内訳（訂正用に金額・方法を保持） */
+  const doneInfo = {};
+  (d.attendanceLogs||[]).forEach(r=>{
+    if(dk(r[0])===todayKey && r[2]===sport){
+      doneInfo[r[4]] = { nickname:r[3]||r[4], amount:Number(r[6])||0, method:r[7]||'現金' };
+    }
+  });
+  state.doneInfo = doneInfo;
+
   const sportsToday = [];
   (d.pendingSchedules||[]).forEach(r=>{ if(dk(r[0])===todayKey && r[4] && !sportsToday.includes(r[4])) sportsToday.push(r[4]); });
   if(sport && !sportsToday.includes(sport)) sportsToday.unshift(sport);
   state.sports = sportsToday;
 
-  /* 名簿を組み立て */
   const masterMap={};
   (d.attendees||[]).forEach(a=>{ masterMap[a[1]]=a; });
   const items=[];
@@ -380,11 +375,11 @@ function applyData(d, tickets, frees, halves){
 }
 
 function render(){
-  const y=state.date||'';
-  document.getElementById('h-date').textContent = y;
+  document.getElementById('h-date').textContent = state.date||'';
   document.getElementById('h-sport').textContent = state.sport || '開催の予定なし';
   document.getElementById('h-place').textContent = state.sport ? state.place : '';
   document.getElementById('h-practice').innerHTML = state.isPractice ? '<span class="practice-flag">⛹️‍♀️ 練習日</span>' : '';
+  document.getElementById('h-leader').textContent = leader ? '本日の担当：'+leader.name : '';
 
   const chips=document.getElementById('h-chips');
   if(state.sports.length>1){
@@ -410,20 +405,26 @@ function render(){
   html += '<div class="section-label">これから（'+yet.length+'人）</div>';
   html += yet.length ? yet.map(rowHtml).join('') : '<div class="empty">全員チェックイン済みです。</div>';
   if(done.length){
-    html += '<div class="section-label">チェックイン済み（'+done.length+'人）</div>';
-    html += done.map(i=>`<div class="person done"><div class="pname"><div class="n">${esc(i.nickname)}</div></div><div class="stamp">済</div></div>`).join('');
+    html += '<div class="section-label">チェックイン済み（'+done.length+'人・タップで訂正）</div>';
+    html += done.map(i=>`<button class="person done" onclick="openUndo('${esc(i.fullname).replace(/'/g,"\\'")}')"><div class="pname"><div class="n">${esc(i.nickname)}</div></div><div class="stamp">済</div></button>`).join('');
   }
   wrap.innerHTML=html;
 }
 
 function rowHtml(i){
+  if(INSTANT_TYPES.includes(i.type)){
+    return `<button class="person" onclick="quickCheckin('${esc(i.fullname).replace(/'/g,"\\'")}')">
+      <div class="pname"><div class="n">${esc(i.nickname)}</div><div class="t">${esc(i.type)}</div></div>
+      <div class="chev">✓</div>
+    </button>`;
+  }
   const badges=[];
   if(i.isNew) badges.push('<span class="badge b-new">はじめて</span>');
   if(state.isPractice && i.type==='ビジター会員') badges.push('<span class="badge b-warn">練習日は対象外</span>');
   if(!state.isPractice){
     if(i.hasFree) badges.push('<span class="badge b-free">🎟️ 無料券</span>');
     if(i.hasHalf) badges.push('<span class="badge b-half">🎟️ 200円引き</span>');
-    if(i.usageMode==='回数券') badges.push('<span class="badge b-tkt">回数券 残'+(i.remain!=null?i.remain:'?')+'</span>');
+    if(i.remain>0) badges.push('<span class="badge b-tkt">回数券 残'+i.remain+'</span>');
   }
   return `<button class="person" onclick="openPay('${esc(i.fullname).replace(/'/g,"\\'")}')">
     <div class="pname">
@@ -437,9 +438,7 @@ function rowHtml(i){
 
 function switchSport(s){ state.sport=s; load(); }
 
-/* =========================================================
-   料金の選択肢（staff.html の buildPayOptions と同じ）
-   ========================================================= */
+/* ===== 料金の選択肢 ===== */
 function buildPayOptions(i){
   if(state.isPractice){
     if(PRACTICE_DAY_FREE_TYPES.includes(i.type)) return [{label:'運営',amount:0,method:'運営無料'}];
@@ -447,44 +446,28 @@ function buildPayOptions(i){
     if(fee===undefined) return [{label:'練習日は対象外・要確認',amount:'custom'}];
     return [{label:'練習日',amount:fee,method:'練習日'}];
   }
-  if(FREE_TYPES.includes(i.type)) return [{label:'運営',amount:0,method:'運営無料'}];
   if(i.isMemberTrial) return [{label:'体験参加の無料特典',amount:0,method:'体験特典無料'}];
-
-  if(i.usageMode==='回数券'){
-    const rl = '残り'+(i.remain!=null?i.remain:'-')+'枚';
-    if(state.isBad) return [
-      {label:'回数券 ＋ 現金（'+rl+'）',amount:200,useTicket:true,method:'回数券'},
-      {label:'回数券のみ（'+rl+'）',amount:0,useTicket:true,method:'回数券'},
-      {label:'その他',amount:'custom'}
-    ];
-    return [
-      {label:'回数券を使う（'+rl+'）',amount:0,useTicket:true,method:'回数券'},
-      {label:'その他',amount:'custom'}
-    ];
-  }
 
   const isMinB = ['みんB会員','みんなのBUKATSU会員'].includes(i.type);
   const isOuen = (i.type==='応援団'||i.type==='応援団会員');
-  let base;
+  let base, baseAmount;
   if(isMinB){
-    base = state.isBad ? [{label:'現金',amount:400,method:'現金'},{label:'現金',amount:200,method:'現金'}]
-                       : [{label:'現金',amount:200,method:'現金'}];
+    base=[{label:'現金',amount:200,method:'現金'}]; baseAmount=200;
   } else if(isOuen){
-    base = [{label:'応援団（月謝に含む）',amount:0,method:'応援団月謝込み'}];
+    base=[{label:'応援団（月謝に含む）',amount:0,method:'応援団月謝込み'}]; baseAmount=0;
   } else {
-    base = state.isBad ? [{label:'現金',amount:700,method:'現金'},{label:'現金',amount:500,method:'現金'}]
-                       : [{label:'現金',amount:500,method:'現金'},{label:'現金',amount:700,method:'現金'}];
+    baseAmount = state.isBad ? 700 : 500;
+    base=[{label:'現金',amount:baseAmount,method:'現金'}];
   }
-  const baseAmount = isMinB ? 200 : (state.isBad ? 700 : 500);
-  const tkts=[];
-  if(i.hasFree) tkts.push({label:'🎟️ 無料券を使う',amount:0,method:'無料チケット',useFree:true});
-  if(i.hasHalf) tkts.push({label:'🎟️ 200円引きを使う',amount:Math.max(baseAmount-200,0),method:'200円引きクーポン',useHalf:true});
-  return [...base,...tkts,{label:'その他',amount:'custom'}];
+
+  const extra=[];
+  if(i.hasFree) extra.push({label:'🎟️ 無料券を使う',amount:0,method:'無料チケット',useFree:true});
+  if(i.hasHalf) extra.push({label:'🎟️ 200円引きを使う',amount:Math.max(baseAmount-200,0),method:'200円引きクーポン',useHalf:true});
+  if(i.remain>0) extra.push({label:'🎫 回数券を使う（残り'+i.remain+'枚）',amount:0,method:'回数券',useTicket:true});
+  return [...base,...extra,{label:'その他',amount:'custom'}];
 }
 
-/* =========================================================
-   チェックイン
-   ========================================================= */
+/* ===== チェックイン ===== */
 let payTarget=null, payOpts=[];
 
 function openPay(fullname){
@@ -496,7 +479,7 @@ function openPay(fullname){
   document.getElementById('ps-type').textContent=i.type+(i.nickname!==i.fullname?'　/　'+i.fullname:'');
   document.getElementById('ps-opts').innerHTML = payOpts.map((o,n)=>{
     if(o.amount==='custom') return `<button class="opt" onclick="showCustom()"><span class="ol">${esc(o.label)}</span><span class="oa">…</span></button>`;
-    const cls = (o.useFree||o.useHalf) ? 'opt tkt' : 'opt';
+    const cls = (o.useFree||o.useHalf||o.useTicket) ? 'opt tkt' : 'opt';
     return `<button class="${cls}" onclick="checkIn(${n})"><span class="ol">${esc(o.label)}</span><span class="oa num">¥${o.amount}</span></button>`;
   }).join('') + `<div id="ps-custom" style="display:none">
       <div class="custom-row">
@@ -522,12 +505,17 @@ async function checkInCustom(){
   const reason=document.getElementById('ps-reason').value;
   await saveCheckin(payTarget, amt, reason, {});
 }
+async function quickCheckin(fullname){
+  const i = state.items.find(x=>x.fullname===fullname);
+  if(!i) return;
+  const method = (i.type==='応援団'||i.type==='応援団会員') ? '応援団月謝込み' : '運営無料';
+  await saveCheckin(i, 0, method, {});
+}
 
 async function saveCheckin(i, amount, method, opt){
   closeSheets(); block(true);
   const name=i.nickname;
   try{
-    /* チケットは先に消費する。無ければ通常料金に切り替えて記録する */
     if(opt.useFree){
       const r = await callGAS('useFreeTicket', i.fullname);
       if(r!=='ok'){ amount = state.isBad?700:500; method='無料券なし・現金振替'; toast('無料券が見つかりません。現金に切り替えました'); }
@@ -543,8 +531,10 @@ async function saveCheckin(i, amount, method, opt){
       [state.date, state.place, state.sport, i.nickname, i.fullname, i.type, amount, method, leader.name]);
 
     state.done.add(i.fullname);
+    state.doneInfo[i.fullname] = { nickname: i.nickname, amount, method };
     if(opt.useFree) i.hasFree=false;
     if(opt.useHalf) i.hasHalf=false;
+    if(opt.useTicket) i.remain = Math.max((i.remain||1)-1, 0);
     render();
     const st=document.querySelector('.person.done .stamp'); if(st) st.classList.add('pop');
     toast(name+' さん チェックイン');
@@ -553,9 +543,31 @@ async function saveCheckin(i, amount, method, opt){
   }finally{ block(false); }
 }
 
-/* =========================================================
-   当日参加
-   ========================================================= */
+/* ===== チェックインの訂正 ===== */
+let undoTarget=null;
+function openUndo(fullname){
+  const info = state.doneInfo[fullname];
+  if(!info){ toast('この方の内訳が見つかりません'); return; }
+  undoTarget = { fullname, ...info };
+  document.getElementById('us-name').textContent = info.nickname+' さん';
+  document.getElementById('us-detail').textContent = '¥'+info.amount+'　'+info.method;
+  openSheet('undo-sheet');
+}
+async function confirmUndo(){
+  if(!undoTarget) return;
+  closeSheets(); block(true);
+  try{
+    await callGAS('undoAttendanceLog', state.date, state.sport, undoTarget.fullname, undoTarget.method);
+    state.done.delete(undoTarget.fullname);
+    delete state.doneInfo[undoTarget.fullname];
+    toast(undoTarget.nickname+' さんの取り消しをしました');
+    render();
+  }catch(e){
+    toast('取り消せませんでした');
+  }finally{ block(false); }
+}
+
+/* ===== 当日参加 ===== */
 function openAdd(){
   if(!state.sport){ toast('今日は開催の予定がありません'); return; }
   document.getElementById('ad-last').value='';
@@ -584,9 +596,6 @@ async function submitAdd(){
   }finally{ btn.disabled=false; btn.textContent='受付する'; }
 }
 
-/* =========================================================
-   シート開閉
-   ========================================================= */
 function openSheet(id){
   document.getElementById('scrim').classList.add('open');
   document.getElementById(id).classList.add('open');
