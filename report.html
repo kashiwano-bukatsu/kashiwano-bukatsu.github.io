@@ -419,6 +419,34 @@ header h1 span{font-family:'Press Start 2P';font-size:10px;color:var(--gold);dis
 .forecast-day .member:last-child{border-bottom:none;}
 .forecast-day .member .mtype{color:#888;font-size:10px;margin-left:4px;}
 
+/* ★追加：アコーディオン（見込み売上／予定経費の内訳開閉） */
+.acc-toggle{
+  margin:0 14px 0;text-align:center;font-size:11px;color:var(--green-d);
+  background:var(--panel);border:3px solid var(--ink);border-top:none;
+  padding:7px 0;box-shadow:4px 4px 0 var(--shadow);cursor:pointer;
+  user-select:none;
+}
+.acc-toggle:active{background:var(--gold)}
+.acc-body{
+  max-height:0;overflow:hidden;
+  transition:max-height .3s ease;
+}
+.acc-body.open{max-height:4000px;margin-top:10px;}
+
+/* ★追加：予定経費 内訳 */
+.expense-breakdown{
+  margin:0 14px 12px;background:var(--panel);
+  border:3px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);
+  font-size:13px;
+}
+.expense-breakdown .row{
+  display:flex;flex-direction:column;gap:2px;
+  padding:10px 12px;border-bottom:2px dashed #ccc;
+}
+.expense-breakdown .row:last-child{border-bottom:none}
+.expense-breakdown .row .main{display:flex;justify-content:space-between}
+.expense-breakdown .row .note{font-size:10px;color:#888}
+
 footer{
   text-align:center;font-size:10px;color:#8a9;padding:16px 0 24px;
 }
@@ -610,9 +638,19 @@ footer{
 
   <div class="sec">こんげつの みこみ うりあげ（げんざいの よやくぶん）</div>
   <div class="stats" id="forecastTotalArea"></div>
-  <div class="chart-wrap" id="forecastPieArea"></div>
-  <div class="sport-tabs" id="forecastTabBtns"></div>
-  <div id="forecastSportArea"></div>
+  <div class="acc-toggle" id="forecastAccToggle">▼ うちわけを みる</div>
+  <div class="acc-body" id="forecastAccBody">
+    <div class="chart-wrap" id="forecastPieArea"></div>
+    <div class="sport-tabs" id="forecastTabBtns"></div>
+    <div id="forecastSportArea"></div>
+  </div>
+
+  <div class="sec">よてい けいひ（こんげつ のこり分）</div>
+  <div class="stats" id="expenseTotalArea"></div>
+  <div class="acc-toggle" id="expenseAccToggle">▼ うちわけを みる</div>
+  <div class="acc-body" id="expenseAccBody">
+    <div id="expenseBreakdownArea"></div>
+  </div>
 
   <div class="sec">うりあげ すいい（6ヶ月）</div>
   <div class="chart-wrap">
@@ -732,6 +770,8 @@ function setLoading(){
   document.getElementById('forecastPieArea').innerHTML='';
   document.getElementById('forecastTabBtns').innerHTML='';
   document.getElementById('forecastSportArea').innerHTML='';
+  document.getElementById('expenseTotalArea').innerHTML='';
+  document.getElementById('expenseBreakdownArea').innerHTML='';
   document.getElementById('chartArea').innerHTML='';
   document.getElementById('salesArea').innerHTML='';
   document.getElementById('rankArea').innerHTML='';
@@ -870,6 +910,42 @@ function renderForecast(fc){
   }
 }
 
+// ★追加：アコーディオン開閉（見込み売上／予定経費、共通処理）
+function setupAccordion(toggleId, bodyId){
+  const toggle = document.getElementById(toggleId);
+  const body = document.getElementById(bodyId);
+  if(!toggle || !body) return;
+  toggle.onclick = () => {
+    const open = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ とじる' : '▼ うちわけを みる';
+  };
+}
+setupAccordion('forecastAccToggle', 'forecastAccBody');
+setupAccordion('expenseAccToggle', 'expenseAccBody');
+
+// ★追加：よてい けいひ（体育館代＋ガソリン代）を描画
+function renderExpenseForecast(ef){
+  document.getElementById('expenseTotalArea').innerHTML = `
+    <div class="card wide">
+      <div class="lbl">🧾 よてい けいひ ごうけい</div>
+      <div class="val">${yen(ef.total)}</div>
+    </div>
+  `;
+  const gas = ef.gas || {cost:0, trips:0};
+  document.getElementById('expenseBreakdownArea').innerHTML = `
+    <div class="expense-breakdown">
+      <div class="row">
+        <div class="main"><span>体育館代金（予定）</span><span>${yen(ef.courtFee)}</span></div>
+        <div class="note">今月のこり ${ef.trips||0}日ぶんの開催予定</div>
+      </div>
+      <div class="row">
+        <div class="main"><span>ガソリン代（予定）</span><span>${yen(gas.cost)}</span></div>
+        <div class="note">都賀駅⇔沼南体育館 往復${gas.roundTripKm||60}km × ${gas.trips||0}日 ÷ 燃費${gas.efficiency||14}km/L × ¥${gas.price||150}/L</div>
+      </div>
+    </div>
+  `;
+}
+
 function render(data){
   // --- stat cards ---
   const s=data.sales, a=data.attendance, nm=data.newMembers, t=data.tickets;
@@ -918,6 +994,9 @@ function render(data){
 
   // --- こんげつの みこみ うりあげ ---
   renderForecast(data.forecast || {total:0, byType:{}, bySport:{}});
+
+  // --- よてい けいひ ---
+  renderExpenseForecast(data.expenseForecast || {total:0, courtFee:0, trips:0, gas:{cost:0, trips:0}});
 
   // --- 6ヶ月推移 ---
   const trend = data.monthlyTrend || [];
