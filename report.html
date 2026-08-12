@@ -383,6 +383,42 @@ header h1 span{font-family:'Press Start 2P';font-size:10px;color:var(--gold);dis
 .badge.vb{background:var(--orange)}
 .newlist .via{margin-left:auto;font-size:10px;color:#777}
 
+/* ★追加：コストカードの補助数値（シャトルコスト表示用） */
+.card .sub{font-size:10px;color:#888;margin-top:4px}
+
+/* ★追加：見込み売上 円グラフ */
+.pie-wrap{display:flex;align-items:center;gap:16px;padding:14px;}
+.pie{width:110px;height:110px;border-radius:50%;flex-shrink:0;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);}
+.pie-legend{flex:1;font-size:12px;}
+.pie-legend .li{display:flex;align-items:center;gap:6px;padding:4px 0;}
+.pie-legend .sw{width:12px;height:12px;border:2px solid var(--ink);flex-shrink:0;}
+
+/* ★追加：見込み売上 種目タブ */
+.sport-tabs{display:flex;gap:8px;margin:0 14px 10px;}
+.sport-tabs button{
+  flex:1;font-family:'DotGothic16';font-size:12px;
+  border:3px solid var(--ink);background:var(--panel);padding:8px 4px;
+  box-shadow:3px 3px 0 var(--shadow);
+}
+.sport-tabs button.active{background:var(--gold);box-shadow:none;transform:translate(3px,3px);}
+
+/* ★追加：見込み売上 日程ごとの内訳カード */
+.forecast-day{
+  margin:0 14px 12px;background:var(--panel);
+  border:3px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);
+  font-size:12px;
+}
+.forecast-day .head{
+  display:flex;justify-content:space-between;padding:8px 12px;
+  background:#eef6e8;border-bottom:2px dashed #ccc;font-weight:bold;
+}
+.forecast-day .member{
+  display:flex;justify-content:space-between;padding:6px 12px;
+  border-bottom:1px dashed #ddd;
+}
+.forecast-day .member:last-child{border-bottom:none;}
+.forecast-day .member .mtype{color:#888;font-size:10px;margin-left:4px;}
+
 footer{
   text-align:center;font-size:10px;color:#8a9;padding:16px 0 24px;
 }
@@ -572,6 +608,12 @@ footer{
   <div class="sec">うんえい コスト</div>
   <div class="stats" id="costArea"></div>
 
+  <div class="sec">こんげつの みこみ うりあげ（げんざいの よやくぶん）</div>
+  <div class="stats" id="forecastTotalArea"></div>
+  <div class="chart-wrap" id="forecastPieArea"></div>
+  <div class="sport-tabs" id="forecastTabBtns"></div>
+  <div id="forecastSportArea"></div>
+
   <div class="sec">うりあげ すいい（6ヶ月）</div>
   <div class="chart-wrap">
     <div class="chart" id="chartArea"></div>
@@ -686,6 +728,10 @@ bT.onclick=()=>{
 function setLoading(){
   document.getElementById('statsArea').innerHTML = '<div class="loading-msg">📡 データ よみこみちゅう…</div>';
   document.getElementById('costArea').innerHTML='';
+  document.getElementById('forecastTotalArea').innerHTML='';
+  document.getElementById('forecastPieArea').innerHTML='';
+  document.getElementById('forecastTabBtns').innerHTML='';
+  document.getElementById('forecastSportArea').innerHTML='';
   document.getElementById('chartArea').innerHTML='';
   document.getElementById('salesArea').innerHTML='';
   document.getElementById('rankArea').innerHTML='';
@@ -750,6 +796,80 @@ function badgeFor(type){
   return `<span class="badge kb">・</span>`;
 }
 
+// ★追加：こんげつの みこみ うりあげ を描画
+const FORECAST_TYPE_COLOR = {
+  'カシワのBUKATSU会員':'#3e8e5a',
+  'みんなのBUKATSU会員':'#4a7cd6',
+  'ビジター会員':'#f08c3a',
+  '新規体験参加':'#f5c542'
+};
+const FORECAST_SPORTS = ['バスケットボール','バレーボール','バドミントン'];
+let activeForecastSport = FORECAST_SPORTS[0];
+
+function renderForecast(fc){
+  // 全体金額カード
+  document.getElementById('forecastTotalArea').innerHTML = `
+    <div class="card wide">
+      <div class="lbl">💴 ぜんたい みこみ金額</div>
+      <div class="val">${yen(fc.total)}</div>
+    </div>
+  `;
+
+  // 会員種別ごとの円グラフ
+  const byType = fc.byType || {};
+  const typeKeys = Object.keys(byType);
+  if(typeKeys.length===0){
+    document.getElementById('forecastPieArea').innerHTML = '<div class="empty-msg">今後の予約はまだありません</div>';
+  }else{
+    const totalCount = typeKeys.reduce((s,k)=>s+byType[k],0);
+    let acc = 0;
+    const stops = typeKeys.map(k=>{
+      const pct = totalCount ? (byType[k]/totalCount*100) : 0;
+      const from = acc, to = acc + pct;
+      acc = to;
+      return `${FORECAST_TYPE_COLOR[k]||'#999'} ${from}% ${to}%`;
+    }).join(', ');
+    const legend = typeKeys.map(k=>`
+      <div class="li"><span class="sw" style="background:${FORECAST_TYPE_COLOR[k]||'#999'}"></span>${k}：${byType[k]}人</div>
+    `).join('');
+    document.getElementById('forecastPieArea').innerHTML = `
+      <div class="pie-wrap">
+        <div class="pie" style="background:conic-gradient(${stops})"></div>
+        <div class="pie-legend">${legend}</div>
+      </div>
+    `;
+  }
+
+  // 種目タブ
+  document.getElementById('forecastTabBtns').innerHTML = FORECAST_SPORTS.map(sp=>`
+    <button data-sport="${sp}" class="${sp===activeForecastSport?'active':''}">${sp}</button>
+  `).join('');
+  document.querySelectorAll('#forecastTabBtns button').forEach(btn=>{
+    btn.onclick=()=>{
+      activeForecastSport = btn.dataset.sport;
+      renderForecast(fc); // タブ切替時は同じデータで再描画するだけ
+    };
+  });
+
+  // 選択中の種目：日程ごとの予約者一覧と予定売上
+  const days = (fc.bySport && fc.bySport[activeForecastSport]) || [];
+  if(days.length===0){
+    document.getElementById('forecastSportArea').innerHTML = '<div class="empty-msg">この種目の今後の予約はありません</div>';
+  }else{
+    document.getElementById('forecastSportArea').innerHTML = days.map(d=>`
+      <div class="forecast-day">
+        <div class="head"><span>${d.date}</span><span>${yen(d.total)}</span></div>
+        ${d.members.map(m=>`
+          <div class="member">
+            <span>${m.name}<span class="mtype">（${m.type}）</span></span>
+            <span>${yen(m.price)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+  }
+}
+
 function render(data){
   // --- stat cards ---
   const s=data.sales, a=data.attendance, nm=data.newMembers, t=data.tickets;
@@ -778,7 +898,7 @@ function render(data){
 
   // --- うんえい コスト ---
   const cf = data.courtFee || {total:0};
-  const sh = data.shuttle || {used:0};
+  const sh = data.shuttle || {used:0, cost:0};
   const ex = data.expense || {total:0};
   document.getElementById('costArea').innerHTML = `
     <div class="card">
@@ -786,14 +906,18 @@ function render(data){
       <div class="val">${yen(cf.total)}</div>
     </div>
     <div class="card">
-      <div class="lbl">シャトル使用本数</div>
-      <div class="val">${sh.used}<small>本</small></div>
+      <div class="lbl">シャトル使用個数</div>
+      <div class="val">${sh.used}<small>個</small></div>
+      <div class="sub">${yen(sh.cost)}</div>
     </div>
-    <div class="card">
+    <div class="card wide">
       <div class="lbl">経費合計</div>
       <div class="val">${yen(ex.total)}</div>
     </div>
   `;
+
+  // --- こんげつの みこみ うりあげ ---
+  renderForecast(data.forecast || {total:0, byType:{}, bySport:{}});
 
   // --- 6ヶ月推移 ---
   const trend = data.monthlyTrend || [];
