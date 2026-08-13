@@ -350,6 +350,18 @@ body.sporolog-page .wrapper{padding-top:0}
       </div>
     </div>
 
+    <!-- 回数券 専用カード（回数券を購入済みの会員だけに表示） -->
+    <div id="mypage-ticketbook-card" style="display:none;background:linear-gradient(135deg,#1a3a5c,#0f2744);border-radius:20px;padding:16px;margin-bottom:12px;color:#fff">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:28px">🎟️</div>
+        <div style="flex:1">
+          <div style="font-size:12px;color:#9fc4ea;font-weight:700;margin-bottom:2px">回数券 残り</div>
+          <div style="font-size:22px;font-weight:800" id="mypage-ticketbook-remain">0枚</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px">購入 <span id="mypage-ticketbook-total">0</span>枚／チェックインごとに1枚消費されます</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card" id="sporolog-link-card" onclick="goSporlogTab()" style="cursor:pointer;background:linear-gradient(135deg,#fff9e6,#fff4d6);border:1.5px solid rgba(246,201,69,0.5)">
       <div style="display:flex;align-items:center;gap:14px">
         <div style="font-size:30px">🎫</div>
@@ -1434,6 +1446,18 @@ async function loadMypageData(checkNotice,updateRankCache){
       ptCard.style.display='block';
     }
     else if(ptCard){ptCard.style.display='none';}
+    // 回数券 専用カード（購入したことがある会員だけ表示。残0でも「使い切りました」の意味で表示は続ける）
+    const tbCard=document.getElementById('mypage-ticketbook-card');
+    if(tbCard){
+      const tbTotal=d.ticketBookTotal||0;
+      if(tbTotal>0){
+        document.getElementById('mypage-ticketbook-remain').textContent=(d.ticketBookRemain||0)+'枚';
+        document.getElementById('mypage-ticketbook-total').textContent=tbTotal;
+        tbCard.style.display='block';
+      } else {
+        tbCard.style.display='none';
+      }
+    }
     // 会員向けお知らせ
     loadMemberNotices();
   }catch(e){
