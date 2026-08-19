@@ -38,6 +38,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;bac
 .video-meta{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:7px}
 .video-date{font-size:10px;color:#6b7585}
 .video-sport-tag{font-size:9.5px;background:rgba(255,255,255,0.06);color:#a8b0bd;padding:2px 7px;border-radius:7px;font-weight:600}
+.load-more-btn{grid-column:1/-1;margin-top:6px;padding:12px;border-radius:12px;background:#16202f;color:#cfd6e0;border:1px solid rgba(255,255,255,0.1);font-size:12.5px;font-weight:700;cursor:pointer}
+.load-more-btn:active{transform:scale(0.98)}
 .empty-state{text-align:center;padding:60px 20px;color:#5a6478}
 .empty-state .icon{font-size:36px;margin-bottom:12px;opacity:0.4}
 .empty-state .msg{font-size:13px}
@@ -109,8 +111,45 @@ async function callGAS(func,...args){
 }
 
 const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+const CACHE_KEY='bukatsu_video_cache_v1';
+const CACHE_TTL_MS=10*60*1000; // 10分間はキャッシュを使い回す
+const PAGE_SIZE=20; // 一度に表示する件数(残りは「もっと見る」で読み込む)
 let allVideos=[];
 let currentFilter='全て';
+let visibleCount=PAGE_SIZE;
+
+function parseDate(dateStr){
+  const parts=(dateStr||'').split('/').map(s=>parseInt(s,10));
+  if(parts.length<3||parts.some(isNaN))return null;
+  return new Date(parts[0],parts[1]-1,parts[2]);
+}
+
+function sortByDateDesc(videos){
+  return [...videos].sort((a,b)=>{
+    const da=parseDate(a[0]),db=parseDate(b[0]);
+    if(!da&&!db)return 0;
+    if(!da)return 1;
+    if(!db)return -1;
+    return db-da;
+  });
+}
+
+function readCache(){
+  try{
+    const raw=sessionStorage.getItem(CACHE_KEY);
+    if(!raw)return null;
+    const {ts,data}=JSON.parse(raw);
+    if(!ts||!data)return null;
+    if(Date.now()-ts>CACHE_TTL_MS)return null;
+    return data;
+  }catch(e){return null;}
+}
+
+function writeCache(data){
+  try{
+    sessionStorage.setItem(CACHE_KEY,JSON.stringify({ts:Date.now(),data}));
+  }catch(e){/* 容量エラーなどは無視 */}
+}
 
 function isNew(dateStr){
   // dateStr例: "2026/06/16" や "2026/6/16"
@@ -191,9 +230,18 @@ function renderFilterTabs(){
 
 function setFilter(sport){
   currentFilter=sport;
+  visibleCount=PAGE_SIZE;
   renderFilterTabs();
-  const filtered=sport==='全て'?allVideos:allVideos.filter(v=>v[3]===sport);
-  renderVideoList(filtered);
+  renderVideoList(getFilteredVideos());
+}
+
+function getFilteredVideos(){
+  return currentFilter==='全て'?allVideos:allVideos.filter(v=>v[3]===currentFilter);
+}
+
+function loadMore(){
+  visibleCount+=PAGE_SIZE;
+  renderVideoList(getFilteredVideos());
 }
 
 function renderVideoList(videos){
@@ -205,14 +253,15 @@ function renderVideoList(videos){
   }
   el.className='video-grid';
   const watchable=canWatch();
-  el.innerHTML=videos.map(v=>{
+  const visible=videos.slice(0,visibleCount);
+  const cards=visible.map(v=>{
     const date=v[0],title=v[1],url=v[2],sport=v[3]||'';
     const ytId=extractYoutubeId(url);
     const thumb=ytId?`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`:'';
     return `
       <div class="video-card" onclick="handleVideoClick('${ytId}')">
         <div class="thumb-wrap${!watchable?' thumb-locked':''}">
-          ${thumb?`<img src="${thumb}" alt="${title}">`:''}
+          ${thumb?`<img src="${thumb}" alt="${title}" loading="lazy" decoding="async">`:''}
           ${watchable
             ?'<div class="play-overlay"><div class="play-circle"></div></div>'
             :'<div class="lock-center"><div class="lock-icon-circle">🔒</div><div class="lock-label">会員限定</div></div>'}
@@ -227,18 +276,36 @@ function renderVideoList(videos){
         </div>
       </div>`;
   }).join('');
+  const moreBtn=videos.length>visibleCount
+    ?`<button class="load-more-btn" onclick="loadMore()">もっと見る(残り${videos.length-visibleCount}件)</button>`
+    :'';
+  el.innerHTML=cards+moreBtn;
+}
+
+function showVideos(videos){
+  allVideos=sortByDateDesc(videos||[]);
+  visibleCount=PAGE_SIZE;
+  renderFilterTabs();
+  renderVideoList(getFilteredVideos());
 }
 
 async function init(){
+  // まずキャッシュがあれば即表示し、読み込み待ちの時間を無くす
+  const cached=readCache();
+  if(cached){
+    showVideos(cached);
+  }
   try{
     const videos=await callGAS('getVideoList');
-    allVideos=videos||[];
-    renderFilterTabs();
-    renderVideoList(allVideos);
+    writeCache(videos||[]);
+    // キャッシュ表示中でも最新データに差し替える(キャッシュが無い場合はここで初表示)
+    showVideos(videos);
   }catch(e){
-    const el=document.getElementById('video-list');
-    el.className='empty-state';
-    el.innerHTML='<div class="icon">⚠️</div><div class="msg">読み込みに失敗しました</div>';
+    if(!cached){
+      const el=document.getElementById('video-list');
+      el.className='empty-state';
+      el.innerHTML='<div class="icon">⚠️</div><div class="msg">読み込みに失敗しました</div>';
+    }
   }
 }
 init();
