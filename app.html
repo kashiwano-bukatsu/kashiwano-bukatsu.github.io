@@ -178,15 +178,13 @@ input[type=radio]{width:20px;height:20px;accent-color:#1a3a5c;cursor:pointer;fle
 .new-pulse-badge{display:inline-block;background:linear-gradient(135deg,#ff6b6b,#ee3344);color:#fff;font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:10px;letter-spacing:0.5px;margin-left:6px;vertical-align:middle;animation:newBlink 1.6s ease-in-out infinite}
 .prep-spinner{width:28px;height:28px;border:3px solid #e0e8f0;border-top-color:#1a3a5c;border-radius:50%;animation:prepSpin 1s linear infinite;margin:0 auto 8px}
 @keyframes goldShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-@keyframes spolog-pip-pulse{0%,100%{box-shadow:0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 10px rgba(255,193,7,0.7)}}
-.spolog-pip-pulse{animation:spolog-pip-pulse 1.2s infinite}
 @media(min-width:600px){.wrapper{box-shadow:0 0 40px rgba(0,0,0,0.1)}}
 
 /* キャンペーンバナー */
 .campaign-banner{background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5d060;border-radius:14px;padding:14px;margin-top:12px;text-align:center}
 
-/* ===== スポログ専用ページ：V10のダーク×赤金アリーナ演出。ヘッダー非表示・背景は画面いっぱいに（フェード切替） ===== */
-#dark-bg-overlay{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% -10%,#3a1410,#100504 68%);opacity:0;transition:opacity .4s ease;pointer-events:none}
+/* ===== スポログ専用ページ：秋ver「焼き芋スタンプ」演出。ヘッダー非表示・背景は画面いっぱいに（フェード切替） ===== */
+#dark-bg-overlay{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse at 50% -10%,#4a2a12,#120a06 68%);opacity:0;transition:opacity .4s ease;pointer-events:none}
 body.sporolog-page #dark-bg-overlay{opacity:1}
 .wrapper{position:relative;z-index:1;transition:padding-top .35s ease}
 .header{transition:opacity .3s ease,transform .3s ease}
@@ -197,13 +195,33 @@ body.sporolog-page .wrapper{padding-top:0}
 }
 .sporolog-arena{position:relative;padding:22px 18px 40px;padding-top:calc(22px + env(safe-area-inset-top,0px));overflow:hidden}
 .sporolog-arena::before{
-  content:'';position:absolute;inset:0;opacity:.15;pointer-events:none;
-  background:repeating-linear-gradient(115deg,#FF5C33 0 3px,transparent 3px 40px);
+  content:'';position:absolute;inset:0;opacity:.12;pointer-events:none;
+  background:repeating-linear-gradient(115deg,#E8A33D 0 3px,transparent 3px 44px);
 }
-.sporolog-eyebrow{position:relative;text-align:center;font-size:11px;font-weight:900;letter-spacing:.35em;color:#FF9A5C}
-.sporolog-arenatitle{position:relative;text-align:center;font-size:22px;font-weight:900;letter-spacing:.06em;color:#fff;margin-top:4px}
-.sporolog-arenasub{position:relative;text-align:center;font-size:11.5px;color:#e8a88a;margin-top:2px;margin-bottom:8px}
+.sporolog-arena::after{
+  content:'';position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);width:220px;height:80px;
+  background:radial-gradient(ellipse at center, rgba(255,150,50,0.35), transparent 70%);pointer-events:none;
+}
+.sporolog-eyebrow{position:relative;text-align:center;font-size:11px;font-weight:900;letter-spacing:.35em;color:#FFB65C}
+.sporolog-arenatitle{position:relative;text-align:center;font-size:22px;font-weight:900;letter-spacing:.06em;color:#FFF0DC;margin-top:4px}
+.sporolog-arenasub{position:relative;text-align:center;font-size:11.5px;color:#e0b389;margin-top:2px;margin-bottom:8px}
 #section-sporolog #sporolog-card{position:relative;margin-top:18px}
+
+/* ===== 焼き芋スタンプ（HEAT GAUGE代替） ===== */
+.imo-cell{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.imo-numonly{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,180,90,0.28);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:rgba(255,255,255,0.32)}
+.imo-numonly.imo-next{border-color:rgba(255,180,90,0.6);color:rgba(255,200,140,0.7)}
+.imo-emoji{position:relative;z-index:2;font-size:27px;line-height:1}
+.imo-num{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;color:rgba(255,255,255,0.4)}
+.imo-halo{position:absolute;inset:-18%;z-index:1;border-radius:50%;pointer-events:none;opacity:0}
+.imo-hot .imo-halo{
+  opacity:1;
+  background:radial-gradient(circle, rgba(255,210,140,0.5) 0%, rgba(255,170,70,0.22) 45%, transparent 72%);
+  animation: imoHaloPulse 2.4s ease-in-out infinite;
+}
+.imo-hot .imo-emoji{ text-shadow:0 0 8px rgba(255,210,140,0.75); }
+@keyframes imoHaloPulse{0%,100%{transform:scale(0.94);opacity:.8}50%{transform:scale(1.05);opacity:1}}
+.imo-ms{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);white-space:nowrap;font-size:8.5px;font-weight:900;color:#FFB65C;letter-spacing:.01em;z-index:2}
 </style>
 </head>
 <body>
@@ -393,7 +411,7 @@ body.sporolog-page .wrapper{padding-top:0}
   <div class="sporolog-arena">
     <div class="sporolog-eyebrow">SPOROLOG</div>
     <div class="sporolog-arenatitle">参加ログ</div>
-    <div class="sporolog-arenasub">参加するたびに、記録が積み上がる</div>
+    <div class="sporolog-arenasub">参加するたびに、焼き芋が出てくる</div>
 
     <div style="position:relative;margin-top:8px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,217,61,0.3);box-shadow:0 6px 18px rgba(0,0,0,0.4)">
       <img src="sporolog-banner.jpg" alt="" style="width:100%;display:block;aspect-ratio:4/3;object-fit:cover">
@@ -1221,50 +1239,35 @@ function showMypageMain(){
   loadMypageData(true,true);
 }
 
-// スタンプカード風に進捗を表示（丸を線でつなぎ、現在地にマスコットを配置）
-// 進捗の色を「緑→黄緑→アンバー→ゴールド」へ滑らかに補間する
-const SPOROLOG_COLOR_STOPS = [[196,30,20],[230,74,42],[255,124,51],[255,180,61],[255,217,61]];
-function sporologColorAt(t){
-  t = Math.max(0, Math.min(1, t));
-  const segs = SPOROLOG_COLOR_STOPS.length - 1;
-  const segT = t * segs;
-  const i = Math.min(Math.floor(segT), segs - 1);
-  const localT = segT - i;
-  const c1 = SPOROLOG_COLOR_STOPS[i], c2 = SPOROLOG_COLOR_STOPS[i + 1];
-  const r = Math.round(c1[0] + (c2[0] - c1[0]) * localT);
-  const g = Math.round(c1[1] + (c2[1] - c1[1]) * localT);
-  const b = Math.round(c1[2] + (c2[2] - c1[2]) * localT);
-  return 'rgb(' + r + ',' + g + ',' + b + ')';
-}
-
+// スタンプカード風に進捗を表示（焼き芋が1本ずつ焼きあがっていくイメージ）
+// ★秋ver「焼き芋スタンプ」：未達成は数字だけ、達成すると🍠が出現する（進捗ロジックは既存踏襲）
 function buildSporlogBoard(progress, lap){
   const squares = [1,2,3,4,5,6,7,8,9,10];
-  // ★0.5pt対応：スタンプ自体は整数個で数え、半端(0.5)分は「次のスタンプ」を半分だけ着色する。
+  // ★0.5pt対応：スタンプ自体は整数個で数え、半端(0.5)分は「次のスタンプ」に半分だけ焼き目が入りかけている表現にする。
   const floorProgress = Math.floor(progress);
   const hasHalf = (progress - floorProgress) > 0; // 0.5刻み運用なので実質「端数あり」＝0.5
-  // ★V10アレンジ：スキュー(斜め)タイルグリッド、ダーク×赤金アリーナ配色（進捗ロジックは既存踏襲）
   const tilesHtml = squares.map(n=>{
     const done = n <= floorProgress;
-    const isHalf = hasHalf && n === floorProgress + 1;
-    const isNext = !done && !isHalf && n === floorProgress + 1;
-    const isMilestone = (n === 5 || n === 10);
-    const stepColor = sporologColorAt(n/10);
-    const prevColor = sporologColorAt((n-1)/10);
-    let bg = 'rgba(255,255,255,0.05)', border = '2px solid rgba(255,217,61,0.25)', color = 'rgba(255,217,61,0.35)', boxShadow = '';
-    if (done) { bg = 'linear-gradient(155deg,' + prevColor + ',' + stepColor + ')'; border = '2px solid ' + stepColor; color = '#3a1400'; boxShadow = '0 3px 8px rgba(255,92,51,0.35)'; }
-    else if (isHalf) { bg = 'linear-gradient(90deg,' + stepColor + ' 50%, rgba(255,255,255,0.05) 50%)'; border = '2px solid ' + stepColor; color = stepColor; }
-    else if (isNext) { border = '2px solid ' + stepColor; color = stepColor; }
-    if (done && n === 10) boxShadow = '0 0 10px rgba(255,217,61,0.7)';
-    // ★マイルストーン(5・10)はタイル自体を大きく拡大して目立たせる（文字バッジ・アイコンは無し、番号のみ）
-    //   5は上段の最後・10は下段の最後なので、拡大時に隣の段と被らないよう伸びる向きを分ける
-    //   （5＝下辺を基準に上へ伸ばす／10＝上辺を基準に下へ伸ばす）
-    const scaleStyle = isMilestone ? ' scale(1.3)' : '';
-    const transformOrigin = n===5 ? 'left bottom' : (n===10 ? 'left top' : 'center');
-    const zIndexStyle = isMilestone ? 'z-index:2;' : '';
-    const tileContent = '<span style="display:inline-block;transform:skewX(8deg)">'+n+'</span>';
-    const pulseClass = isNext ? ' spolog-pip-pulse' : '';
-    return '<div class="'+pulseClass.trim()+'" style="position:relative;'+zIndexStyle+'aspect-ratio:1;background:'+bg+';border:'+border+';transform:skewX(-8deg)'+scaleStyle+';transform-origin:'+transformOrigin+';border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:'+(isMilestone?16:12)+'px;font-weight:800;color:'+color+';box-shadow:'+boxShadow+'">'
-      + tileContent
+    const isNext = !done && n === floorProgress + 1;
+    const isHalf = hasHalf && isNext;
+    const isHot = done && n === floorProgress; // 今焼けたばかりの1本だけ、ふわっと後光
+    const msHtml = (n === 5) ? '<div class="imo-ms">200円引</div>' : (n === 10 ? '<div class="imo-ms">無料券</div>' : '');
+    if (!done) {
+      if (isHalf) {
+        // 練習日参加（0.5pt）で半分だけ焼けた状態：リングを半分だけ着色し、焼き芋を薄く覗かせる
+        return '<div class="imo-cell">'
+          + '<div class="imo-emoji" style="opacity:.35;font-size:22px">🍠</div>'
+          + '<div class="imo-numonly imo-next" style="position:relative;background:linear-gradient(90deg,rgba(255,180,90,0.25) 50%,transparent 50%)">' + n + '</div>'
+          + msHtml
+          + '</div>';
+      }
+      return '<div class="imo-cell"><div class="imo-numonly' + (isNext ? ' imo-next' : '') + '">' + n + '</div>' + msHtml + '</div>';
+    }
+    return '<div class="imo-cell' + (isHot ? ' imo-hot' : '') + '">'
+      + '<div class="imo-halo"></div>'
+      + '<div class="imo-emoji">🍠</div>'
+      + '<div class="imo-num">' + n + '</div>'
+      + msHtml
       + '</div>';
   }).join('');
   // 次の特典までの残り回数とラベル（5回目=200円引きチケット／10回目=無料チケット）。0.5刻みなら「あと2.5回」のように表示。
@@ -1273,23 +1276,23 @@ function buildSporlogBoard(progress, lap){
   const remainingLabel = (remaining % 1 === 0) ? String(remaining) : remaining.toFixed(1);
   const nextRewardLabel = nextMilestone === 5 ? '200円引きチケット' : '無料チケット';
   // 10回達成直後（progress===0）はまだ前の周回扱いにして、11回目（progress>=1）になってから「○周目」を表示する
-  const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:rgba(255,217,61,0.15);border:1px solid rgba(255,217,61,0.35);color:#FFD93D;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
+  const lapLabel = (lap > 1 && progress > 0) ? '<div style="display:inline-block;background:rgba(255,180,90,0.15);border:1px solid rgba(255,180,90,0.35);color:#FFC988;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px">'+lap+'周目</div>' : '';
   // 5回目（200円引きチケット獲得）・10回目（無料チケット獲得）に到達している時だけ、動画を見返せるボタンを出す
-  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#FFB23D;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>'
-    : (progress===10) ? '<button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#FFD93D;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
-  // ★V10踏襲：獲得済みの無料チケットがあればグリッド下にワンタップで見られるボタンを出す（3D立体風ピルボタン）
-  const ticketQuickBtn = (currentTicketCount>0) ? '<button onclick="openTicketModal()" style="display:flex;align-items:center;justify-content:center;gap:6px;margin:16px auto 0;background:linear-gradient(135deg,#FFD93D,#FF9A3D);color:#5a2a00;border:none;border-radius:999px;padding:11px 22px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #C97a1e">🎟️ 獲得チケットを見る（'+currentTicketCount+'枚）</button>' : '';
-  // ★V10踏襲：FINISH MOVE風の特典案内ボックス
-  const finishBox = '<div style="margin-top:22px;border:2px solid #FF5C33;border-radius:10px;padding:14px 16px;position:relative;background:rgba(255,92,51,0.08)">'
-    + '<div style="font:900 10px/1 sans-serif;letter-spacing:.22em;color:#FF9A5C">NEXT REWARD</div>'
-    + '<div style="font-size:17px;font-weight:900;margin-top:6px;color:#FFD93D;text-shadow:1px 1px 0 rgba(122,26,10,0.6)">'+nextMilestone+'回参加で '+nextRewardLabel+'</div>'
-    + '<div style="font-size:11.5px;color:#e8a88a;margin-top:4px">あと'+remainingLabel+'回で達成！</div>'
+  const replayBtn = (progress===5) ? '<button onclick="playSporlogAnim(\'achievement5.mp4\', ()=>{})" style="font-size:13px;color:#FFAE6B;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>'
+    : (progress===10) ? '<button onclick="playSporlogAnim(\'achievement10.mp4\', ()=>{})" style="font-size:13px;color:#FFC988;background:none;border:none;text-decoration:underline;cursor:pointer;">🎬 達成動画を見る</button>' : '';
+  // ★獲得済みの無料チケットがあればグリッド下にワンタップで見られるボタンを出す（3D立体風ピルボタン）
+  const ticketQuickBtn = (currentTicketCount>0) ? '<button onclick="openTicketModal()" style="display:flex;align-items:center;justify-content:center;gap:6px;margin:16px auto 0;background:linear-gradient(135deg,#FFC988,#E0651F);color:#3a1400;border:none;border-radius:999px;padding:11px 22px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #9c4415">🎟️ 獲得チケットを見る（'+currentTicketCount+'枚）</button>' : '';
+  // ★FINISH MOVE風の特典案内ボックス（焼き芋アリーナに合わせて暖色トーン）
+  const finishBox = '<div style="margin-top:22px;border:2px solid #E0651F;border-radius:10px;padding:14px 16px;position:relative;background:rgba(224,101,31,0.10)">'
+    + '<div style="font:900 10px/1 sans-serif;letter-spacing:.22em;color:#FFAE6B">NEXT REWARD</div>'
+    + '<div style="font-size:17px;font-weight:900;margin-top:6px;color:#FFC988">'+nextMilestone+'回参加で '+nextRewardLabel+'</div>'
+    + '<div style="font-size:11.5px;color:#e0b389;margin-top:4px">あと'+remainingLabel+'回で焼きあがる！</div>'
     + '</div>';
   return ''+
     '<div style="text-align:center">'+lapLabel+'</div>'+
-    '<div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-bottom:10px;text-align:center;letter-spacing:.05em">HEAT GAUGE</div>'+
-    '<div style="position:relative;padding:0 4px">'+
-      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:300px;margin:0 auto">'+tilesHtml+'</div>'+
+    '<div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-bottom:14px;text-align:center;letter-spacing:.05em">焼き芋スタンプ（'+floorProgress+'/10）</div>'+
+    '<div class="imoWrap" style="position:relative;overflow:visible;padding:0 4px">'+
+      '<div style="display:grid;grid-template-columns:repeat(5,1fr);row-gap:22px;column-gap:6px;width:100%;max-width:300px;margin:0 auto">'+tilesHtml+'</div>'+
     '</div>'+
     finishBox+
     '<div style="display:flex;justify-content:center;gap:14px;margin-top:10px"><button onclick="openSporlogInfo()" style="font-size:13px;color:rgba(255,255,255,0.6);background:none;border:none;text-decoration:underline;cursor:pointer;">スポログとは？</button>'+replayBtn+'</div>'+
@@ -2297,14 +2300,8 @@ function showVisitorReferralWarning(){
   document.body.appendChild(ov);
 }
 
-async function loadReferralSchedules(){
-  const sel=document.getElementById('ref-friend-schedule');sel.innerHTML='<option value="">読み込み中...</option>';
-  try{
-    const s=await callGAS('getUpcomingSchedules','全て');
-    if(!s||!s.length){sel.innerHTML='<option value="">予定がありません</option>';return;}
-    sel.innerHTML=s.map(x=>'<option value="'+x[0]+'_'+x[4]+'">'+x[0]+'（'+getDow(x[0])+'） '+x[4]+' @ '+x[2]+'</option>').join('');
-  }catch(e){sel.innerHTML='<option value="">読み込みエラー</option>';}
-}
+// ★整理：loadReferralSchedules は下（リトライ処理つき版）で再定義されており、
+//   こちらの旧版は常に上書きされて実行されない死んだコードだったため削除。
 
 async function submitReferral(){
   const lastName=document.getElementById('ref-friend-lastname').value.trim();
@@ -2631,9 +2628,8 @@ function openRankInfo(){
 
 // videos.html（カミングスーン）
 </script>
-</body>
-</html>
-<!-- JS追加パッチ -->
+
+<!-- ===== JS追加パッチ（旧・別ファイル構成をここに統合） ===== -->
 <script>
 // ===== 設定フルページ =====
 function openSettings(){
@@ -3449,3 +3445,6 @@ window.addEventListener('resize', adjustHeaderOffset);
 const _headerLogoImg = document.querySelector('.header img');
 if (_headerLogoImg) _headerLogoImg.addEventListener('load', adjustHeaderOffset);
 </script>
+
+</body>
+</html>
