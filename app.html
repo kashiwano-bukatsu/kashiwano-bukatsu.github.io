@@ -929,7 +929,9 @@ function courtLabel(courtLetters){
 // ===== ログイン情報の保存を一箇所に集約（重複バグ防止用） =====
 function saveCurrentUser(){
   if(mypageCurrentUser){
-    localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    try{
+      localStorage.setItem('bukatsu_user',JSON.stringify(mypageCurrentUser));
+    }catch(e){ /* プライベートモード等でstorageが使えない環境では保存をあきらめるだけにする */ }
   }
 }
 
@@ -976,17 +978,20 @@ let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedP
 
 const _gasRunning = {};
 async function callGAS(func,...args){
-  // 同じ関数の連打だけ防止（別関数の並列呼び出しはOK）
-  if(_gasRunning[func]) return Promise.reject(new Error('処理中です'));
-  _gasRunning[func] = true;
-  try{
-    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
-    const json=await res.json();
-    if(json.status==='error')throw new Error(json.message);
-    return json.data;
-  }finally{
-    _gasRunning[func] = false;
-  }
+  // 同じ関数が連打された場合はエラーにせず、実行中の同じ呼び出し結果を共有して返す
+  if(_gasRunning[func]) return _gasRunning[func];
+  const p=(async()=>{
+    try{
+      const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
+      const json=await res.json();
+      if(json.status==='error')throw new Error(json.message);
+      return json.data;
+    }finally{
+      delete _gasRunning[func];
+    }
+  })();
+  _gasRunning[func]=p;
+  return p;
 }
 function formatDate(d){return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
 function getDow(s){return['日','月','火','水','木','金','土'][new Date(s.replace(/\//g,'-')).getDay()];}
@@ -1056,11 +1061,13 @@ window.addEventListener('load',()=>{
     setTimeout(()=>{
       splash.style.display='none';
       // 自動ログインチェック（「記憶する」設定がオフでも、videos.html等から戻ってきた場合は復元する）
-      const autoLogin=localStorage.getItem('bukatsu_auto_login');
-      const saved=localStorage.getItem('bukatsu_user');
-      if((autoLogin==='true'||skipSplash)&&saved){
-        try{mypageCurrentUser=JSON.parse(saved);showMypageMain();}catch(e){}
-      }
+      try{
+        const autoLogin=localStorage.getItem('bukatsu_auto_login');
+        const saved=localStorage.getItem('bukatsu_user');
+        if((autoLogin==='true'||skipSplash)&&saved){
+          mypageCurrentUser=JSON.parse(saved);showMypageMain();
+        }
+      }catch(e){ /* storageが使えない環境では自動ログインだけスキップする */ }
       loadHomeData();
     },fadeDelay);
   },splashDelay);
@@ -1180,7 +1187,7 @@ async function mypageLogin(){
     if(!data){document.getElementById('mypage-login-error').style.display='block';return;}
     mypageCurrentUser={internalId:data.internalId,fullname:data.fullname,nickname:data.nickname,memberSport:data.sport||'全て',memberNumber:data.memberNumber||'',type:data.type||'ビジター会員',gender:data.gender||'',area:data.area||'',status:data.status||'',isApplying:data.status==='会員(申請中)',isPendingPayment:data.status==='会員(支払い確認中)'};
     saveCurrentUser();
-    localStorage.setItem('bukatsu_auto_login',remember?'true':'false');
+    try{localStorage.setItem('bukatsu_auto_login',remember?'true':'false');}catch(e){ /* storageが使えない環境でもログイン自体は続行する */ }
     closeLoginModal();
     document.getElementById('mypage-fullname').value='';
     document.getElementById('mypage-dob').value='';
@@ -1191,8 +1198,10 @@ async function mypageLogin(){
 
 function mypageLogout(){
   mypageCurrentUser=null;
-  localStorage.removeItem('bukatsu_user');
-  localStorage.setItem('bukatsu_auto_login','false');
+  try{
+    localStorage.removeItem('bukatsu_user');
+    localStorage.setItem('bukatsu_auto_login','false');
+  }catch(e){ /* storageが使えない環境でもログアウト自体は続行する */ }
   document.getElementById('mypage-select-area').style.display='block';
   document.getElementById('mypage-main-area').style.display='none';
   updateTabVisibility();
