@@ -455,7 +455,7 @@ body.sporolog-page .wrapper{padding-top:0}
     </div>
     <div id="next-member-loading" class="next-member-card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>次回の参加予定メンバー</div>
-      <div style="text-align:center;padding:10px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div></div>
+      <div id="next-member-loading-body" style="text-align:center;padding:10px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div></div>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('reserve-form-body','reserve-form-arrow')">
@@ -976,22 +976,92 @@ async function referrerIdToName(internalId){
 
 let mypageCurrentUser=null, selectedStatuses={}, currentTicketCount=0, selectedPlan='visitor', familyMembers=[];
 
+// ===== GAS呼び出し =====
+// ★変更：
+//  1) 連打防止の判定を「関数名」→「関数名＋引数」に変更（別の日程の参加者を続けて開くと結果が混ざるバグの修正）
+//  2) 読み取り専用の関数だけ、通信失敗（Failed to fetch等）のとき自動で最大2回までやり直す
+//     ※予約・キャンセルなど書き込み系は二重登録を防ぐため、やり直さない
+const GAS_READ_FUNCS=new Set([
+  'loginAttendee','getMemberDashboard','getReceptionHomeData','getUpcomingSchedules','getReserveTabData',
+  'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
+  'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
+  'getVideoList','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
+  'getMyInvitedTrials','getYogaLineUrl','getNotice'
+]);
+const GAS_READ_TIMEOUT_MS=30000;
 const _gasRunning = {};
+function _gasSleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function _gasFetchOnce(func,args,timeoutMs){
+  const ctrl=(timeoutMs&&typeof AbortController!=='undefined')?new AbortController():null;
+  const timer=ctrl?setTimeout(()=>ctrl.abort(),timeoutMs):null;
+  try{
+    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args}),signal:ctrl?ctrl.signal:undefined});
+    const text=await res.text();
+    let json;
+    try{json=JSON.parse(text);}
+    catch(e){const err=new Error('サーバーの応答を読み取れませんでした');err.retryable=true;throw err;}
+    if(json.status==='error'){const err=new Error(json.message);err.retryable=false;throw err;}
+    return json.data;
+  }catch(e){
+    if(e.retryable===undefined)e.retryable=true; // 通信失敗・タイムアウトはやり直し対象
+    throw e;
+  }finally{
+    if(timer)clearTimeout(timer);
+  }
+}
 async function callGAS(func,...args){
-  // 同じ関数が連打された場合はエラーにせず、実行中の同じ呼び出し結果を共有して返す
-  if(_gasRunning[func]) return _gasRunning[func];
+  // 同じ関数を同じ引数で連打した場合は、実行中の呼び出し結果を共有して返す（二重送信防止）
+  let key;
+  try{key=func+'|'+JSON.stringify(args);}catch(e){key=func+'|'+Date.now()+Math.random();}
+  if(_gasRunning[key]) return _gasRunning[key];
+  const isRead=GAS_READ_FUNCS.has(func);
   const p=(async()=>{
     try{
-      const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
-      const json=await res.json();
-      if(json.status==='error')throw new Error(json.message);
-      return json.data;
+      const maxTry=isRead?3:1;
+      let lastErr=null;
+      for(let i=0;i<maxTry;i++){
+        try{
+          return await _gasFetchOnce(func,args,isRead?GAS_READ_TIMEOUT_MS:0);
+        }catch(e){
+          lastErr=e;
+          if(!e.retryable||i===maxTry-1)break;
+          await _gasSleep(1000*(i+1)); // 1秒→2秒と間隔をあけてやり直す
+        }
+      }
+      throw lastErr;
     }finally{
-      delete _gasRunning[func];
+      delete _gasRunning[key];
     }
   })();
-  _gasRunning[func]=p;
+  _gasRunning[key]=p;
   return p;
+}
+// 通信エラーを利用者向けのわかりやすい文言に変換
+function gasErrorText(e){
+  const m=(e&&e.message)||'';
+  if((e&&e.name==='AbortError')||/Failed to fetch|NetworkError|Load failed|network|aborted|読み取れません/i.test(m)){
+    return '通信がうまくいきませんでした。電波の良い場所で、もう一度お試しください。';
+  }
+  return m||'読み込みに失敗しました';
+}
+// 読み込み失敗時の「再読み込み」ボックス（dark=trueはスポログ用の暗い背景向け）
+function reloadBoxHTML(e,onclickJs,dark){
+  const msgColor=dark?'rgba(255,255,255,0.75)':'#555';
+  const subColor=dark?'rgba(255,255,255,0.45)':'#999';
+  const btnStyle=dark
+    ?'background:linear-gradient(135deg,#FFC988,#E0651F);color:#3a1400;'
+    :'background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;';
+  return '<div style="text-align:center;padding:18px 8px">'
+    +'<div style="font-size:26px;margin-bottom:6px">📡</div>'
+    +'<div style="font-size:14px;font-weight:700;color:'+msgColor+'">読み込めませんでした</div>'
+    +'<div style="font-size:12px;color:'+subColor+';margin-top:4px;line-height:1.7">'+gasErrorText(e)+'</div>'
+    +'<button onclick="event.stopPropagation();'+onclickJs+'" style="margin-top:12px;padding:12px 26px;border:none;border-radius:999px;font-size:14px;font-weight:800;cursor:pointer;'+btnStyle+'">🔄 再読み込み</button>'
+    +'</div>';
+}
+function loadingBoxHTML(dark){
+  const c=dark?'rgba(255,255,255,0.6)':'#aaa';
+  const sp=dark?'border-color:rgba(255,255,255,0.15);border-top-color:#FFD93D;':'';
+  return '<div style="text-align:center;padding:20px 0"><div class="prep-spinner" style="margin:0 auto 10px;'+sp+'"></div><div style="font-size:13px;color:'+c+'">読み込み中…</div></div>';
 }
 function formatDate(d){return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}
 function getDow(s){return['日','月','火','水','木','金','土'][new Date(s.replace(/\//g,'-')).getDay()];}
@@ -1192,7 +1262,7 @@ async function mypageLogin(){
     document.getElementById('mypage-fullname').value='';
     document.getElementById('mypage-dob').value='';
     showMypageMain();
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
   finally{btn.textContent='ログイン';btn.disabled=false;}
 }
 
@@ -1376,6 +1446,9 @@ function playSporlogAnim(src, onDone){
 }
 
 async function loadMypageData(checkNotice,updateRankCache){
+  // ★変更：読み込みのたびにスポログ欄を「読み込み中」にしてから最新を表示する（古い表示とのズレ防止）
+  const _progressArea=document.getElementById('mypage-progress-area');
+  if(_progressArea)_progressArea.innerHTML=loadingBoxHTML(true);
   try{
     preloadSporlogAnim('achievement5.mp4');
     preloadSporlogAnim('achievement10.mp4');
@@ -1473,16 +1546,9 @@ async function loadMypageData(checkNotice,updateRankCache){
     // 会員向けお知らせ
     loadMemberNotices();
   }catch(e){
+    // ★変更：「Failed to fetch」等で失敗したら、エラー文だけでなく再読み込みボタンを出す
     const area=document.getElementById('mypage-progress-area');
-    if(e.message==='処理中です'){
-      // ★同時に別の読み込みが進行中なだけ（エラーではない）ので、ぐるぐる+読み込み中メッセージを表示。
-      //   先に走っている方の読み込みが終われば同じ場所に正しいデータが反映されるが、
-      //   念のため少し待ってからもう一度だけ読み込みを試みる
-      area.innerHTML='<div style="text-align:center;padding:24px 0"><div class="prep-spinner" style="border-color:rgba(255,255,255,0.15);border-top-color:#FFD93D;margin:0 auto 10px"></div><div style="font-size:13px;color:rgba(255,255,255,0.6)">読み込み中…</div></div>';
-      setTimeout(()=>{ if(mypageCurrentUser) loadMypageData(); }, 1200);
-    } else {
-      area.innerHTML='<div style="color:#e53935;font-size:13px">エラー：'+e.message+'</div>';
-    }
+    if(area)area.innerHTML=reloadBoxHTML(e,'loadMypageData()',true);
   }
 }
 
@@ -1510,14 +1576,19 @@ const NEXT_MEMBER_SPORTS=['バスケットボール','バレーボール','バ�
 let _nextBySportData={};
 let _currentNextSport=null;
 
+// ★追加：予約タブの読み込みが重なったとき、古い方の結果で画面を上書きしないための番号
+let _reserveLoadSeq=0;
 async function loadReserveData(){
-  document.getElementById('mypage-schedule-list').innerHTML='<div class="empty">読み込み中...</div>';
+  const mySeq=++_reserveLoadSeq;
+  document.getElementById('mypage-schedule-list').innerHTML=loadingBoxHTML(false);
   document.getElementById('next-member-card').style.display='none';
+  document.getElementById('next-member-loading-body').innerHTML='<div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div>';
   document.getElementById('next-member-loading').style.display='block';
   try{
     // ★軽量化：以前は getMyReservations / getUpcomingSchedules / getTempAttendees / getReservations の
     // 4回サーバー往復していたが、GAS側で1回にまとめて返すように変更（要：Code.gs側にgetReserveTabDataを追加）
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
+    if(mySeq!==_reserveLoadSeq)return; // もっと新しい読み込みが始まっていたら何もしない
     renderScheduleList(data.schedules, data.reservations);
     loadTrialData();
     loadInvitedTrials();
@@ -1529,7 +1600,13 @@ async function loadReserveData(){
     }else{
       document.getElementById('next-member-loading').style.display='none';
     }
-  }catch(e){document.getElementById('next-member-loading').style.display='none';}
+  }catch(e){
+    if(mySeq!==_reserveLoadSeq)return;
+    // ★変更：以前は失敗すると「読み込み中...」のまま止まっていた。再読み込みボタンを出す
+    document.getElementById('next-member-loading-body').innerHTML=reloadBoxHTML(e,'loadReserveData()',false);
+    document.getElementById('next-member-loading').style.display='block';
+    document.getElementById('mypage-schedule-list').innerHTML=reloadBoxHTML(e,'loadReserveData()',false);
+  }
 }
 
 // ★追加：最初に開くタブを決める（自分の登録種目を優先→無ければ開催予定がある種目→それも無ければ先頭）
@@ -1835,8 +1912,8 @@ function toggleScheduleDetail(i){
           '<button class="status-sel-btn '+(st==='❌'?'sel-batsu':'')+'" onclick="event.stopPropagation();setPendingStatus(\''+it.date+'_'+it.sport+'\',\'❌\',this,'+i+')">❌<div style="font-size:10px;margin-top:2px">不参加</div></button>'+
         '</div>'+
         '<div id="reserve-edit-'+i+'" style="display:flex;gap:8px">'+
-          '<button onclick="event.stopPropagation();saveSingleStatus(\''+it.date+'\',\''+it.sport+'\','+i+')" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">保存</button>'+
-          '<button onclick="event.stopPropagation();cancelSingleReserve(\''+it.date+'\',\''+it.sport+'\')" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>'+
+          '<button onclick="event.stopPropagation();saveSingleStatus(\''+it.date+'\',\''+it.sport+'\','+i+',this)" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">保存</button>'+
+          '<button onclick="event.stopPropagation();cancelSingleReserve(\''+it.date+'\',\''+it.sport+'\',this)" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>'+
         '</div>'+
         '<button class="view-members-btn" style="margin-top:10px" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+it.date+'\',\''+it.sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
     }else{
@@ -1864,6 +1941,7 @@ async function loadTrialData(){
     return;
   }
   lockIcon.style.display='none';
+  el.innerHTML=loadingBoxHTML(false);
   try{
     const sports=await callGAS('getTrialSports',mypageCurrentUser.fullname);
     if(!sports.length){el.innerHTML='<div class="empty">対象の種目はありません（全種目参加済みです）</div>';return;}
@@ -1873,7 +1951,7 @@ async function loadTrialData(){
       }
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><button onclick="openTrialScheduleList(\''+s.sport+'\')" style="background:#1a3a5c;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">参加してみる</button></div>';
     }).join('');
-  }catch(e){el.innerHTML='<div class="empty">読み込みに失敗しました</div>';}
+  }catch(e){el.innerHTML=reloadBoxHTML(e,'loadTrialData()',false);}
 }
 
 function onTrialAccordionClick(){
@@ -1889,7 +1967,7 @@ function showTrialInfoModal(e){
 
 async function openTrialScheduleList(sport){
   const ov=document.createElement('div');ov.className='ticket-overlay';
-  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:14px;text-align:center">'+sport+'の日程を選ぶ</div><div id="trial-schedule-body"><div class="empty">読み込み中...</div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:12px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;">閉じる</button></div>';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:14px;text-align:center">'+sport+'の日程を選ぶ</div><div id="trial-schedule-body">'+loadingBoxHTML(false)+'</div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:12px;background:#f0f4f8;color:#555;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;">閉じる</button></div>';
   document.body.appendChild(ov);
   const body=ov.querySelector('#trial-schedule-body');
   try{
@@ -1897,7 +1975,9 @@ async function openTrialScheduleList(sport){
     const list=all.filter(s=>s[4]===sport);
     if(!list.length){body.innerHTML='<div class="empty">現在予約可能な日程がありません</div>';return;}
     body.innerHTML=list.map(s=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:13px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div><button onclick=\'confirmTrialReserve("'+s[0]+'","'+sport+'","'+s[2]+'")\' style="background:#1a3a5c;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">選ぶ</button></div>').join('');
-  }catch(e){body.innerHTML='<div class="empty">読み込みに失敗しました</div>';}
+  }catch(e){
+    body.innerHTML=reloadBoxHTML(e,"this.closest('.ticket-overlay').remove();openTrialScheduleList('"+sport+"')",false);
+  }
 }
 
 async function confirmTrialReserve(date,sport,place){
@@ -1909,7 +1989,7 @@ async function confirmTrialReserve(date,sport,place){
     else if(r==='already_reserved')alert('この種目はすでに体験参加を予約中です（参加後にまた選べます）');
     else if(r==='duplicate')alert('その日程はすでに予約済みです');
     else alert('エラーが発生しました');
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e)+'\n\n※予約が完了している場合もあるため、予約タブで確認してください。');loadReserveData();}
 }
 
 async function loadDetailMembers(i,date,sport){
@@ -1924,7 +2004,7 @@ async function loadDetailMembers(i,date,sport){
       const isNew=x[9]==='NEW'||x[9]==='初参加';
       return'<div class="reserve-member-item"><span style="font-size:18px">'+st+'</span><span style="font-size:15px">'+displayName+(isNew?'<span class="new-badge">NEW</span>':'')+'</span>'+(x[4]===mypageCurrentUser.fullname?'<span style="font-size:11px;background:#e6f4ea;color:#188038;padding:2px 8px;border-radius:10px;margin-left:auto">あなた</span>':'')+'</div>';
     }).filter(Boolean).join(''):'<div style="color:#bbb;font-size:14px;padding:8px 0">まだ予約がありません</div>';
-  }catch(e){area.innerHTML='<div style="text-align:center;padding:10px 0"><div style="color:#e53935;font-size:13px;margin-bottom:8px">読み込みに失敗しました</div><button onclick="event.stopPropagation();loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')" style="background:#f0f4f8;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:#555;cursor:pointer">もう一度読み込む</button></div>';}
+  }catch(e){area.innerHTML='<div style="text-align:center;padding:10px 0"><div style="color:#e53935;font-size:13px;margin-bottom:8px">'+gasErrorText(e)+'</div><button onclick="event.stopPropagation();document.getElementById(\'detail-members-'+i+'\').style.display=\'none\';loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')" style="background:#f0f4f8;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:#555;cursor:pointer">🔄 もう一度読み込む</button></div>';}
 }
 
 async function submitScheduleReservations(){
@@ -1949,9 +2029,12 @@ async function submitScheduleReservations(){
     if(includeSelf) rows.push([now,x.date,x.sport,x.place,mypageCurrentUser.fullname,mypageCurrentUser.nickname,mypageCurrentUser.memberSport||'',status,'','']);
     if(includePartner) rows.push([now,x.date,x.sport,x.place,fp.fullname,fp.nickname,mypageCurrentUser.memberSport||'',status,'','']);
   });
-  const btn=document.getElementById('schedule-submit-btn');if(btn){btn.disabled=true;btn.textContent='予約中...';}
+  const btn=document.getElementById('schedule-submit-btn');
+  if(btn&&btn.disabled)return; // 連打防止
+  if(btn){btn.disabled=true;btn.textContent='予約中...';}
   try{const added=await callGAS('bulkAddReservations',rows);alert(added+'件予約しました');loadReserveData();}
-  catch(e){alert('エラー：'+e.message);}finally{if(btn){btn.disabled=false;btn.textContent='選択した日程を予約する';}}
+  catch(e){alert('エラー：'+gasErrorText(e)+'\n\n※予約が完了している場合もあるため、画面を読み込み直します。');loadReserveData();}
+  finally{if(btn){btn.disabled=false;btn.textContent='選択した日程を予約する';}}
 }
 
 // ===== 会員証 =====
@@ -1991,7 +2074,7 @@ async function saveEditProfile(){
     mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
     saveCurrentUser();
     closeEditProfile();document.getElementById('mypage-logged-name').textContent=nickname+' さん';alert('プロフィールを更新しました');
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
 }
 
 // ===== チケット =====
@@ -2010,7 +2093,7 @@ async function useTicketModal(btn){
     const result=await callGAS('useFreeTicket',mypageCurrentUser.fullname);
     if(result==='no_ticket'){alert('使用できるチケットがありませんでした（既に使用済みの可能性があります）');closeTicketModal();loadMypageData();return;}
     closeTicketModal();alert('チケットを使用しました');loadMypageData();
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
   finally{if(btn){btn.disabled=false;btn.textContent='使う';}}
 }
 
@@ -2031,7 +2114,7 @@ async function useHalfPriceTicketModal(btn){
     const result=await callGAS('useHalfPriceTicket',mypageCurrentUser.fullname);
     if(result==='no_ticket'){alert('使用できるチケットがありませんでした（既に使用済みの可能性があります）');closeHalfPriceModal();loadMypageData();return;}
     closeHalfPriceModal();alert('200円引きチケットを使用しました');loadMypageData();
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
   finally{if(btn){btn.disabled=false;btn.textContent='使う';}}
 }
 
@@ -2059,7 +2142,7 @@ async function submitTicketPurchase(){
     await callGAS('submitUpgradeRequest',mypageCurrentUser.fullname,mypageCurrentUser.nickname,'回数券購入 '+_ticketCount+'セット','現金（当日）');
     document.getElementById('ticket-purchase-overlay').remove();
     showSimplePopup('申込を受け付けました','当日スタッフにお声がけください。');
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
 }
 
 // ===== アップグレード =====
@@ -2215,7 +2298,7 @@ async function searchTempMember(){
     }else{
       re.innerHTML='<div style="background:#fff3e0;border:1.5px solid #f57c00;border-radius:12px;padding:14px;font-size:14px;color:#555;line-height:2"><div style="font-weight:700;color:#f57c00;margin-bottom:6px">体験登録が見つかりませんでした</div>当日スタッフに声をかけてください。</div>';
     }
-  }catch(e){re.innerHTML='<div style="color:#e53935;font-size:14px">読み込みエラー</div>';}
+  }catch(e){re.innerHTML='<div style="color:#e53935;font-size:14px">'+gasErrorText(e)+'</div>';}
 }
 function confirmTempMember(){
   const sport=document.getElementById('reg-confirmed-sport').value;
@@ -2273,7 +2356,7 @@ async function registerAttendee(){
     const ov=document.createElement('div');ov.className='ticket-overlay';
     ov.innerHTML='<div class="ticket-blur-bg"></div><div class="ticket-modal" style="text-align:center"><div style="font-size:56px;margin-bottom:8px">🎉</div><div style="font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:6px">登録完了！</div><div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:4px">'+nickname+' さん</div><div style="font-size:13px;color:#888;margin-bottom:16px">'+successMsg+'</div><div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:20px"><div style="font-size:11px;color:#aaa;margin-bottom:4px">会員番号</div><div style="font-size:24px;font-weight:800;color:#1a1a2e;letter-spacing:2px">'+memberNumber+'</div></div><button onclick="this.closest(\'.ticket-overlay\').remove();showMypageMain();" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer">マイページへ</button></div>';
     document.body.appendChild(ov);
-  }catch(e){btn.disabled=false;btn.textContent='登録する';alert('エラー：'+e.message);}
+  }catch(e){btn.disabled=false;btn.textContent='登録する';alert('エラー：'+gasErrorText(e));}
 }
 
 // ===== 紹介タブ =====
@@ -2327,6 +2410,7 @@ async function submitReferral(){
   if(hasError)return;
   const fullname=lastName+firstName;
   const btn=document.getElementById('referral-submit-btn');
+  if(btn&&btn.disabled)return; // 連打防止
   if(btn){btn.disabled=true;btn.textContent='送信中...';}
   try{
     const schedParts=sched.split('_');
@@ -2341,7 +2425,7 @@ async function submitReferral(){
     document.getElementById('ref-friend-exp').value='';
     checkReferralForm();
     setTimeout(()=>{ov.style.transition='opacity 0.5s ease';ov.style.opacity='0';setTimeout(()=>{ov.remove();showTab('home');},500);},4000);
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
   finally{if(btn){btn.disabled=false;btn.textContent='紹介する';}}
 }
 
@@ -2396,7 +2480,9 @@ async function loadMemberChatMessages(){
     el.scrollTop=el.scrollHeight;
     // 未読バナーをリセット
     refreshMessageBanner();
-  }catch(e){}
+  }catch(e){
+    el.innerHTML=reloadBoxHTML(e,'loadMemberChatMessages()',false);
+  }
 }
 
 async function sendMemberChatMessage(){
@@ -2408,7 +2494,7 @@ async function sendMemberChatMessage(){
   try{
     await callGAS('sendMessageFromMember',mypageCurrentUser.fullname,text);
     loadMemberChatMessages();
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){input.value=text;alert('エラー：'+gasErrorText(e));}
 }
 
 function memberChatAutoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
@@ -2478,7 +2564,7 @@ async function loadMonthCalendar(){
   try{
     calendarSchedules=await callGAS('getUpcomingSchedules','全て')||[];
     renderMonthCalendar(calendarCurrentMonth);
-  }catch(e){el.innerHTML='<div class="empty" style="font-size:13px">読み込めませんでした</div>';}
+  }catch(e){el.innerHTML=reloadBoxHTML(e,'loadMonthCalendar()',false);}
 }
 function renderMonthCalendar(date){
   const el=document.getElementById('home-month-calendar');if(!el)return;
@@ -2596,7 +2682,8 @@ function checkReferralForm(){
   const allFilled=lastName&&firstName&&exp&&sched;
   if(btn){btn.style.opacity=allFilled?'1':'0.4';btn.style.pointerEvents=allFilled?'auto':'none';}
 }
-async function loadReferralSchedules(retry=0){
+async function loadReferralSchedules(){
+  // ★変更：callGAS側で自動リトライするようになったので、ここでの独自リトライは廃止（二重リトライで待ち時間が伸びるのを防止）
   const sel=document.getElementById('ref-friend-schedule');
   const retryBtn=document.getElementById('ref-schedule-retry');
   if(retryBtn)retryBtn.style.display='none';
@@ -2607,8 +2694,7 @@ async function loadReferralSchedules(retry=0){
     sel.innerHTML='<option value="">選択してください</option>'+s.map(x=>'<option value="'+x[0]+'_'+x[4]+'">'+x[0]+'（'+getDow(x[0])+'） '+x[4]+' @ '+x[2]+'</option>').join('');
     checkReferralForm();
   }catch(e){
-    if(retry<2){setTimeout(()=>loadReferralSchedules(retry+1),1500);}
-    else{sel.innerHTML='<option value="">読み込み失敗</option>';if(retryBtn)retryBtn.style.display='inline-block';}
+    sel.innerHTML='<option value="">読み込み失敗</option>';if(retryBtn)retryBtn.style.display='inline-block';
   }
 }
 
@@ -2666,7 +2752,7 @@ async function saveSettingsProfile(){
     saveCurrentUser();
     document.getElementById('mypage-logged-name').textContent=nickname+' さん';
     alert('プロフィールを更新しました');
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
 }
 let _settingsUpgradePlan='';
 let _familyMembers=[];
@@ -2821,7 +2907,7 @@ async function submitFamilyUpgrade(){
     showSimplePopup('申請を受け付けました','スタッフからご連絡します。');
     document.getElementById('sett-plan-change-area').style.display='none';
     document.getElementById('sett-plan-change-btn').textContent='変更する';
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));}
 }
 
 async function confirmUpgradeRequest(plan, overlay){
@@ -2833,7 +2919,7 @@ async function confirmUpgradeRequest(plan, overlay){
     showSimplePopup('申請を受け付けました','スタッフからご連絡します。');
     document.getElementById('sett-plan-change-area').style.display='none';
     document.getElementById('sett-plan-change-btn').textContent='変更する';
-  }catch(e){btn.disabled=false;btn.textContent='申請する';alert('エラー：'+e.message);}
+  }catch(e){btn.disabled=false;btn.textContent='申請する';alert('エラー：'+gasErrorText(e));}
 }
 async function submitSettingsTicketPurchase(){
   if(!mypageCurrentUser)return;
@@ -2858,7 +2944,7 @@ async function doTicketRequest(sets,price,overlay){
     overlay.remove();
     showSimplePopup('申込を受け付けました','当日スタッフにお声がけください。');
     loadTicketPendingCard(); // 設定・マイページ両方更新
-  }catch(e){btn.disabled=false;btn.textContent='申込する';alert('エラー：'+e.message);}
+  }catch(e){btn.disabled=false;btn.textContent='申込する';alert('エラー：'+gasErrorText(e));}
 }
 function calcTicketPrice(sets,type){
   const isFamily=type==='ファミリー会員';
@@ -3270,7 +3356,7 @@ async function _execRegister(){
     document.body.appendChild(ov);
   }catch(e){
     const lo=document.getElementById('reg-loading-overlay');if(lo)lo.remove();
-    alert('エラー：'+e.message);
+    alert('エラー：'+gasErrorText(e));
   }
 }
 
@@ -3299,28 +3385,42 @@ function setPendingStatus(key,status,btn,idx){
 }
 
 // ===== 予約変更：保存 =====
-async function saveSingleStatus(date,sport,idx){
+// ★変更：保存中はボタンを押せなくし、保存後は予約タブ全体を最新に読み直す（参加予定メンバーの表示とズレないように）
+async function saveSingleStatus(date,sport,idx,btn){
   if(!mypageCurrentUser)return;
+  if(btn&&btn.disabled)return;
   const key=date+'_'+sport;
   const panel=document.getElementById('mypage-detail-'+idx);
   const status=_pendingStatusMap[key]||(panel&&panel.querySelector('.sel-maru')?'⭕':panel&&panel.querySelector('.sel-sankaku')?'△':panel&&panel.querySelector('.sel-batsu')?'❌':'⭕');
+  if(btn){btn.disabled=true;btn.textContent='保存中...';}
   try{
     await callGAS('updateReservationStatus',date,sport,mypageCurrentUser.fullname,status);
-    const lbl=document.getElementById('st-label-'+idx);
-    if(lbl){const sl={'⭕':'参加','△':'未定','❌':'不参加'};lbl.textContent='予約済み：'+status+' '+(sl[status]||'')+'（タップで変更・キャンセル）';}
     alert('ステータスを変更しました');
-  }catch(e){alert('エラー：'+e.message);}
+    loadReserveData();
+  }catch(e){
+    alert('エラー：'+gasErrorText(e)+'\n\n※変更が反映されている場合もあるため、画面を読み込み直します。');
+    loadReserveData();
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='保存';}
+  }
 }
 
 // ===== 予約変更：キャンセル（削除） =====
-async function cancelSingleReserve(date,sport){
+async function cancelSingleReserve(date,sport,btn){
   if(!mypageCurrentUser)return;
+  if(btn&&btn.disabled)return;
   if(!confirm(date+'の予約をキャンセルしますか？'))return;
+  if(btn){btn.disabled=true;btn.textContent='処理中...';}
   try{
     await callGAS('cancelReservation',date,sport,mypageCurrentUser.fullname);
     alert('予約をキャンセルしました');
     loadReserveData();
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){
+    alert('エラー：'+gasErrorText(e)+'\n\n※キャンセルが完了している場合もあるため、画面を読み込み直します。');
+    loadReserveData();
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='キャンセル';}
+  }
 }
 
 // ===== 招待した体験予定者一覧（招待者本人がキャンセル操作できる） =====
@@ -3350,7 +3450,7 @@ async function cancelInvitedTrial(internalId,fullname){
     if(result==='not_trial'){alert('すでに体験予定の状態ではないようです');loadInvitedTrials();return;}
     alert(fullname+'さんの体験参加をキャンセルしました');
     loadInvitedTrials();
-  }catch(e){alert('エラー：'+e.message);}
+  }catch(e){alert('エラー：'+gasErrorText(e));loadInvitedTrials();}
 }
 
 // ===== オンラインヨガ部（カミングスーン）=====
