@@ -1580,6 +1580,9 @@ let _currentNextSport=null;
 let _reserveLoadSeq=0;
 async function loadReserveData(){
   const mySeq=++_reserveLoadSeq;
+  // ★第2段：前回分の付随データは使わない（古い情報とのズレ防止）
+  window._reserveAllSchedules=null;
+  window._reserveMembersMap=null;
   document.getElementById('mypage-schedule-list').innerHTML=loadingBoxHTML(false);
   document.getElementById('next-member-card').style.display='none';
   document.getElementById('next-member-loading-body').innerHTML='<div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">読み込み中…</div>';
@@ -1590,8 +1593,11 @@ async function loadReserveData(){
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
     if(mySeq!==_reserveLoadSeq)return; // もっと新しい読み込みが始まっていたら何もしない
     renderScheduleList(data.schedules, data.reservations);
-    loadTrialData();
-    loadInvitedTrials();
+    // ★第2段：GASが1回でまとめて返したデータを使う（無い場合＝GAS未更新なら従来どおり個別に取得）
+    window._reserveAllSchedules=Array.isArray(data.allSchedules)?data.allSchedules:null;
+    window._reserveMembersMap=data.membersBySchedule||null;
+    loadTrialData(Array.isArray(data.trialSports)?data.trialSports:undefined);
+    loadInvitedTrials(Array.isArray(data.invitedTrials)?data.invitedTrials:undefined);
     // ★追加：種目ごとの直近予定＋参加予定メンバーをまとめて保持し、ワンタップ切替できるようにする
     _nextBySportData=data.nextBySport||{};
     const hasAnySchedule=NEXT_MEMBER_SPORTS.some(sp=>_nextBySportData[sp]&&_nextBySportData[sp].schedule);
@@ -1932,7 +1938,7 @@ function selectScheduleStatus(i,status){
   const cb=document.getElementById('sched-check-'+i);if(cb)cb.checked=true; // ステータスを変えたら予約対象として自動チェック
 }
 
-async function loadTrialData(){
+async function loadTrialData(prefetched){
   const el=document.getElementById('trial-sport-list');
   const lockIcon=document.getElementById('trial-lock');
   if(isVisitor(mypageCurrentUser.type)){
@@ -1941,17 +1947,23 @@ async function loadTrialData(){
     return;
   }
   lockIcon.style.display='none';
+  // ★第2段：予約タブの一括データに含まれていれば、通信せずにそのまま表示
+  if(Array.isArray(prefetched)){_renderTrialSportsList(prefetched);return;}
   el.innerHTML=loadingBoxHTML(false);
   try{
     const sports=await callGAS('getTrialSports',mypageCurrentUser.fullname);
-    if(!sports.length){el.innerHTML='<div class="empty">対象の種目はありません（全種目参加済みです）</div>';return;}
-    el.innerHTML=sports.map(s=>{
-      if(s.used){
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8;opacity:0.5"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><div style="font-size:12px;color:#aaa">利用済み</div></div>';
-      }
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><button onclick="openTrialScheduleList(\''+s.sport+'\')" style="background:#1a3a5c;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">参加してみる</button></div>';
-    }).join('');
+    _renderTrialSportsList(sports);
   }catch(e){el.innerHTML=reloadBoxHTML(e,'loadTrialData()',false);}
+}
+function _renderTrialSportsList(sports){
+  const el=document.getElementById('trial-sport-list');
+  if(!sports||!sports.length){el.innerHTML='<div class="empty">対象の種目はありません（全種目参加済みです）</div>';return;}
+  el.innerHTML=sports.map(s=>{
+    if(s.used){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8;opacity:0.5"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><div style="font-size:12px;color:#aaa">利用済み</div></div>';
+    }
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:14px;font-weight:700">'+(SPORT_ICON[s.sport]||'')+' '+s.sport+'</div><button onclick="openTrialScheduleList(\''+s.sport+'\')" style="background:#1a3a5c;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer">参加してみる</button></div>';
+  }).join('');
 }
 
 function onTrialAccordionClick(){
@@ -1971,7 +1983,8 @@ async function openTrialScheduleList(sport){
   document.body.appendChild(ov);
   const body=ov.querySelector('#trial-schedule-body');
   try{
-    const all=await callGAS('getUpcomingSchedules','全て');
+    // ★第2段：予約タブで取得済みの全日程があれば通信しない
+    const all=window._reserveAllSchedules||await callGAS('getUpcomingSchedules','全て');
     const list=all.filter(s=>s[4]===sport);
     if(!list.length){body.innerHTML='<div class="empty">現在予約可能な日程がありません</div>';return;}
     body.innerHTML=list.map(s=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="font-size:13px">'+s[0]+'（'+getDow(s[0])+'） '+s[1]+' ／ '+s[2]+'</div><button onclick=\'confirmTrialReserve("'+s[0]+'","'+sport+'","'+s[2]+'")\' style="background:#1a3a5c;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">選ぶ</button></div>').join('');
@@ -1997,7 +2010,9 @@ async function loadDetailMembers(i,date,sport){
   if(area.style.display==='block'){area.style.display='none';return;}
   area.style.display='block';area.innerHTML='<div style="text-align:center;padding:14px 0"><div class="prep-spinner" style="margin:0 auto 8px"></div><div style="font-size:13px;color:#aaa">参加者を読み込み中…</div></div>';
   try{
-    const r=await callGAS('getReservations',date,sport);
+    // ★第2段：予約タブで取得済みの参加者リストがあれば通信せず即表示
+    const _pre=window._reserveMembersMap&&window._reserveMembersMap[dk(date)+'|'+sport];
+    const r=_pre||await callGAS('getReservations',date,sport);
     area.innerHTML=r.length?'<div style="font-size:13px;color:#888;margin-bottom:6px">参加予定（'+r.filter(x=>(x[7]||'⭕')!=='❌').length+'人）</div>'+r.map(x=>{
       const st=x[7]||'⭕';if(st==='❌')return'';
       const displayName=x[5]?x[5].split(/[\s　]/)[0]:x[5];
@@ -3424,11 +3439,12 @@ async function cancelSingleReserve(date,sport,btn){
 }
 
 // ===== 招待した体験予定者一覧（招待者本人がキャンセル操作できる） =====
-async function loadInvitedTrials(){
+async function loadInvitedTrials(prefetched){
   if(!mypageCurrentUser)return;
   const card=document.getElementById('invited-trials-card');
   try{
-    const list=await callGAS('getMyInvitedTrials',mypageCurrentUser.fullname);
+    // ★第2段：予約タブの一括データに含まれていれば通信しない
+    const list=Array.isArray(prefetched)?prefetched:await callGAS('getMyInvitedTrials',mypageCurrentUser.fullname);
     if(!list||!list.length){card.style.display='none';return;}
     card.style.display='block';
     document.getElementById('invited-trials-list').innerHTML=list.map(t=>
