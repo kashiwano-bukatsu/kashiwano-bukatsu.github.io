@@ -412,6 +412,7 @@ body.sporolog-page .wrapper{padding-top:0}
     <div class="sporolog-eyebrow">SPOROLOG</div>
     <div class="sporolog-arenatitle">参加ログ</div>
     <div class="sporolog-arenasub">参加するたびに、焼き芋が出てくる</div>
+    <div style="position:relative;text-align:center;margin-bottom:6px"><button onclick="refreshNow('sporolog')" style="background:none;border:1px solid rgba(255,182,92,0.4);color:#FFB65C;border-radius:999px;padding:5px 14px;font-size:11.5px;font-weight:700;cursor:pointer">🔄 最新に更新</button></div>
 
     <div style="position:relative;margin-top:8px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,217,61,0.3);box-shadow:0 6px 18px rgba(0,0,0,0.4)">
       <img src="sporolog-banner.jpg" alt="" style="width:100%;display:block;aspect-ratio:4/3;object-fit:cover">
@@ -444,6 +445,7 @@ body.sporolog-page .wrapper{padding-top:0}
     <div style="text-align:center;padding:16px 0"><div class="prep-spinner" style="margin:0 auto 12px"></div><div style="font-size:15px;font-weight:700;color:#888">事務局の確認をお待ちください</div><div style="font-size:13px;color:#aaa;margin-top:6px">承認後、予約機能がご利用いただけます</div></div>
   </div>
   <div id="reserve-main" style="display:none">
+    <div style="text-align:right;margin-bottom:8px"><button onclick="refreshNow('reserve')" style="background:#fff;border:1px solid #d5dde6;color:#1a3a5c;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 最新に更新</button></div>
     <div id="next-member-card" class="next-member-card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>次回の参加予定メンバー</div>
       <div id="next-member-sport-tabs" style="display:flex;gap:6px;margin-bottom:10px"></div>
@@ -989,6 +991,16 @@ const GAS_READ_FUNCS=new Set([
   'getMyInvitedTrials','getYogaLineUrl','getNotice'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
+// ★第3段：先読み＆3分キャッシュ
+//  ・下の関数は、取得から3分以内なら通信せずに前回の結果をそのまま使う
+//  ・予約・キャンセルなど「書き込み」をしたら、キャッシュは全部捨てて次回は必ず取り直す
+const GAS_CACHE_TTL_MS=3*60*1000;
+const GAS_CACHE_FUNCS=new Set([
+  'getMemberDashboard','getReserveTabData','getReceptionHomeData','getUpcomingSchedules','getReservations',
+  'getTrialSports','getMyInvitedTrials','getMemberNotices','getVideoList','getNotice','getAppVersion'
+]);
+const _gasCache={};
+function clearGASCache(){Object.keys(_gasCache).forEach(k=>delete _gasCache[k]);}
 const _gasRunning = {};
 function _gasSleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function _gasFetchOnce(func,args,timeoutMs){
@@ -1015,6 +1027,12 @@ async function callGAS(func,...args){
   try{key=func+'|'+JSON.stringify(args);}catch(e){key=func+'|'+Date.now()+Math.random();}
   if(_gasRunning[key]) return _gasRunning[key];
   const isRead=GAS_READ_FUNCS.has(func);
+  const cacheable=GAS_CACHE_FUNCS.has(func);
+  if(cacheable){
+    const hit=_gasCache[key];
+    if(hit&&Date.now()-hit.t<GAS_CACHE_TTL_MS)return hit.p;
+  }
+  if(!isRead)clearGASCache(); // 書き込み開始：古いデータは使わない
   const p=(async()=>{
     try{
       const maxTry=isRead?3:1;
@@ -1031,9 +1049,15 @@ async function callGAS(func,...args){
       throw lastErr;
     }finally{
       delete _gasRunning[key];
+      if(!isRead)clearGASCache(); // 書き込み完了：次の表示は必ず最新を取り直す
     }
   })();
   _gasRunning[key]=p;
+  if(cacheable){
+    const entry={t:Date.now(),p};
+    _gasCache[key]=entry;
+    p.catch(()=>{if(_gasCache[key]===entry)delete _gasCache[key];}); // 失敗した結果は残さない
+  }
   return p;
 }
 // 通信エラーを利用者向けのわかりやすい文言に変換
@@ -1057,6 +1081,17 @@ function reloadBoxHTML(e,onclickJs,dark){
     +'<div style="font-size:12px;color:'+subColor+';margin-top:4px;line-height:1.7">'+gasErrorText(e)+'</div>'
     +'<button onclick="event.stopPropagation();'+onclickJs+'" style="margin-top:12px;padding:12px 26px;border:none;border-radius:999px;font-size:14px;font-weight:800;cursor:pointer;'+btnStyle+'">🔄 再読み込み</button>'
     +'</div>';
+}
+// ★第3段：裏で先に読み込んでおく（結果はキャッシュに入り、画面を開いたとき即表示される）
+function prefetchUserData(u){
+  if(!u||!u.internalId)return;
+  callGAS('getMemberDashboard',u.internalId).catch(()=>{});
+  if(!u.isApplying&&u.fullname)callGAS('getReserveTabData',u.fullname,u.memberSport||'全て').catch(()=>{});
+}
+// 手動の「最新に更新」
+function refreshNow(kind){
+  clearGASCache();
+  if(kind==='reserve')loadReserveData();else loadMypageData();
 }
 function loadingBoxHTML(dark){
   const c=dark?'rgba(255,255,255,0.6)':'#aaa';
@@ -1124,6 +1159,14 @@ window.addEventListener('load',()=>{
   const splash=document.getElementById('splash');
   const skipSplash=sessionStorage.getItem('bukatsu_skip_splash')==='true';
   sessionStorage.removeItem('bukatsu_skip_splash');
+  // ★第3段：起動画面を出している間に、裏でデータの読み込みを始めておく
+  callGAS('getReceptionHomeData').catch(()=>{});
+  try{
+    if(!MAINTENANCE_MODE&&(localStorage.getItem('bukatsu_auto_login')==='true'||skipSplash)){
+      const _saved=localStorage.getItem('bukatsu_user');
+      if(_saved)prefetchUserData(JSON.parse(_saved));
+    }
+  }catch(e){}
   const splashDelay=skipSplash?0:2600;
   const fadeDelay=skipSplash?0:1100;
   setTimeout(()=>{
@@ -1268,6 +1311,7 @@ async function mypageLogin(){
 
 function mypageLogout(){
   mypageCurrentUser=null;
+  clearGASCache();
   try{
     localStorage.removeItem('bukatsu_user');
     localStorage.setItem('bukatsu_auto_login','false');
@@ -1316,6 +1360,7 @@ function showMypageMain(){
     checkVideosNewBadge();
   }
   loadMypageData(true,true);
+  prefetchUserData(mypageCurrentUser); // ★第3段：予約タブのデータも裏で先読み
 }
 
 // スタンプカード風に進捗を表示（焼き芋が1本ずつ焼きあがっていくイメージ）
@@ -1453,7 +1498,7 @@ async function loadMypageData(checkNotice,updateRankCache){
     preloadSporlogAnim('achievement5.mp4');
     preloadSporlogAnim('achievement10.mp4');
     const d=await callGAS('getMemberDashboard',mypageCurrentUser.internalId);
-    if(checkNotice&&d.referralNotice)showReferralNoticePopup(d.referralNotice);
+    if(checkNotice&&d.referralNotice){showReferralNoticePopup(d.referralNotice);d.referralNotice=null;}
     let progress=d.ticketProgress||0,tickets=d.ticketCount||0,lap=d.lap||1;
     document.getElementById('mypage-total-count').textContent=d.totalCount;
     document.getElementById('mypage-month-count').textContent=d.monthCount;
