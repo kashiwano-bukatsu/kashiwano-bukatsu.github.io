@@ -3984,7 +3984,10 @@ async function loadInvitedTrials(prefetched){
   const card=document.getElementById('invited-trials-card');
   try{
     // ★第2段：予約タブの一括データに含まれていれば通信しない
-    const list=Array.isArray(prefetched)?prefetched:await callGAS('getMyInvitedTrials',mypageCurrentUser.fullname);
+    const _raw=Array.isArray(prefetched)?prefetched:await callGAS('getMyInvitedTrials',mypageCurrentUser.fullname);
+    // 参加予定日を過ぎた人は表示しない（当日分は表示）
+    const _d=new Date(),_today=_d.getFullYear()+'/'+String(_d.getMonth()+1).padStart(2,'0')+'/'+String(_d.getDate()).padStart(2,'0');
+    const list=(_raw||[]).filter(t=>!t.scheduleDate||t.scheduleDate>=_today);
     if(!list||!list.length){card.style.display='none';return;}
     card.style.display='block';
     document.getElementById('invited-trials-list').innerHTML=list.map(t=>
