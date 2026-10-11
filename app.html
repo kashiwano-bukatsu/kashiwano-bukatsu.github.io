@@ -3131,7 +3131,7 @@ async function loadMonthCalendar(){
   const el=document.getElementById('home-month-calendar');
   if(!el)return;
   try{
-    calendarSchedules=await callGAS('getUpcomingSchedules','全て')||[];
+    calendarSchedules=await callGAS('getUpcomingSchedules','全て',true)||[];
     renderMonthCalendar(calendarCurrentMonth);
   }catch(e){el.innerHTML=reloadBoxHTML(e,'loadMonthCalendar()',false);}
 }
