@@ -512,6 +512,7 @@ body.sporolog-page .wrapper{padding-top:0}
       <select id="ref-friend-schedule" onchange="checkReferralForm()"><option value="">スケジュールを読み込み中...</option></select>
       <div id="ref-err-schedule" style="display:none;color:#e53935;font-size:12px;margin-top:2px">未入力</div>
       <button id="ref-schedule-retry" onclick="loadReferralSchedules()" style="display:none;margin-top:6px;padding:8px 16px;background:#f0f4f8;border:1.5px solid #ccd;border-radius:10px;font-size:13px;color:#555;cursor:pointer">🔄 再読み込み</button>
+      <label style="display:flex;align-items:center;gap:10px;margin-top:14px;cursor:pointer"><input type="checkbox" id="ref-as-family"><span style="font-size:14px;color:#444">家族として紹介する（紹介ボーナスはありません）</span></label>
       <button id="referral-submit-btn" class="btn btn-primary" onclick="submitReferral()" style="opacity:0.4;pointer-events:none">紹介する</button>
     </div>
   </div>
@@ -542,6 +543,24 @@ body.sporolog-page .wrapper{padding-top:0}
         <option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option>
       </select>
       <button class="btn btn-primary" onclick="saveSettingsProfile()" style="margin-top:14px">保存する</button>
+    </div>
+    <!-- ファミリー -->
+    <div class="card" id="settings-family-card">
+      <div class="card-title"><div class="card-title-dot"></div>ファミリー</div>
+      <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">つながったファミリーは、予約・キャンセル・参加ステータスの変更をまとめて行えます。</div>
+      <div id="settings-family-list"></div>
+      <div class="label">家族を追加する（事務局の承認後に反映）</div>
+      <input type="text" id="fam-req-number" placeholder="家族の会員番号　例：FB000063" autocapitalize="characters">
+      <div class="label" style="margin-top:10px">家族の生年月日（8桁）</div>
+      <input type="tel" id="fam-req-dob" maxlength="8" placeholder="例：19961019">
+      <div id="fam-req-reason-wrap" style="display:none">
+        <div class="label" style="margin-top:10px">苗字が違う理由</div>
+        <input type="text" id="fam-req-reason" placeholder="例：祖父母、旧姓 など">
+      </div>
+      <button class="btn btn-primary" id="fam-req-btn" onclick="submitFamilyRequest()">申請する</button>
+      <div id="fam-req-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
+      <div class="label">申請の状況</div>
+      <div id="settings-family-requests"></div>
     </div>
     <!-- プラン変更 -->
     <div class="card">
@@ -988,7 +1007,7 @@ const GAS_READ_FUNCS=new Set([
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
   'getVideoList','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
-  'getMyInvitedTrials','getYogaLineUrl','getNotice'
+  'getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
 // ★第3段：先読み＆3分キャッシュ
@@ -1335,8 +1354,9 @@ function showMypageMain(){
   const famLabel=document.getElementById('mypage-family-label');
   const famName=document.getElementById('mypage-family-name');
   if(famLabel&&famName){
-    if(mypageCurrentUser.familyPartner&&mypageCurrentUser.familyPartner.nickname){
-      famName.textContent=mypageCurrentUser.familyPartner.nickname;
+    const _fmNames=famHeaderNames();
+    if(_fmNames.length){
+      famName.textContent=_fmNames.join('・');
       famLabel.style.display='block';
     } else { famLabel.style.display='none'; }
   }
@@ -1520,6 +1540,8 @@ async function loadMypageData(checkNotice,updateRankCache){
       mypageCurrentUser.isApplying=d.status==='会員(申請中)';
       mypageCurrentUser.isPendingPayment=d.status==='会員(支払い確認中)';
       mypageCurrentUser.familyPartner=d.familyPartner||null;
+      mypageCurrentUser.familyMembers=Array.isArray(d.familyMembers)?d.familyMembers:[];
+      {const _fl=document.getElementById('mypage-family-label'),_fn=document.getElementById('mypage-family-name');if(_fl&&_fn){const _n=famHeaderNames();if(_n.length){_fn.textContent=_n.join('・');_fl.style.display='block';}else{_fl.style.display='none';}}}
       saveCurrentUser();
       const sc=document.getElementById('sporolog-card');
       const slc=document.getElementById('sporolog-link-card');
@@ -1637,6 +1659,9 @@ async function loadReserveData(){
     // 4回サーバー往復していたが、GAS側で1回にまとめて返すように変更（要：Code.gs側にgetReserveTabDataを追加）
     const data = await callGAS('getReserveTabData', mypageCurrentUser.fullname, mypageCurrentUser.memberSport||'全て');
     if(mySeq!==_reserveLoadSeq)return; // もっと新しい読み込みが始まっていたら何もしない
+    window._reserveFamily=Array.isArray(data.family)?data.family:[];
+    window._reserveFamilyRes=data.familyReservations||{};
+    window._reserveAllSchedulesPre=Array.isArray(data.allSchedules)?data.allSchedules:null;
     renderScheduleList(data.schedules, data.reservations);
     // ★第2段：GASが1回でまとめて返したデータを使う（無い場合＝GAS未更新なら従来どおり個別に取得）
     window._reserveAllSchedules=Array.isArray(data.allSchedules)?data.allSchedules:null;
@@ -1880,7 +1905,7 @@ function toggleCapacityExplain(){
 // ・未予約 → チェックボックス（一括BASE）、開くとステータス選択＋参加メンバー
 // ・予約済み → ✅バッジ＋ステータス表示、開くとステータス変更・キャンセル＋参加メンバー
 let _scheduleStatusMap={}; // idx -> ステータス（デフォルト⭕、詳細を開いて変更可）
-function renderScheduleList(schedules,reservations){
+function renderScheduleList_legacy(schedules,reservations){
   const el=document.getElementById('mypage-schedule-list');
   reservations=reservations||[];
   const resMap={};
@@ -1946,7 +1971,7 @@ function toggleAllSchedules(cb){
   document.querySelectorAll('.schedule-check').forEach(c=>c.checked=cb.checked);
 }
 
-function toggleScheduleDetail(i){
+function toggleScheduleDetail_legacy(i){
   const detail=document.getElementById('mypage-detail-'+i),arrow=document.getElementById('sched-arrow-'+i);
   if(detail.style.display==='block'){detail.style.display='none';arrow.textContent='›';return;}
   detail.style.display='block';arrow.textContent='∨';
@@ -2067,7 +2092,7 @@ async function loadDetailMembers(i,date,sport){
   }catch(e){area.innerHTML='<div style="text-align:center;padding:10px 0"><div style="color:#e53935;font-size:13px;margin-bottom:8px">'+gasErrorText(e)+'</div><button onclick="event.stopPropagation();document.getElementById(\'detail-members-'+i+'\').style.display=\'none\';loadDetailMembers('+i+',\''+date+'\',\''+sport+'\')" style="background:#f0f4f8;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:#555;cursor:pointer">🔄 もう一度読み込む</button></div>';}
 }
 
-async function submitScheduleReservations(){
+async function submitScheduleReservations_legacy(){
   if(!mypageCurrentUser)return;
   if(checkApplying())return;
   const checks=document.querySelectorAll('.schedule-check:checked');
@@ -2096,6 +2121,371 @@ async function submitScheduleReservations(){
   catch(e){alert('エラー：'+gasErrorText(e)+'\n\n※予約が完了している場合もあるため、画面を読み込み直します。');loadReserveData();}
   finally{if(btn){btn.disabled=false;btn.textContent='選択した日程を予約する';}}
 }
+
+/* ================= ここから ファミリー機能 ================= */
+// ===== ファミリー機能（予約・設定・紹介の重複確認） =====
+// 家族がいない人は従来の処理（*_legacy）がそのまま動く。家族がいる人だけ *Fam が動く。
+function _famActive(){ return Array.isArray(window._reserveFamily)&&window._reserveFamily.length>0; }
+function _famFirstName(n){ return String(n||'').split(/[\s　]/)[0]; }
+function _famEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+const _FAM_ALL_SPORT_TYPES=['応援団','運営','代表','部長','本部'];
+function _famPeople(){
+  const me={fullname:mypageCurrentUser.fullname,nickname:mypageCurrentUser.nickname,type:mypageCurrentUser.type,sport:mypageCurrentUser.memberSport||'全て',isSelf:true};
+  return [me].concat((window._reserveFamily||[]).map(function(f){return {fullname:f.fullname,nickname:f.nickname,type:f.type,sport:f.sport||'全て',isSelf:false};}));
+}
+function _famPlays(p,sport){
+  if(_FAM_ALL_SPORT_TYPES.includes(p.type))return true;
+  const sp=p.sport||'全て';
+  if(sp==='全て')return true;
+  return sp.split('＋').some(function(x){return x&&sport.indexOf(x)!==-1;});
+}
+function _famIsVisitor(p){ return p.type==='ビジター会員'; }
+function _famName(p){ return p.isSelf?'自分':_famFirstName(p.nickname); }
+
+// ---------- 予約タブ：日程リスト ----------
+function renderScheduleList(schedules,reservations){
+  if(_famActive())return renderScheduleListFam(schedules,reservations);
+  return renderScheduleList_legacy(schedules,reservations);
+}
+function renderScheduleListFam(schedules,reservations){
+  const el=document.getElementById('mypage-schedule-list');
+  const people=_famPeople();
+  const me=people[0];
+  const base=Array.isArray(window._reserveAllSchedulesPre)?window._reserveAllSchedulesPre:(schedules||[]);
+  const famRes=window._reserveFamilyRes||{};
+  const resBy={};
+  people.forEach(function(p){resBy[p.fullname]={};});
+  (reservations||[]).forEach(function(r){resBy[me.fullname][r[1]+'_'+r[2]]=r;});
+  people.slice(1).forEach(function(p){(famRes[p.fullname]||[]).forEach(function(r){resBy[p.fullname][r[1]+'_'+r[2]]=r;});});
+  const items=[];const seen=new Set();
+  const mk=function(date,time,place,sport,memo,fee,eligible,practice,key){
+    const rb={};people.forEach(function(p){rb[p.fullname]=resBy[p.fullname][key]||null;});
+    return {date:date,time:time,place:place,sport:sport,memo:memo,fee:fee,eligible:eligible,practice:practice,resBy:rb,res:rb[me.fullname]};
+  };
+  base.forEach(function(s){
+    const date=s[0],sport=s[4],memo=s[7];
+    const practice=isPracticeDay(memo);
+    const players=people.filter(function(p){return _famPlays(p,sport);});
+    const eligible=players.filter(function(p){return !(practice&&_famIsVisitor(p));});
+    const key=date+'_'+sport;
+    const anyRes=people.some(function(p){return resBy[p.fullname][key];});
+    if(!eligible.length&&!anyRes)return;
+    seen.add(key);
+    items.push(mk(date,s[1],s[2],sport,memo,s[5],eligible,practice,key));
+  });
+  (reservations||[]).forEach(function(r){
+    const k=r[1]+'_'+r[2];
+    if(!seen.has(k)){seen.add(k);items.push(mk(r[1],'',r[3],r[2],'','',[me],false,k));}
+  });
+  const sorted=items.sort(function(a,b){return dk(a.date)-dk(b.date);});
+  window._reserveSchedules=sorted;
+  _scheduleStatusMap={};
+  if(!sorted.length){el.innerHTML='<div class="empty">今後の予定がありません</div>';return;}
+
+  let html='<div style="background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:12px;color:#888;font-weight:700">予約する人</div><span onclick="famSelectAllPeople()" style="font-size:12px;color:#4a90d9;cursor:pointer;text-decoration:underline">全員を選ぶ</span></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    people.map(function(p,k){
+      return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:#fff;border-radius:10px;padding:8px 12px;border:2px solid '+(k===0?'#1a3a5c':'#ddd')+'"><input type="checkbox" class="fam-person-check" data-name="'+_famEsc(p.fullname)+'"'+(k===0?' checked':'')+' style="width:22px;height:22px;accent-color:#1a3a5c" onchange="this.parentNode.style.borderColor=this.checked?\'#1a3a5c\':\'#ddd\'"><span style="font-size:13px;font-weight:700;color:#1a3a5c">'+_famEsc(_famName(p))+'</span></label>';
+    }).join('')+'</div></div>';
+  const hasUnreserved=sorted.some(function(it){return it.eligible.some(function(p){return !it.resBy[p.fullname];});});
+  if(hasUnreserved){
+    html+='<label style="display:flex;align-items:center;gap:10px;padding:6px 0 14px;cursor:pointer"><input type="checkbox" id="schedule-select-all" onchange="toggleAllSchedules(this)" style="width:22px;height:22px;accent-color:#1a3a5c;flex-shrink:0"><span style="font-size:14px;font-weight:700;color:#1a3a5c">予約できる日程を全て選択</span></label>';
+  }
+  html+=sorted.map(function(it,i){
+    const unres=it.eligible.filter(function(p){return !it.resBy[p.fullname];});
+    const isTrial=it.res&&it.res[8]==='体験参加';
+    const stLine=people.filter(function(p){return it.resBy[p.fullname]||it.eligible.indexOf(p)!==-1;}).map(function(p){
+      const r=it.resBy[p.fullname];
+      return r?'<span style="color:#188038;font-weight:700">'+_famEsc(_famName(p))+' ✅'+_famEsc(r[7]||'⭕')+'</span>':'<span style="color:#999">'+_famEsc(_famName(p))+' 未</span>';
+    }).join('　');
+    const blocked=(it.practice&&people.some(function(p){return _famIsVisitor(p)&&_famPlays(p,it.sport);}))?'<div style="font-size:11px;color:#b26a00;margin-top:2px">ビジター会員は練習日は予約できません</div>':'';
+    let left;
+    if(unres.length){
+      _scheduleStatusMap[i]='⭕';
+      left='<input type="checkbox" class="schedule-check" id="sched-check-'+i+'" data-idx="'+i+'" style="width:22px;height:22px;flex-shrink:0;accent-color:#1a3a5c">';
+    }else{
+      left='<div style="width:22px;text-align:center;font-size:16px;flex-shrink:0">✅</div>';
+    }
+    return '<div class="schedule-item" style="padding:10px 0;border-bottom:1px solid #f0f4f8;'+(unres.length?'':'background:#fafffe')+'">'+
+      '<div style="display:flex;align-items:center;gap:12px">'+left+
+        '<div style="flex:1;cursor:pointer" onclick="toggleScheduleDetail('+i+')">'+
+          '<div style="font-size:15px;font-weight:700">'+(SPORT_ICON[it.sport]||'')+' '+_famEsc(it.sport)+(isTrial?'<span class="new-badge" style="background:#1a3a5c">体験</span>':'')+practiceDayBadge(it.memo,it.fee)+'</div>'+
+          '<div style="font-size:13px;color:#888;margin-top:2px">'+it.date+'（'+getDow(it.date)+'）'+(it.time?' '+it.time:'')+' ／ '+_famEsc(it.place)+'</div>'+
+          '<div style="font-size:12px;margin-top:4px" id="fam-line-'+i+'">'+stLine+'</div>'+blocked+
+          (unres.length?'<div style="font-size:12px;color:#1a3a5c;margin-top:4px" id="sched-status-label-'+i+'">新しく予約する時のステータス：⭕ 参加（タップで変更）</div>':'')+
+        '</div>'+
+        '<div style="font-size:18px;color:#aaa" id="sched-arrow-'+i+'" onclick="toggleScheduleDetail('+i+')">›</div>'+
+      '</div>'+
+      '<div id="mypage-detail-'+i+'" style="display:none;margin-top:10px;padding-left:34px"></div>'+
+    '</div>';
+  }).join('');
+  el.innerHTML=html;
+}
+function famSelectAllPeople(){
+  document.querySelectorAll('.fam-person-check').forEach(function(c){c.checked=true;if(c.parentNode)c.parentNode.style.borderColor='#1a3a5c';});
+}
+
+// ---------- 予約タブ：日程を開いたときの中身 ----------
+function toggleScheduleDetail(i){
+  if(_famActive()&&window._reserveSchedules&&window._reserveSchedules[i]&&window._reserveSchedules[i].resBy)return toggleScheduleDetailFam(i);
+  return toggleScheduleDetail_legacy(i);
+}
+const _famManageStatus={};
+function toggleScheduleDetailFam(i){
+  const detail=document.getElementById('mypage-detail-'+i),arrow=document.getElementById('sched-arrow-'+i);
+  if(detail.style.display==='block'){detail.style.display='none';arrow.textContent='›';return;}
+  detail.style.display='block';arrow.textContent='∨';
+  if(detail.dataset.built)return;
+  detail.dataset.built='1';
+  const it=window._reserveSchedules[i];
+  const people=_famPeople();
+  const unres=it.eligible.filter(function(p){return !it.resBy[p.fullname];});
+  const resv=people.filter(function(p){return it.resBy[p.fullname];});
+  let h='';
+  if(unres.length){
+    h+='<div style="font-size:13px;color:#888;margin-bottom:8px">新しく予約する時のステータス（'+unres.map(function(p){return _famEsc(_famName(p));}).join('・')+'）<br><span style="font-size:11px">※上の「予約する人」でチェックした人が対象です</span></div>'+
+      '<div class="status-select-row">'+
+      ['⭕|maru|参加','△|sankaku|未定','❌|batsu|不参加'].map(function(t){var a=t.split('|');return '<button class="status-sel-btn'+(a[1]==='maru'?' sel-maru':'')+'" id="sel-'+i+'-'+a[1]+'" onclick="event.stopPropagation();selectScheduleStatus('+i+',\''+a[0]+'\')">'+a[0]+'<div style="font-size:11px;color:#888;margin-top:4px">'+a[2]+'</div></button>';}).join('')+
+      '</div>';
+  }
+  if(resv.length){
+    h+='<div style="font-size:13px;color:#888;margin:14px 0 8px">予約済みの人（変更・キャンセルする人にチェック）</div>'+
+      resv.map(function(p){
+        const r=it.resBy[p.fullname];
+        return '<label style="display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer" onclick="event.stopPropagation()"><input type="checkbox" class="fam-manage-check" data-idx="'+i+'" data-name="'+_famEsc(p.fullname)+'" style="width:22px;height:22px;accent-color:#1a3a5c"><span style="font-size:14px;font-weight:700;color:#1a3a5c">'+_famEsc(_famName(p))+'</span><span style="font-size:12px;color:#188038">'+_famEsc(r[7]||'⭕')+'</span></label>';
+      }).join('')+
+      '<div style="font-size:13px;color:#888;margin:8px 0">変更後のステータス</div>'+
+      '<div style="display:flex;gap:6px;margin-bottom:8px">'+
+      ['⭕|参加','△|未定','❌|不参加'].map(function(t){var a=t.split('|');return '<button class="status-sel-btn" id="fsel-'+i+'-'+a[0]+'" onclick="event.stopPropagation();famSetManageStatus('+i+',\''+a[0]+'\')">'+a[0]+'<div style="font-size:10px;margin-top:2px">'+a[1]+'</div></button>';}).join('')+
+      '</div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button onclick="event.stopPropagation();famSaveStatus('+i+',this)" style="flex:1;padding:10px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">選んだ人のステータスを保存</button>'+
+        '<button onclick="event.stopPropagation();famCancel('+i+',this)" style="flex:1;padding:10px;background:#e53935;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">選んだ人をキャンセル</button>'+
+      '</div>';
+  }
+  h+='<button class="view-members-btn" style="margin-top:10px" onclick="event.stopPropagation();loadDetailMembers('+i+',\''+it.date+'\',\''+it.sport+'\')">参加者を見る</button><div id="detail-members-'+i+'" style="margin-top:8px"></div>';
+  detail.innerHTML=h;
+}
+function famSetManageStatus(i,st){
+  _famManageStatus[i]=st;
+  ['⭕','△','❌'].forEach(function(k){
+    const b=document.getElementById('fsel-'+i+'-'+k);if(!b)return;
+    b.classList.remove('sel-maru','sel-sankaku','sel-batsu');
+    if(k===st)b.classList.add({'⭕':'sel-maru','△':'sel-sankaku','❌':'sel-batsu'}[k]);
+  });
+}
+function _famCheckedManage(i){
+  return Array.from(document.querySelectorAll('.fam-manage-check[data-idx="'+i+'"]:checked')).map(function(c){return c.dataset.name;});
+}
+function _famNickOf(name){
+  const p=_famPeople().find(function(x){return x.fullname===name;});
+  return p?_famName(p):name;
+}
+async function famSaveStatus(i,btn){
+  if(!mypageCurrentUser||(btn&&btn.disabled))return;
+  const it=window._reserveSchedules[i];
+  const names=_famCheckedManage(i);
+  if(!names.length)return alert('変更する人にチェックを付けてください');
+  const st=_famManageStatus[i];
+  if(!st)return alert('変更後のステータスを選んでください');
+  if(btn){btn.disabled=true;btn.textContent='保存中...';}
+  try{
+    await callGAS('familyBulkUpdateStatus',names.map(function(n){return {date:it.date,sport:it.sport,fullname:n,status:st};}),mypageCurrentUser.fullname);
+    alert(names.map(_famNickOf).join('・')+' のステータスを変更しました');
+    loadReserveData();
+  }catch(e){
+    alert('エラー：'+gasErrorText(e)+'\n\n※変更が反映されている場合もあるため、画面を読み込み直します。');
+    loadReserveData();
+  }finally{ if(btn){btn.disabled=false;btn.textContent='選んだ人のステータスを保存';} }
+}
+async function famCancel(i,btn){
+  if(!mypageCurrentUser||(btn&&btn.disabled))return;
+  const it=window._reserveSchedules[i];
+  const names=_famCheckedManage(i);
+  if(!names.length)return alert('キャンセルする人にチェックを付けてください');
+  if(!confirm(it.date+' '+it.sport+' の予約を、'+names.map(_famNickOf).join('・')+' さんぶんキャンセルしますか？'))return;
+  if(btn){btn.disabled=true;btn.textContent='処理中...';}
+  try{
+    await callGAS('familyBulkCancel',names.map(function(n){return {date:it.date,sport:it.sport,fullname:n};}),mypageCurrentUser.fullname);
+    alert('予約をキャンセルしました');
+    loadReserveData();
+  }catch(e){
+    alert('エラー：'+gasErrorText(e)+'\n\n※キャンセルが完了している場合もあるため、画面を読み込み直します。');
+    loadReserveData();
+  }finally{ if(btn){btn.disabled=false;btn.textContent='選んだ人をキャンセル';} }
+}
+
+// ---------- 予約タブ：まとめて予約 ----------
+async function submitScheduleReservations(){
+  if(_famActive())return submitScheduleReservationsFam();
+  return submitScheduleReservations_legacy();
+}
+async function submitScheduleReservationsFam(){
+  if(!mypageCurrentUser)return;
+  if(checkApplying())return;
+  const checks=document.querySelectorAll('.schedule-check:checked');
+  if(!checks.length)return alert('予約する日程を選択してください');
+  const names=Array.from(document.querySelectorAll('.fam-person-check:checked')).map(function(c){return c.dataset.name;});
+  if(!names.length)return alert('予約する人を選択してください');
+  const sel=_famPeople().filter(function(p){return names.indexOf(p.fullname)!==-1;});
+  const s=window._reserveSchedules||[];
+  const now=new Date().toLocaleString('ja-JP');
+  const rows=[],notes=[];
+  Array.from(checks).forEach(function(c){
+    const idx=parseInt(c.dataset.idx),x=s[idx];
+    if(!x)return;
+    const st=_scheduleStatusMap[idx]||'⭕';
+    sel.forEach(function(p){
+      if(x.resBy[p.fullname])return;
+      if(!_famPlays(p,x.sport))return;
+      if(x.practice&&_famIsVisitor(p)){notes.push(_famName(p)+'さん：'+x.date+'は練習日のため予約できません（ビジター会員）');return;}
+      rows.push([now,x.date,x.sport,x.place,p.fullname,p.nickname,p.sport||'',st,'','']);
+    });
+  });
+  if(!rows.length)return alert('予約できる組み合わせがありません。すでに予約済み、または対象外です。'+(notes.length?'\n\n'+notes.join('\n'):''));
+  const btn=document.getElementById('schedule-submit-btn');
+  if(btn&&btn.disabled)return;
+  if(btn){btn.disabled=true;btn.textContent='予約中...';}
+  try{
+    const r=await callGAS('familyBulkReserve',rows,mypageCurrentUser.fullname);
+    const added=(r&&typeof r==='object')?r.added:r;
+    let msg=added+'件予約しました';
+    const sk=(r&&r.skipped)||[];
+    sk.forEach(function(k){ if(k.reason==='visitor_practice_forbidden')notes.push(_famNickOf(k.fullname)+'さん：'+k.date+'は練習日のため予約できません（ビジター会員）'); });
+    if(notes.length)msg+='\n\n'+Array.from(new Set(notes)).join('\n');
+    alert(msg);loadReserveData();
+  }catch(e){alert('エラー：'+gasErrorText(e)+'\n\n※予約が完了している場合もあるため、画面を読み込み直します。');loadReserveData();}
+  finally{if(btn){btn.disabled=false;btn.textContent='選択した日程を予約する';}}
+}
+
+// ---------- マイページ：ファミリー表示 ----------
+function famHeaderNames(){
+  const fm=(mypageCurrentUser&&mypageCurrentUser.familyMembers&&mypageCurrentUser.familyMembers.length)
+    ?mypageCurrentUser.familyMembers.map(function(f){return _famFirstName(f.nickname);})
+    :((mypageCurrentUser&&mypageCurrentUser.familyPartner&&mypageCurrentUser.familyPartner.nickname)?[_famFirstName(mypageCurrentUser.familyPartner.nickname)]:[]);
+  return fm;
+}
+
+// ---------- 設定：ファミリー（会員番号で申請） ----------
+const FAM_REQ_ERRORS={
+  actor_not_found:'ログイン情報が見つかりません。ログインし直してください。',
+  not_member:'会員のみ申請できます。',
+  mismatch:'会員番号または生年月日が一致しません。',
+  self:'ご自身は追加できません。',
+  already_in_family:'すでにファミリーとしてつながっています。',
+  target_has_family:'この方はすでに別のファミリーに登録されています。事務局にご相談ください。',
+  pending_exists:'すでに申請中です。事務局の承認をお待ちください。',
+  reason_required:'苗字が違うため、理由を入力してください（例：祖父母、旧姓など）。'
+};
+async function loadSettingsFamily(){
+  const listEl=document.getElementById('settings-family-list'),reqEl=document.getElementById('settings-family-requests');
+  if(!listEl||!mypageCurrentUser)return;
+  listEl.innerHTML='<div style="font-size:13px;color:#aaa">読み込み中…</div>';
+  try{
+    const res=await Promise.all([callGAS('getMyFamily',mypageCurrentUser.fullname),callGAS('getMyFamilyRequests',mypageCurrentUser.fullname)]);
+    const fam=res[0]||[],reqs=res[1]||[];
+    const iAmRep=fam.length>0&&!fam.some(function(f){return f.isRep;});
+    if(!fam.length){
+      listEl.innerHTML='<div style="font-size:13px;color:#888">まだファミリーはいません</div>';
+    }else{
+      listEl.innerHTML=fam.map(function(f){
+        const canRemove=iAmRep;
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f4f8"><div><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+_famEsc(f.nickname)+(f.isRep?' <span style="font-size:11px;background:#fff3cd;color:#a3821f;padding:2px 8px;border-radius:10px">代表</span>':'')+'</div><div style="font-size:12px;color:#888">'+_famEsc(f.type||'')+'</div></div>'+
+          (canRemove?'<button data-id="'+_famEsc(f.internalId)+'" class="fam-unlink-btn" style="background:#fdeaea;color:#a83232;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">外す</button>':'')+'</div>';
+      }).join('')+(iAmRep?'':'<button id="fam-leave-btn" style="margin-top:10px;background:#f0f4f8;color:#555;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">ファミリーから抜ける</button>');
+      listEl.querySelectorAll('.fam-unlink-btn').forEach(function(b){b.onclick=function(){unlinkFamilyUi(b.dataset.id,false);};});
+      const lb=document.getElementById('fam-leave-btn');if(lb)lb.onclick=function(){unlinkFamilyUi(mypageCurrentUser.internalId,true);};
+    }
+    reqEl.innerHTML=reqs.length?reqs.map(function(r){
+      const mine=r.repName===mypageCurrentUser.fullname;
+      const who=mine?(_famEsc(r.memberNick)+'さんを申請'):(_famEsc(r.repNick)+'さんから申請');
+      const col=r.status==='承認'?'#188038':r.status==='却下'?'#c62828':'#b26a00';
+      return '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f4f8"><span>'+who+'</span><span style="color:'+col+';font-weight:700">'+_famEsc(r.status)+'</span></div>';
+    }).join(''):'<div style="font-size:13px;color:#aaa">申請はありません</div>';
+  }catch(e){
+    listEl.innerHTML='<div style="font-size:13px;color:#e53935">'+_famEsc(gasErrorText(e))+'</div>';
+  }
+}
+async function unlinkFamilyUi(targetId,isSelf){
+  if(!confirm(isSelf?'ファミリーから抜けますか？':'このメンバーをファミリーから外しますか？'))return;
+  try{
+    const r=await callGAS('unlinkFamilyMember',mypageCurrentUser.fullname,targetId);
+    if(r!=='ok')return alert('外せませんでした（'+r+'）');
+    alert('ファミリーから外しました');
+    loadSettingsFamily();
+  }catch(e){alert('エラー：'+gasErrorText(e));}
+}
+async function submitFamilyRequest(){
+  const num=document.getElementById('fam-req-number').value.trim();
+  const dob=document.getElementById('fam-req-dob').value.trim();
+  const reason=document.getElementById('fam-req-reason').value.trim();
+  const msg=document.getElementById('fam-req-msg');
+  msg.style.color='#e53935';
+  if(!num||!dob){msg.textContent='会員番号と生年月日を入力してください';return;}
+  const btn=document.getElementById('fam-req-btn');
+  if(btn.disabled)return;
+  btn.disabled=true;btn.textContent='送信中...';
+  try{
+    const r=await callGAS('requestFamilyLink',mypageCurrentUser.fullname,num,dob,reason);
+    if(r&&r.ok){
+      msg.style.color='#188038';
+      msg.textContent='申請しました。事務局が確認したら、メッセージでお知らせします。';
+      document.getElementById('fam-req-number').value='';document.getElementById('fam-req-dob').value='';document.getElementById('fam-req-reason').value='';
+      document.getElementById('fam-req-reason-wrap').style.display='none';
+      loadSettingsFamily();
+    }else{
+      if(r==='reason_required')document.getElementById('fam-req-reason-wrap').style.display='block';
+      msg.textContent=FAM_REQ_ERRORS[r]||('申請できませんでした（'+r+'）');
+    }
+  }catch(e){msg.textContent=gasErrorText(e);}
+  finally{btn.disabled=false;btn.textContent='申請する';}
+}
+
+// ---------- 紹介フォーム：同姓同名の確認 ----------
+function _famDialog(html,buttons,withInput){
+  return new Promise(function(resolve){
+    const ov=document.createElement('div');ov.className='popup-overlay';
+    ov.innerHTML='<div class="popup-card" style="text-align:left"><div style="font-size:15px;color:#333;line-height:1.8">'+html+'</div>'+
+      (withInput?'<input type="text" id="fam-dlg-input" placeholder="例：山田太郎" style="margin-top:12px">':'')+
+      '<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">'+
+      buttons.map(function(b,k){return '<button data-i="'+k+'" style="padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;'+(b.primary?'background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff':'background:#f0f4f8;color:#555')+'">'+b.label+'</button>';}).join('')+
+      '</div></div>';
+    document.body.appendChild(ov);
+    ov.querySelectorAll('button').forEach(function(btn){
+      btn.onclick=function(){
+        const b=buttons[parseInt(btn.dataset.i)];
+        const v=withInput?document.getElementById('fam-dlg-input').value.trim():'';
+        if(b.needInput&&!v){alert(b.needInput);return;}
+        ov.remove();resolve({value:b.value,input:v});
+      };
+    });
+  });
+}
+// 戻り値 true＝登録できた／false＝やめた・登録できなかった
+async function referralAddWithCheck(fullname,sport,scheduleDate,exp,asFamily){
+  const opts={asFamily:!!asFamily};
+  let r=await callGAS('addTempAttendee',fullname,mypageCurrentUser.internalId,sport,scheduleDate,exp,opts);
+  if(typeof r==='string')return true; // サーバーが古い場合の互換
+  if(r&&r.duplicate){
+    const info=(r.firstDate||r.sport)?'<div style="font-size:12px;color:#888;margin-top:6px">過去の登録：'+_famEsc(r.firstDate||'')+(r.sport?' ／ '+_famEsc(r.sport):'')+'</div>':'';
+    const a=await _famDialog('<b>'+_famEsc(fullname)+'</b> さんと同じ名前の登録があります。<br>過去に参加したことがある方ですか？'+info,
+      [{label:'はい（以前参加したことがある）',value:'same',primary:true},{label:'いいえ（同姓同名の別の方）',value:'different'},{label:'やめる',value:''}]);
+    if(!a.value)return false;
+    opts.answer=a.value;
+    if(a.value==='different'){
+      const k=await _famDialog('同姓同名の方と区別するため、<b>漢字のフルネーム</b>を入力してください。',
+        [{label:'この名前で登録する',value:'ok',primary:true,needInput:'漢字のフルネームを入力してください'},{label:'やめる',value:''}],true);
+      if(!k.value)return false;
+      opts.kanji=k.input;
+    }
+    r=await callGAS('addTempAttendee',fullname,mypageCurrentUser.internalId,sport,scheduleDate,exp,opts);
+  }
+  if(r&&r.ok)return true;
+  if(r&&r.reason==='already_member'){alert(r.message||'会員の方です。ご本人のログインから予約してもらってください。');return false;}
+  if(r&&r.reason==='kanji_required'){alert('漢字のフルネームが必要です');return false;}
+  alert('登録できませんでした');return false;
+}
+
+/* ================= ここまで ファミリー機能 ================= */
 
 // ===== 会員証 =====
 function openMemberCard(){
@@ -2476,7 +2866,10 @@ async function submitReferral(){
     const schedParts=sched.split('_');
     const scheduleDate=schedParts[0]||'';
     const sport=schedParts[1]||'';
-    await callGAS('addTempAttendee',fullname,mypageCurrentUser.internalId,sport,scheduleDate,exp);
+    const _asFam=!!(document.getElementById('ref-as-family')&&document.getElementById('ref-as-family').checked);
+    const _added=await referralAddWithCheck(fullname,sport,scheduleDate,exp,_asFam);
+    if(!_added)return;
+    const _rf=document.getElementById('ref-as-family');if(_rf)_rf.checked=false;
     const ov=document.createElement('div');ov.className='popup-overlay';
     ov.innerHTML='<div class="popup-card"><div style="font-size:28px;font-weight:700;color:#222;margin-bottom:8px">'+lastName+' さん</div><div style="font-size:16px;color:#444;margin-bottom:8px;line-height:1.8">紹介登録が完了しました！</div><div style="font-size:15px;color:#188038;font-weight:700;margin-top:8px;">当日お待ちしています</div><div style="font-family:\'Dancing Script\',cursive;font-size:32px;color:#222;letter-spacing:2px;margin-top:12px;">Thank you!!</div></div>';
     document.body.appendChild(ov);
@@ -2793,6 +3186,7 @@ function openSettings(){
   document.getElementById('settings-sport').value=mypageCurrentUser.memberSport||'';
   setTicketCount(1);
   document.getElementById('section-settings').style.display='block';
+  loadSettingsFamily();
   document.body.style.overflow='hidden';
 }
 function closeSettings(){
@@ -3591,6 +3985,7 @@ openSettings = function(){
   }
   setTicketCount(1);
   loadTicketPendingCard();
+  loadSettingsFamily();
   el.style.display = 'block';
   document.body.style.overflow = 'hidden';
 };

@@ -487,6 +487,14 @@ tr:hover td{background:var(--card-soft);}
         <div id="payment-confirm-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
+        <div class="card-title"><div class="dot"></div>家族の紐付け申請</div>
+        <div id="family-req-table-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>現在のファミリー</div>
+        <div id="family-list-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>プラン変更申請</div>
         <div id="upgrade-table-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
@@ -857,7 +865,7 @@ function switchView(view){
   document.getElementById('topbar-sub').textContent = sub;
   closeMobileSidebar();
 
-  if (view === 'approval') { renderApprovalList(); renderPaymentConfirmList(); renderUpgradeList(); }
+  if (view === 'approval') { renderApprovalList(); renderPaymentConfirmList(); renderUpgradeList(); renderFamilyRequestList(); renderFamilyList(); }
   if (view === 'temp') renderTempList();
   if (view === 'member') { /* 検索待ち、何もしない */ }
   if (view === 'schedule') renderScheduleView();
@@ -894,7 +902,9 @@ function referrerLabel(referrerId, nameMap){
 async function loadDashboard(){
   try{
     const persons = await getPersonMaster();
-    const approvalCount = persons.filter(p => p.status === '会員(申請中)' || p.status === '会員(支払い確認中)').length;
+    let famPending = 0;
+    try { famPending = ((await callGAS('getFamilyRequests')) || []).filter(r => r.status === '承認待ち').length; } catch(e) {}
+    const approvalCount = persons.filter(p => p.status === '会員(申請中)' || p.status === '会員(支払い確認中)').length + famPending;
     const today0 = new Date(); today0.setHours(0,0,0,0);
     const tempCount = persons.filter(p => {
       if (p.status !== '体験予定') return false;
@@ -1789,6 +1799,114 @@ function showAdminApp(){
 function logOp(action, detail){
   const operator = currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明';
   callGAS('addOperationLog', operator, action, detail || '').catch(() => {});
+}
+
+
+// ===== 家族の紐付け申請 =====
+function adminOperatorName(){ return (currentAdminUser && (currentAdminUser.nickname || currentAdminUser.fullname)) || '事務局'; }
+const FAMILY_APPROVE_ERRORS = {
+  not_found: '申請が見つかりません', already_done: 'すでに処理済みです',
+  person_not_found: '会員情報が見つかりません', target_has_family: '相手はすでに別のファミリーに登録されています'
+};
+async function renderFamilyRequestList(){
+  const wrap = document.getElementById('family-req-table-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const rows = (await callGAS('getFamilyRequests')) || [];
+    const pending = rows.filter(r => r.status === '承認待ち');
+    const done = rows.filter(r => r.status !== '承認待ち').slice(0, 10);
+    let html = '';
+    if (!pending.length){
+      html += '<div class="empty-state">承認待ちの家族申請はありません</div>';
+    } else {
+      html += `<table>
+        <thead><tr><th>申請日時</th><th>代表者 → 家族</th><th>種別</th><th>苗字</th><th>理由</th><th></th></tr></thead>
+        <tbody>${pending.map(r => `
+          <tr style="${r.surnameMatch === '一致' ? '' : 'background:var(--warn-soft)'}">
+            <td>${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(r.repNick)}（${escapeHtml(r.repName)}）<br>→ ${escapeHtml(r.memberNick)}（${escapeHtml(r.memberName)}）</td>
+            <td><span class="badge badge-gold">${escapeHtml(r.repType||'')}</span><br><span class="badge badge-gold">${escapeHtml(r.memberType||'')}</span></td>
+            <td>${r.surnameMatch === '一致' ? '<span class="badge badge-accent">一致</span>' : '<span class="badge badge-warn">苗字が違う</span>'}</td>
+            <td>${escapeHtml(r.reason||'-')}</td>
+            <td class="actions-cell">
+              <button class="btn btn-primary btn-sm" onclick="approveFamilyReq('${escapeHtml(r.id)}')">承認する</button>
+              <button class="btn btn-danger btn-sm" onclick="rejectFamilyReq('${escapeHtml(r.id)}')">却下する</button>
+            </td>
+          </tr>`).join('')}</tbody>
+      </table>`;
+    }
+    if (done.length){
+      html += '<div style="margin-top:14px;font-size:12px;color:var(--ink-soft);font-weight:700">最近の処理（直近10件）</div>' +
+        done.map(r => `<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)"><span>${escapeHtml(r.repNick)} → ${escapeHtml(r.memberNick)}</span><span>${escapeHtml(r.status)}　${escapeHtml(r.doneAt||'')}</span></div>`).join('');
+    }
+    wrap.innerHTML = html;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+async function approveFamilyReq(id){
+  if (!confirm('この家族の紐付けを承認します。承認すると、お互いの予約・キャンセルをまとめて操作できるようになります。よろしいですか？')) return;
+  try{
+    const r = await callGAS('approveFamilyLink', id, adminOperatorName());
+    if (r !== 'ok') { alert('承認できませんでした：' + (FAMILY_APPROVE_ERRORS[r] || r)); }
+    else logOp('家族の紐付け承認', id);
+    await renderFamilyRequestList(); await renderFamilyList();
+    loadDashboard();
+  }catch(e){ alert('承認に失敗しました：' + e.message); }
+}
+async function rejectFamilyReq(id){
+  if (!confirm('この家族の紐付け申請を却下します。よろしいですか？')) return;
+  const reason = prompt('却下理由（任意・申請者に通知されます。空欄でも構いません）', '') || '';
+  try{
+    const r = await callGAS('rejectFamilyLink', id, reason, adminOperatorName());
+    if (r !== 'ok') { alert('却下できませんでした：' + (FAMILY_APPROVE_ERRORS[r] || r)); }
+    else logOp('家族の紐付け却下', id);
+    await renderFamilyRequestList();
+    loadDashboard();
+  }catch(e){ alert('却下処理に失敗しました：' + e.message); }
+}
+
+// ===== 現在のファミリー一覧（解除もここから） =====
+async function renderFamilyList(){
+  const wrap = document.getElementById('family-list-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    const persons = await getPersonMaster(true);
+    const byId = {}; persons.forEach(p => { byId[p.internalId] = p; });
+    // つながっている人どうしをグループにまとめる（手入力の2人ペアも新しい形も同じように扱う）
+    const parent = {};
+    const find = x => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+    const add = x => { if (!(x in parent)) parent[x] = x; };
+    persons.forEach(p => {
+      if (!p.familyId) return;
+      add(p.internalId); add(p.familyId);
+      parent[find(p.internalId)] = find(p.familyId);
+    });
+    const groups = {};
+    Object.keys(parent).forEach(id => { const g = find(id); (groups[g] = groups[g] || []).push(id); });
+    const list = Object.values(groups).map(ids => ids.map(id => byId[id]).filter(Boolean)).filter(g => g.length >= 2);
+    if (!list.length){ wrap.innerHTML = '<div class="empty-state">つながっているファミリーはありません</div>'; return; }
+    wrap.innerHTML = list.map(g => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--line)">
+        ${g.map(p => `<span style="display:inline-flex;align-items:center;gap:6px;margin:3px 10px 3px 0">
+          <b>${escapeHtml(p.nickname || p.fullname)}</b>
+          <span class="badge badge-gold">${escapeHtml(p.type||'')}</span>
+          <button class="btn btn-danger btn-sm" onclick="adminUnlinkFamilyPerson('${escapeHtml(p.internalId)}','${escapeHtml(p.nickname || p.fullname)}')">外す</button>
+        </span>`).join('')}
+      </div>`).join('');
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+async function adminUnlinkFamilyPerson(internalId, name){
+  if (!confirm(name + ' さんをファミリーから外します。よろしいですか？')) return;
+  try{
+    const r = await callGAS('adminUnlinkFamily', internalId);
+    if (r !== 'ok') alert('外せませんでした：' + r); else logOp('ファミリー解除', internalId);
+    await renderFamilyList();
+  }catch(e){ alert('失敗しました：' + e.message); }
 }
 
 // ===== 会員管理（検索・種別変更） =====
