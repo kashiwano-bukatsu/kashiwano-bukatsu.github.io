@@ -543,6 +543,26 @@ body.sporolog-page .wrapper{padding-top:0}
         <option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option>
       </select>
       <button class="btn btn-primary" onclick="saveSettingsProfile()" style="margin-top:14px">保存する</button>
+      <div style="border-top:1px solid #e8eef4;margin-top:22px;padding-top:16px">
+        <div style="font-size:14px;font-weight:800;color:#1a1a2e;margin-bottom:4px">フルネーム・生年月日の変更</div>
+        <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">変更したい項目だけ入力してください。事務局の承認後に反映されます。ファミリーの方の分もここから申請できます。</div>
+        <div class="label" style="margin-top:0">変更する人</div>
+        <select id="pc-target"></select>
+        <div class="label">新しいフルネーム（カタカナ・スペースなし）</div>
+        <input type="text" id="pc-name" placeholder="例：ヤマダタロウ">
+        <div class="label">新しい生年月日</div>
+        <div style="display:flex;gap:8px">
+          <select id="pc-dob-y" style="flex:2"><option value="">年</option></select>
+          <select id="pc-dob-m" style="flex:1"><option value="">月</option></select>
+          <select id="pc-dob-d" style="flex:1"><option value="">日</option></select>
+        </div>
+        <div class="label">理由（任意）</div>
+        <input type="text" id="pc-reason" placeholder="例：結婚で苗字が変わった、入力ミス など">
+        <button class="btn btn-primary" id="pc-btn" onclick="submitProfileChange()" style="margin-top:14px">変更を申請する</button>
+        <div id="pc-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
+        <div class="label">申請の状況</div>
+        <div id="pc-requests"></div>
+      </div>
     </div>
     <!-- プラン変更 -->
     <div class="card">
@@ -609,7 +629,7 @@ body.sporolog-page .wrapper{padding-top:0}
       <button class="btn btn-primary" onclick="submitSettingsTicketPurchase()">申込する</button>
     </div>
     <!-- ファミリー -->
-    <div class="card" id="settings-family-card">
+    <div class="card" id="settings-family-card" style="margin-bottom:100px">
       <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('acc-fam-body','acc-fam-arrow')">
         <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>ファミリー</div>
         <div id="acc-fam-arrow" style="font-size:18px;color:#aaa">›</div>
@@ -629,32 +649,6 @@ body.sporolog-page .wrapper{padding-top:0}
       <div id="fam-req-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
       <div class="label">申請の状況</div>
       <div id="settings-family-requests"></div>
-      </div>
-    </div>
-    <!-- 氏名・生年月日の変更 -->
-    <div class="card" id="settings-pc-card" style="margin-bottom:100px">
-      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('acc-pc-body','acc-pc-arrow')">
-        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>フルネーム・生年月日の変更</div>
-        <div id="acc-pc-arrow" style="font-size:18px;color:#aaa">›</div>
-      </div>
-      <div id="acc-pc-body" style="display:none;margin-top:12px">
-      <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">変更したい項目だけ入力してください。事務局の承認後に反映されます。ファミリーの方の分もここから申請できます。</div>
-      <div class="label" style="margin-top:0">変更する人</div>
-      <select id="pc-target"></select>
-      <div class="label">新しいフルネーム（カタカナ・スペースなし）</div>
-      <input type="text" id="pc-name" placeholder="例：ヤマダタロウ">
-      <div class="label">新しい生年月日</div>
-      <div style="display:flex;gap:8px">
-        <select id="pc-dob-y" style="flex:2"><option value="">年</option></select>
-        <select id="pc-dob-m" style="flex:1"><option value="">月</option></select>
-        <select id="pc-dob-d" style="flex:1"><option value="">日</option></select>
-      </div>
-      <div class="label">理由（任意）</div>
-      <input type="text" id="pc-reason" placeholder="例：結婚で苗字が変わった、入力ミス など">
-      <button class="btn btn-primary" id="pc-btn" onclick="submitProfileChange()" style="margin-top:14px">変更を申請する</button>
-      <div id="pc-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
-      <div class="label">申請の状況</div>
-      <div id="pc-requests"></div>
       </div>
     </div>
   </div>
