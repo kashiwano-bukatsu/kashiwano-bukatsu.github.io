@@ -862,11 +862,15 @@ function renderCheckinBlock(blockId, d) {
   const masterMap = {};
   (d.attendees || []).forEach(a => { masterMap[a[1]] = a; });
   const allItems = [];
+  // 体験者の紹介者ラベル（名前→「○○さんの紹介」「Threads」など）。予約から入った体験者にも表示するため全件で引けるようにする
+  const tempInfoMap = {};
+  (d.tempAttendees || []).forEach(t => { if (t[1] && !tempInfoMap[t[1]]) tempInfoMap[t[1]] = t; });
   (d.reservations || []).forEach(r => {
     if ((r[7] || '⭕') === '❌') return;
     const master = masterMap[r[4]] || {};
     const isMemberTrial = r[8] === '体験参加';
-    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || 'ビジター会員', usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
+    const tInfo = tempInfoMap[r[4]];
+    allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || 'ビジター会員', usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial, referrer: (isMemberTrial || tInfo) && tInfo ? (tInfo[5] || '') : '' });
   });
   const targetKey = dk(dateFmt);
   const tempUsers = (d.tempAttendees || []).filter(t => dk(t[0]) === targetKey && sportMatches(t[2], sport) && !(d.attendees || []).find(a => a[1] === t[1]));
@@ -891,7 +895,7 @@ function renderCheckinBlock(blockId, d) {
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:600;color:#fff">${item.isNew ? '<span style="font-size:10px;color:#68d391;border:1px solid #68d391;border-radius:4px;padding:1px 4px;margin-right:4px">NEW</span>' : ''}${isVisitorOnPractice ? '<span style="font-size:10px;color:#f56565;border:1px solid #f56565;border-radius:4px;padding:1px 4px;margin-right:4px">⚠️練習日対象外</span>' : ''}${item.nickname}</div>
         <div style="font-size:11px;color:#aaa">${type}</div>
-        ${item.isNew && item.referrer ? `<div style="font-size:11px;color:#f6ad55;margin-top:2px">📣 ${item.referrer}</div>` : ''}
+        ${item.referrer ? `<div style="font-size:11px;color:#f6ad55;margin-top:2px">📣 ${item.referrer}</div>` : ''}
       </div>
       ${buildPaySelectHtml(safeId, options)}
     </div>`;
