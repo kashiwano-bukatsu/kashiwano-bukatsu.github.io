@@ -544,24 +544,6 @@ body.sporolog-page .wrapper{padding-top:0}
       </select>
       <button class="btn btn-primary" onclick="saveSettingsProfile()" style="margin-top:14px">保存する</button>
     </div>
-    <!-- ファミリー -->
-    <div class="card" id="settings-family-card">
-      <div class="card-title"><div class="card-title-dot"></div>ファミリー</div>
-      <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">つながったファミリーは、予約・キャンセル・参加ステータスの変更をまとめて行えます。</div>
-      <div id="settings-family-list"></div>
-      <div class="label">家族を追加する（事務局の承認後に反映）</div>
-      <input type="text" id="fam-req-number" placeholder="家族の会員番号　例：FB000063" autocapitalize="characters">
-      <div class="label" style="margin-top:10px">家族の生年月日（8桁）</div>
-      <input type="tel" id="fam-req-dob" maxlength="8" placeholder="例：19961019">
-      <div id="fam-req-reason-wrap" style="display:none">
-        <div class="label" style="margin-top:10px">苗字が違う理由</div>
-        <input type="text" id="fam-req-reason" placeholder="例：祖父母、旧姓 など">
-      </div>
-      <button class="btn btn-primary" id="fam-req-btn" onclick="submitFamilyRequest()">申請する</button>
-      <div id="fam-req-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
-      <div class="label">申請の状況</div>
-      <div id="settings-family-requests"></div>
-    </div>
     <!-- プラン変更 -->
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>会員プラン変更</div>
@@ -610,7 +592,7 @@ body.sporolog-page .wrapper{padding-top:0}
       </div>
     </div>
     <!-- 回数券 -->
-    <div id="sett-ticket-section" class="card" style="margin-bottom:100px">
+    <div id="sett-ticket-section" class="card">
       <div class="card-title"><div class="card-title-dot"></div>回数券購入申込</div>
       <div id="sett-ticket-pending" style="display:none;background:linear-gradient(135deg,#fff8e1,#fffde7);border:2px solid #f5d060;border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
         <div style="font-size:12px;color:#b8860b;font-weight:700;margin-bottom:4px">申請中</div>
@@ -625,6 +607,55 @@ body.sporolog-page .wrapper{padding-top:0}
       </div>
       <div id="sett-ticket-total" style="text-align:right;font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:10px"></div>
       <button class="btn btn-primary" onclick="submitSettingsTicketPurchase()">申込する</button>
+    </div>
+    <!-- ファミリー -->
+    <div class="card" id="settings-family-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('acc-fam-body','acc-fam-arrow')">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>ファミリー</div>
+        <div id="acc-fam-arrow" style="font-size:18px;color:#aaa">›</div>
+      </div>
+      <div id="acc-fam-body" style="display:none;margin-top:12px">
+      <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">つながったファミリーは、予約・キャンセル・参加ステータスの変更をまとめて行えます。</div>
+      <div id="settings-family-list"></div>
+      <div class="label">家族を追加する（事務局の承認後に反映）</div>
+      <input type="text" id="fam-req-number" placeholder="家族の会員番号　例：FB000063" autocapitalize="characters">
+      <div class="label" style="margin-top:10px">家族の生年月日（8桁）</div>
+      <input type="tel" id="fam-req-dob" maxlength="8" placeholder="例：19961019">
+      <div id="fam-req-reason-wrap" style="display:none">
+        <div class="label" style="margin-top:10px">苗字が違う理由</div>
+        <input type="text" id="fam-req-reason" placeholder="例：祖父母、旧姓 など">
+      </div>
+      <button class="btn btn-primary" id="fam-req-btn" onclick="submitFamilyRequest()">申請する</button>
+      <div id="fam-req-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
+      <div class="label">申請の状況</div>
+      <div id="settings-family-requests"></div>
+      </div>
+    </div>
+    <!-- 氏名・生年月日の変更 -->
+    <div class="card" id="settings-pc-card" style="margin-bottom:100px">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleReserveAccordion('acc-pc-body','acc-pc-arrow')">
+        <div class="card-title" style="margin-bottom:0"><div class="card-title-dot"></div>フルネーム・生年月日の変更</div>
+        <div id="acc-pc-arrow" style="font-size:18px;color:#aaa">›</div>
+      </div>
+      <div id="acc-pc-body" style="display:none;margin-top:12px">
+      <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">変更したい項目だけ入力してください。事務局の承認後に反映されます。ファミリーの方の分もここから申請できます。</div>
+      <div class="label" style="margin-top:0">変更する人</div>
+      <select id="pc-target"></select>
+      <div class="label">新しいフルネーム（カタカナ・スペースなし）</div>
+      <input type="text" id="pc-name" placeholder="例：ヤマダタロウ">
+      <div class="label">新しい生年月日</div>
+      <div style="display:flex;gap:8px">
+        <select id="pc-dob-y" style="flex:2"><option value="">年</option></select>
+        <select id="pc-dob-m" style="flex:1"><option value="">月</option></select>
+        <select id="pc-dob-d" style="flex:1"><option value="">日</option></select>
+      </div>
+      <div class="label">理由（任意）</div>
+      <input type="text" id="pc-reason" placeholder="例：結婚で苗字が変わった、入力ミス など">
+      <button class="btn btn-primary" id="pc-btn" onclick="submitProfileChange()" style="margin-top:14px">変更を申請する</button>
+      <div id="pc-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
+      <div class="label">申請の状況</div>
+      <div id="pc-requests"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1007,7 +1038,7 @@ const GAS_READ_FUNCS=new Set([
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
   'getVideoList','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
-  'getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson'
+  'getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
 // ★第3段：先読み＆3分キャッシュ
@@ -1197,7 +1228,7 @@ window.addEventListener('load',()=>{
         const autoLogin=localStorage.getItem('bukatsu_auto_login');
         const saved=localStorage.getItem('bukatsu_user');
         if((autoLogin==='true'||skipSplash)&&saved){
-          mypageCurrentUser=JSON.parse(saved);showMypageMain();
+          mypageCurrentUser=JSON.parse(saved);showMypageMain();if(typeof _pcResolveName==='function')_pcResolveName();
         }
       }catch(e){ /* storageが使えない環境では自動ログインだけスキップする */ }
       loadHomeData();
@@ -2486,6 +2517,115 @@ async function referralAddWithCheck(fullname,sport,scheduleDate,exp,asFamily){
 }
 
 /* ================= ここまで ファミリー機能 ================= */
+
+/* ===== フルネーム・生年月日の変更申請 ===== */
+const PC_ERRORS={
+  actor_not_found:'ログイン情報が見つかりません。ログインし直してください。',
+  target_not_found:'対象の方が見つかりません。',
+  not_member:'会員のみ申請できます。',
+  not_family:'ご自身かファミリーの方のみ申請できます。',
+  no_change:'変更がありません。',
+  name_format:'フルネームは、カタカナ・スペースなしで入力してください（例：ヤマダタロウ）。',
+  name_taken:'そのフルネームはすでに登録されています。同じ名前の方がいる場合は事務局にご相談ください。',
+  dob_invalid:'生年月日が正しくありません。',
+  emergency_required:'18歳未満の場合は、緊急連絡先（続柄・電話番号）が必要です。',
+  consent_required:'18歳未満の場合は、保護者の同意が必要です。',
+  pending_exists:'この方の変更申請がすでに出ています。事務局の承認をお待ちください。'
+};
+function _pcEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+function _pcInitDob(){
+  const y=document.getElementById('pc-dob-y');if(!y||y.options.length>1)return;
+  const ty=new Date().getFullYear();for(let i=ty;i>=ty-100;i--){const o=document.createElement('option');o.value=i;o.textContent=i+'年';y.appendChild(o);}
+  const m=document.getElementById('pc-dob-m');for(let i=1;i<=12;i++){const o=document.createElement('option');o.value=String(i).padStart(2,'0');o.textContent=i+'月';m.appendChild(o);}
+  const d=document.getElementById('pc-dob-d');for(let i=1;i<=31;i++){const o=document.createElement('option');o.value=String(i).padStart(2,'0');o.textContent=i+'日';d.appendChild(o);}
+}
+function _pcAge(v){
+  if(!/^\d{8}$/.test(v))return null;
+  const y=+v.slice(0,4),m=+v.slice(4,6),d=+v.slice(6,8),b=new Date(y,m-1,d);
+  if(b.getFullYear()!==y||b.getMonth()!==m-1||b.getDate()!==d)return null;
+  const t=new Date();let a=t.getFullYear()-y;const mo=t.getMonth()-(m-1);if(mo<0||(mo===0&&t.getDate()<d))a--;return a;
+}
+// 保護者の同意ポップアップ（登録時と同じ：緊急連絡先＋同意チェック）。戻り値 null＝やめた
+function _pcConsentDialog(targetName){
+  return new Promise(function(resolve){
+    const ov=document.createElement('div');ov.className='popup-overlay';
+    ov.innerHTML='<div class="popup-card" style="text-align:left">'+
+      '<div style="font-size:15px;font-weight:700;color:#f57c00;margin-bottom:8px">18歳未満の方は保護者の同意が必要です</div>'+
+      '<div style="font-size:13px;color:#666;line-height:1.7;margin-bottom:8px">'+_pcEsc(targetName)+'さんの生年月日が18歳未満になります。緊急連絡先と、保護者の同意を確認してください。同意した日時は記録されます。</div>'+
+      '<div class="label">緊急連絡先（続柄）</div>'+
+      '<select id="pc-em-rel"><option value="">選択してください</option><option value="父">父</option><option value="母">母</option><option value="配偶者">配偶者</option><option value="兄弟姉妹">兄弟姉妹</option><option value="祖父母">祖父母</option><option value="その他">その他</option></select>'+
+      '<div class="label">緊急連絡先（電話番号）</div><input type="tel" id="pc-em-tel" placeholder="例：09012345678">'+
+      '<div class="consent-check" style="margin-top:12px"><input type="checkbox" id="pc-em-ok"><label for="pc-em-ok">保護者の同意を得ています</label></div>'+
+      '<div style="display:flex;gap:8px;margin-top:16px"><button id="pc-em-go" style="flex:1;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff">同意して申請</button>'+
+      '<button id="pc-em-no" style="flex:1;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;background:#f0f4f8;color:#555">やめる</button></div></div>';
+    document.body.appendChild(ov);
+    document.getElementById('pc-em-no').onclick=function(){ov.remove();resolve(null);};
+    document.getElementById('pc-em-go').onclick=function(){
+      const rel=document.getElementById('pc-em-rel').value,tel=document.getElementById('pc-em-tel').value.trim(),ok=document.getElementById('pc-em-ok').checked;
+      if(!rel||!tel){alert('緊急連絡先（続柄・電話番号）を入力してください');return;}
+      if(!ok){alert('保護者の同意にチェックを入れてください');return;}
+      ov.remove();resolve({rel:rel,tel:tel});
+    };
+  });
+}
+async function _pcResolveName(){
+  if(!mypageCurrentUser)return;
+  try{
+    const nf=await callGAS('resolveFullname',mypageCurrentUser.fullname);
+    if(nf&&nf!==mypageCurrentUser.fullname){mypageCurrentUser.fullname=nf;saveCurrentUser();}
+  }catch(e){}
+}
+async function loadProfileChange(){
+  const sel=document.getElementById('pc-target'),listEl=document.getElementById('pc-requests');
+  if(!sel||!mypageCurrentUser)return;
+  _pcInitDob();
+  await _pcResolveName();
+  try{
+    const res=await Promise.all([callGAS('getMyFamily',mypageCurrentUser.fullname),callGAS('getMyProfileChangeRequests',mypageCurrentUser.fullname)]);
+    const fam=res[0]||[],reqs=res[1]||[];
+    const keep=sel.value;
+    sel.innerHTML='<option value="'+_pcEsc(mypageCurrentUser.internalId)+'">'+_pcEsc((mypageCurrentUser.nickname||'自分')+'（自分）')+'</option>'+
+      fam.map(function(f){return '<option value="'+_pcEsc(f.internalId)+'">'+_pcEsc(f.nickname)+'</option>';}).join('');
+    if(keep)sel.value=keep;
+    listEl.innerHTML=reqs.length?reqs.map(function(r){
+      const col=r.status==='承認'?'#188038':r.status==='却下'?'#c62828':'#b26a00';
+      const what=[r.newName?('名前→'+r.newName):'',r.newDob?'生年月日':''].filter(Boolean).join('／');
+      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f4f8"><span>'+_pcEsc(r.nick)+'：'+_pcEsc(what)+'</span><span style="color:'+col+';font-weight:700;white-space:nowrap">'+_pcEsc(r.status)+'</span></div>';
+    }).join(''):'<div style="font-size:13px;color:#aaa">申請はありません</div>';
+  }catch(e){listEl.innerHTML='<div style="font-size:13px;color:#e53935">'+_pcEsc(gasErrorText(e))+'</div>';}
+}
+async function submitProfileChange(){
+  const msg=document.getElementById('pc-msg'),btn=document.getElementById('pc-btn');
+  msg.style.color='#e53935';msg.textContent='';
+  const targetId=document.getElementById('pc-target').value;
+  const targetName=document.getElementById('pc-target').selectedOptions[0].textContent.replace('（自分）','');
+  const newName=document.getElementById('pc-name').value.replace(/[\s　]+/g,'');
+  const y=document.getElementById('pc-dob-y').value,m=document.getElementById('pc-dob-m').value,d=document.getElementById('pc-dob-d').value;
+  if((y||m||d)&&!(y&&m&&d)){msg.textContent='生年月日は年・月・日をすべて選んでください。';return;}
+  const newDob=(y&&m&&d)?(y+m+d):'';
+  if(!newName&&!newDob){msg.textContent='変更したい項目を入力してください。';return;}
+  if(newName&&!/^[ァ-ヶー]{2,}$/.test(newName)){msg.textContent=PC_ERRORS.name_format;return;}
+  if(newDob&&_pcAge(newDob)===null){msg.textContent=PC_ERRORS.dob_invalid;return;}
+  const payload={newFullname:newName,newDob:newDob,reason:document.getElementById('pc-reason').value.trim()};
+  if(newDob&&_pcAge(newDob)<18){
+    const c=await _pcConsentDialog(targetName);
+    if(!c)return;
+    payload.emergencyRel=c.rel;payload.emergencyTel=c.tel;payload.consent=true;
+  }
+  btn.disabled=true;btn.textContent='送信中...';
+  try{
+    const r=await callGAS('requestProfileChange',mypageCurrentUser.fullname,targetId,payload);
+    if(r&&r.ok){
+      msg.style.color='#188038';msg.textContent='申請しました。事務局の承認後に反映されます。';
+      ['pc-name','pc-reason'].forEach(function(id){document.getElementById(id).value='';});
+      ['pc-dob-y','pc-dob-m','pc-dob-d'].forEach(function(id){document.getElementById(id).value='';});
+      loadProfileChange();
+    }else{msg.textContent=PC_ERRORS[r]||('申請できませんでした（'+r+'）');}
+  }catch(e){msg.textContent=gasErrorText(e);}
+  finally{btn.disabled=false;btn.textContent='変更を申請する';}
+}
+(function(){const _lsf=loadSettingsFamily;loadSettingsFamily=function(){_lsf();loadProfileChange();};})();
+
 
 // ===== 会員証 =====
 function openMemberCard(){
