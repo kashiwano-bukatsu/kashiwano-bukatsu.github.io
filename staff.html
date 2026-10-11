@@ -579,9 +579,16 @@ function renderHome(d) {
   html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:10px">今月の参加</div><div class="stat-grid"><div class="stat"><div class="stat-label">参加人数</div><div class="stat-val">${d.monthCount}<span style="font-size:14px;color:#aaa">人</span></div></div><div class="stat"><div class="stat-label">開催回数</div><div class="stat-val">${d.sessionCount}<span style="font-size:14px;color:#aaa">回</span></div></div></div></div>`;
   if (d.ranking && d.ranking.length) {
     const EXCLUDE = ['運営','部長','代表','本部','特別会員'];
-    const filtered = d.ranking.filter(r => !EXCLUDE.includes(r.type));
-    if (filtered.length) {
-      html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:4px">今月のリピートランキング</div>${filtered.map((r,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #333"><div style="font-size:20px;width:28px;text-align:center">${RANK_MEDAL[(r.rank || (i + 1)) - 1]}</div><div style="flex:1">${r.name}</div><div style="font-weight:700">${r.count}回</div></div>`).join('')}</div>`;
+    // 同じ回数の人は同じ順位にまとめて表示する（1位 A、B、C 5回）
+    let groups = [];
+    d.ranking.filter(r => !EXCLUDE.includes(r.type)).forEach(r => {
+      const names = r.names || [r.name];
+      const last = groups[groups.length - 1];
+      if (last && last.count === r.count) last.names.push(...names); else groups.push({ count: r.count, names: [...names] });
+    });
+    groups = groups.slice(0, 3);
+    if (groups.length) {
+      html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:4px">今月のリピートランキング</div>${groups.map((gr, i) => `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #333"><div style="font-size:20px;width:28px;text-align:center">${RANK_MEDAL[i]}</div><div style="flex:1"><div style="font-size:12px;color:#aaa">${i + 1}位</div><div style="line-height:1.6">${gr.names.join('、')}</div></div><div style="font-weight:700;white-space:nowrap">${gr.count}回</div></div>`).join('')}</div>`;
     }
   }
   document.getElementById('home-content').innerHTML = html;
@@ -1289,18 +1296,10 @@ async function loadScheduleListTab() {
   const el = document.getElementById('schedule-list-content');
   el.innerHTML = '<div class="loading">読み込み中...</div>';
   try {
-    const schedules = await callGAS('getUpcomingSchedules', '全て');
     const SPORTS = ['バスケットボール', 'バドミントン', 'バレーボール'];
-    const targetSch = SPORTS.map(sp => schedules.find(s => s[4] === sp)).filter(Boolean);
-    const tempAttendees = await callGAS('getTempAttendees');
+    const bundle = await callGAS('getScheduleListBundle');      // 3種目分を1回の通信で取得
     const results = {};
-    await Promise.all(targetSch.map(async s => {
-      const reservations = await callGAS('getReservations', s[0], s[4]);
-      const active = reservations.filter(r => (r[7] || '⭕') !== '❌');
-      const reservedNames = new Set(active.map(r => r[4]));
-      const tempMembers = tempAttendees.filter(t => t[2] === s[4] && t[3] === s[0] && !reservedNames.has(t[1])).map(t => ({ nickname: t[1], isNew: true }));
-      results[s[4]] = { date: s[0], place: s[2], members: [...active.map(r => ({ nickname: r[5] || r[4], isNew: false })), ...tempMembers] };
-    }));
+    (bundle.list || []).forEach(x => { results[x.sport] = { date: x.date, place: x.place, members: x.members }; });
     el.innerHTML = SPORTS.map(sp => {
       const data = results[sp]; if (!data) return '';
       const safeId = 'acc-' + SPORTS.indexOf(sp);
@@ -1395,8 +1394,7 @@ async function fillReportCore(r, existingReportRow) {
   calcShuttle();
 
   try {
-    const logs = await callGAS('getAttendanceLog');
-    const filtered = logs.filter(l => dk(l[0]) === dk(date) && l[2] === sport);
+    const filtered = await callGAS('getAttendanceLogFor', date, sport);   // その日・その種目の分だけ取得
     let general = 0, minb = 0, family = 0, trial = 0, staff = 0, ouendan = 0, zeroPay = 0;
     let generalIncome = 0, minbIncome = 0, familyIncome = 0, trialIncome = 0, staffIncome = 0, ouendanIncome = 0;
     filtered.forEach(log => {
