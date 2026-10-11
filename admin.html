@@ -410,7 +410,7 @@ tr:hover td{background:var(--card-soft);}
       <div class="nav-left"><span class="nav-icon">📊</span>経理・分析</div>
     </div>
     <div class="nav-item" data-view="messages" onclick="switchView('messages')">
-      <div class="nav-left"><span class="nav-icon">✉</span>メッセージ</div>
+      <div class="nav-left"><span class="nav-icon">✉</span>通知</div>
       <span class="nav-badge zero" id="badge-messages">0</span>
     </div>
     <div class="nav-item" data-view="price" onclick="switchView('price')">
@@ -784,7 +784,7 @@ tr:hover td{background:var(--card-soft);}
           </div>
           <div id="msg-chat-body" style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:8px"></div>
           <div id="msg-chat-input-area" style="display:none;padding:12px 14px;border-top:1px solid var(--line);gap:8px">
-            <textarea id="msg-chat-input" rows="1" placeholder="メッセージを入力" style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;resize:none;box-sizing:border-box"></textarea>
+            <textarea id="msg-chat-input" rows="1" placeholder="通知の内容を入力（会員からの返信はありません）" style="flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;resize:none;box-sizing:border-box"></textarea>
             <button class="btn btn-primary btn-sm" onclick="sendChatMessageAdmin()">送信</button>
           </div>
         </div>
@@ -827,15 +827,60 @@ tr:hover td{background:var(--card-soft);}
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
 
-async function callGAS(func, ...args){
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'text/plain'},
-    body: JSON.stringify({ func, args })
-  });
-  const json = await res.json();
-  if (json.status === 'error') throw new Error(json.message);
+// 読み取り専用の関数（短時間キャッシュ・失敗時の再試行の対象）。書き込み系を呼んだらキャッシュは全部捨てる
+const GAS_READ_FUNCS = new Set([
+  'getPersonMasterAll','getUpcomingSchedules','getReservations','getTicketRequests','getUpgradeRequests','getFamilyRequests',
+  'getProfileChangeRequests','getProfileChangePreview','getFinanceSummary','getPlaces','getPriceMaster','getMemberNotices',
+  'getNoticeTargets','getNotificationsFor','getTempAttendees','getOperationLog','getStaffMembers','getLotteryData',
+  'getAllFreeTickets','getAllHalfPriceTickets','getCancelNoShowStats','getInactiveMembers','getEquipment','getShuttleStock',
+  'getCashLedger','getCashDenominationHistory','getStaffSummaryData','searchMemberProfile'
+]);
+const GAS_CACHE_TTL_MS = 30000;
+const _gasCache = {}, _gasRunning = {};
+function clearGASCache(){ Object.keys(_gasCache).forEach(k => delete _gasCache[k]); }
+function _gasSleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+async function _gasFetchOnce(func, args){
+  let res;
+  try{
+    res = await fetch(GAS_URL, { method: 'POST', headers: {'Content-Type': 'text/plain'}, body: JSON.stringify({ func, args }) });
+  }catch(e){ e.retryable = true; throw e; }
+  let json;
+  try{ json = JSON.parse(await res.text()); }catch(e){ const err = new Error('サーバーの応答を読み取れませんでした'); err.retryable = true; throw err; }
+  if (json.status === 'error'){ const err = new Error(json.message); err.retryable = false; throw err; }
   return json.data;
+}
+async function callGAS(func, ...args){
+  let key;
+  try{ key = func + '|' + JSON.stringify(args); }catch(e){ key = func + '|' + Date.now() + Math.random(); }
+  if (_gasRunning[key]) return _gasRunning[key];          // 同じ呼び出しが実行中なら結果を共有
+  const isRead = GAS_READ_FUNCS.has(func);
+  if (isRead){
+    const hit = _gasCache[key];
+    if (hit && Date.now() - hit.t < GAS_CACHE_TTL_MS) return hit.v;
+  } else {
+    clearGASCache();                                        // 書き込み：古いデータは使わない
+  }
+  const p = (async () => {
+    try{
+      const maxTry = isRead ? 3 : 1;
+      let lastErr = null;
+      for (let i = 0; i < maxTry; i++){
+        try{
+          const v = await _gasFetchOnce(func, args);
+          if (isRead) _gasCache[key] = { t: Date.now(), v };
+          else clearGASCache();
+          return v;
+        }catch(e){
+          lastErr = e;
+          if (!e.retryable || i === maxTry - 1) break;
+          await _gasSleep(1000 * (i + 1));
+        }
+      }
+      throw lastErr;
+    } finally { delete _gasRunning[key]; }
+  })();
+  _gasRunning[key] = p;
+  return p;
 }
 
 // ===== 画面切り替え =====
@@ -849,6 +894,7 @@ const VIEW_TITLES = {
   log: ['操作ログ', '事務局の操作履歴を確認します'],
   finance: ['経理・分析', '月次収支・未払い・離脱気味の会員・キャンセル状況を確認します'],
   lottery: ['抽選', '抽選候補日の登録・参加者振り分けを行います'],
+  messages: ['通知', '会員へ個別に通知を送ります（会員からの返信はありません）'],
 };
 
 function openMobileSidebar(){
@@ -885,9 +931,13 @@ function switchView(view){
 
 // ===== データキャッシュ（人マスタ全件を1回だけ取得して各画面で使う） =====
 let _personMasterCache = null;
+let _personMasterFetchedAt = 0;
 async function getPersonMaster(force){
-  if (_personMasterCache && !force) return _personMasterCache;
+  // 強制更新でも、直前（5秒以内）に取得していればそれを使う（画面を開いたときの重複取得を防ぐ）
+  if (_personMasterCache && (!force || Date.now() - _personMasterFetchedAt < 5000)) return _personMasterCache;
+  if (force) delete _gasCache['getPersonMasterAll|[]'];
   _personMasterCache = await callGAS('getPersonMasterAll');
+  _personMasterFetchedAt = Date.now();
   return _personMasterCache;
 }
 
@@ -904,12 +954,18 @@ function referrerLabel(referrerId, nameMap){
 
 // ===== ダッシュボード =====
 async function loadDashboard(){
+  // 必要なデータを最初にまとめて同時に取得する（以前は1件ずつ順番に待っていた）
+  const _safe = (p) => p.catch(() => null);
+  const _pPersons = getPersonMaster();
+  const _pFam = _safe(callGAS('getFamilyRequests'));
+  const _pProf = _safe(callGAS('getProfileChangeRequests'));
+  const _pTickets = _safe(callGAS('getTicketRequests'));
+  const _pUpgrades = _safe(callGAS('getUpgradeRequests'));
+  const _pSched = _safe(callGAS('getUpcomingSchedules', '全て'));
   try{
-    const persons = await getPersonMaster();
-    let famPending = 0;
-    try { famPending = ((await callGAS('getFamilyRequests')) || []).filter(r => r.status === '承認待ち').length; } catch(e) {}
-    let profPending = 0;
-    try { profPending = ((await callGAS('getProfileChangeRequests')) || []).filter(r => r.status === '承認待ち').length; } catch(e) {}
+    const persons = await _pPersons;
+    const famPending = ((await _pFam) || []).filter(r => r.status === '承認待ち').length;
+    const profPending = ((await _pProf) || []).filter(r => r.status === '承認待ち').length;
     const approvalCount = persons.filter(p => p.status === '会員(申請中)' || p.status === '会員(支払い確認中)').length + famPending + profPending;
     const today0 = new Date(); today0.setHours(0,0,0,0);
     const tempCount = persons.filter(p => {
@@ -934,7 +990,7 @@ async function loadDashboard(){
 
     // 直近の開催予定への参加予約も合わせて表示
     try{
-      const schedules = await callGAS('getUpcomingSchedules', '全て');
+      const schedules = await _pSched;
       if (schedules && schedules.length){
         const s = schedules[0];
         const reservations = await callGAS('getReservations', s[0], s[4]);
@@ -967,14 +1023,14 @@ async function loadDashboard(){
 
   // チケット・アップグレード申請件数（既存関数をそのまま利用）
   try{
-    const tickets = await callGAS('getTicketRequests');
+    const tickets = await _pTickets;
     const pendingTickets = (tickets||[]).filter(r => r[6] === '未受領' || r[6] === '確認済（支払い待ち）').length;
     document.getElementById('stat-ticket').innerHTML = pendingTickets + '<span class="unit">件</span>';
     setBadge('badge-ticket', pendingTickets);
   }catch(e){ document.getElementById('stat-ticket').textContent = '–'; }
 
   try{
-    const upgrades = await callGAS('getUpgradeRequests');
+    const upgrades = await _pUpgrades;
     const pendingUpgrades = (upgrades||[]).filter(r => r[5] === '未対応').length;
     document.getElementById('stat-upgrade').innerHTML = pendingUpgrades + '<span class="unit">件</span>';
   }catch(e){ document.getElementById('stat-upgrade').textContent = '–'; }
@@ -2551,9 +2607,8 @@ async function renderMessagesView(){
   const listEl = document.getElementById('msg-member-list');
   listEl.innerHTML = '<div class="loading-text" style="padding:0 14px">読み込み中...</div>';
   try{
-    _msgMembers = await callGAS('getMembersWithUnread');
-    const totalUnread = _msgMembers.reduce((s, m) => s + (m.unread || 0), 0);
-    setBadge('badge-messages', totalUnread);
+    _msgMembers = await callGAS('getNoticeTargets');
+    setBadge('badge-messages', 0);
     renderMsgMemberList(_msgMembers);
   }catch(e){
     listEl.innerHTML = '<div class="empty-state" style="padding:0 14px">読み込みエラー</div>';
@@ -2571,9 +2626,9 @@ function renderMsgMemberList(members){
     <div onclick="openChatRoomAdmin('${escapeHtml(m.fullname).replace(/'/g,"\\'")}','${escapeHtml(m.nickname).replace(/'/g,"\\'")}')" style="padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center;${_msgCurrentFullname===m.fullname?'background:var(--bg-soft)':''}">
       <div style="min-width:0">
         <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.nickname||m.fullname)}</div>
-        <div style="font-size:11px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.lastMsg ? escapeHtml(m.lastMsg.message) : ''}</div>
+        <div style="font-size:11px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.type || '')}</div>
       </div>
-      ${m.unread ? `<span class="nav-badge" style="position:static">${m.unread}</span>` : ''}
+
     </div>`).join('');
 }
 
@@ -2589,10 +2644,8 @@ async function openChatRoomAdmin(fullname, nickname){
   const body = document.getElementById('msg-chat-body');
   body.innerHTML = '<div class="loading-text">読み込み中...</div>';
   try{
-    await callGAS('markConversationAsRead', fullname);
-    const msgs = await callGAS('getConversation', fullname);
+    const msgs = await callGAS('getNotificationsFor', fullname);
     renderChatMessagesAdmin(msgs);
-    renderMsgMemberList(_msgMembers);
   }catch(e){
     body.innerHTML = '<div class="empty-state">読み込みエラー</div>';
   }
@@ -2600,14 +2653,11 @@ async function openChatRoomAdmin(fullname, nickname){
 
 function renderChatMessagesAdmin(msgs){
   const body = document.getElementById('msg-chat-body');
-  if (!msgs.length){ body.innerHTML = '<div class="empty-state">まだメッセージがありません</div>'; return; }
-  body.innerHTML = msgs.map(m => {
-    const isFromMember = m.direction === 'member→staff';
-    return `<div style="align-self:${isFromMember?'flex-start':'flex-end'};max-width:75%">
-      <div style="background:${isFromMember?'var(--bg-soft)':'var(--accent)'};color:${isFromMember?'var(--ink)':'#fff'};padding:9px 13px;border-radius:12px;font-size:13.5px;white-space:pre-line">${escapeHtml(m.message)}</div>
-      <div style="font-size:10.5px;color:var(--ink-faint);margin-top:2px;text-align:${isFromMember?'left':'right'}">${escapeHtml(m.datetime)}</div>
-    </div>`;
-  }).join('');
+  if (!msgs.length){ body.innerHTML = '<div class="empty-state">まだ通知を送っていません</div>'; return; }
+  body.innerHTML = msgs.map(m => `<div style="align-self:flex-end;max-width:75%">
+      <div style="background:var(--accent);color:#fff;padding:9px 13px;border-radius:12px;font-size:13.5px;white-space:pre-line">${escapeHtml(m.message)}</div>
+      <div style="font-size:10.5px;color:var(--ink-faint);margin-top:2px;text-align:right">${escapeHtml(m.datetime)}　${m.isAll ? '一斉　' : ''}${m.read ? '既読' : '未読'}</div>
+    </div>`).join('');
   body.scrollTop = body.scrollHeight;
 }
 
@@ -2622,9 +2672,9 @@ async function sendChatMessageAdmin(){
   if (btn) btn.disabled = true;
   try{
     await callGAS('sendMessage', _msgCurrentFullname, text, false);
-    logOp('メッセージ送信', _msgCurrentFullname + '：' + text.slice(0, 30));
+    logOp('通知送信', _msgCurrentFullname + '：' + text.slice(0, 30));
     input.value = '';
-    const msgs = await callGAS('getConversation', _msgCurrentFullname);
+    const msgs = await callGAS('getNotificationsFor', _msgCurrentFullname);
     renderChatMessagesAdmin(msgs);
   }catch(e){
     alert('送信に失敗しました：' + e.message);
