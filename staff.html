@@ -326,12 +326,19 @@ if ('serviceWorker' in navigator) {
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
 // 同じ呼び出しが実行中なら結果を共有（二重送信防止）。書き込みは通信失敗でも自動でやり直さない（二重登録防止）
 const _gasRunning = {};
+const _gasCache = {};
+const GAS_CACHE_TTL_MS = 30000;
+const GAS_CACHE_FUNCS = new Set(['getHomeData', 'getUpcomingSchedules', 'getPersonMasterAll', 'getTempAttendees', 'getStaffSummaryData']);
+function clearGASCache() { for (const k in _gasCache) delete _gasCache[k]; }
 const _gasReadRe = /^(get|check|search|find|list|preview|resolve|load)/;
 async function callGAS(func, ...args) {
   let key;
   try { key = func + '|' + JSON.stringify(args); } catch(e) { key = func + '|' + Date.now() + Math.random(); }
   if (_gasRunning[key]) return _gasRunning[key];
   const isRead = _gasReadRe.test(func);
+  const cacheable = GAS_CACHE_FUNCS.has(func);
+  if (cacheable) { const hit = _gasCache[key]; if (hit && Date.now() - hit.t < GAS_CACHE_TTL_MS) return hit.v; }
+  if (!isRead) clearGASCache();          // 書き込みの前に古い読み込み結果を捨てる
   const attempt = async () => {
     const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ func, args }) });
     const json = await res.json();
@@ -342,7 +349,7 @@ async function callGAS(func, ...args) {
     try {
       const maxTry = isRead ? 3 : 1;
       for (let i = 0; i < maxTry; i++) {
-        try { return await attempt(); }
+        try { const v = await attempt(); if (cacheable) _gasCache[key] = { t: Date.now(), v }; else if (!isRead) clearGASCache(); return v; }
         catch(e) {
           if (e.fatal || i === maxTry - 1) throw e;
           await new Promise(r => setTimeout(r, 1000 * (i + 1)));
@@ -561,14 +568,14 @@ function renderHome(d) {
     const items = d.unreported.map(u => `<div style="padding:6px 0;border-bottom:1px solid #443333;font-size:14px;color:#ff6b6b">⚠️ ${u.date}（${SPORT_ICON[u.sport]||''}${u.sport}）レポート未記入</div>`).join('');
     html += `<div class="card" style="border:1.5px solid #8c3a3a;background:#2a1f1f"><div class="card-title" style="font-size:13px;color:#ff6b6b">レポート未記入</div>${items}</div>`;
   }
-  if (d.nextEvent) {
-    const e = d.nextEvent;
+  const _evs = (d.nextEvents && d.nextEvents.length) ? d.nextEvents : (d.nextEvent ? [d.nextEvent] : []);
+  _evs.forEach((e, _evIdx) => {
     const reserverLine = e.reserverName
       ? `<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">🏟 予約者：${e.reserverName}</div>`
       : '';
     const practiceBadge = e.isPracticeDay ? `<span style="background:linear-gradient(135deg,#f5a623,#e8871e);color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px;margin-left:6px;vertical-align:middle">⛹️‍♀️練習日 ¥${e.fee||300}</span>` : '';
-    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">次回開催</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}${practiceBadge}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}${reserverLine}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
-  }
+    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">${_evIdx ? "同日開催" : "次回開催"}</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}${practiceBadge}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}${reserverLine}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
+  });
   html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:10px">今月の参加</div><div class="stat-grid"><div class="stat"><div class="stat-label">参加人数</div><div class="stat-val">${d.monthCount}<span style="font-size:14px;color:#aaa">人</span></div></div><div class="stat"><div class="stat-label">開催回数</div><div class="stat-val">${d.sessionCount}<span style="font-size:14px;color:#aaa">回</span></div></div></div></div>`;
   if (d.ranking && d.ranking.length) {
     const EXCLUDE = ['運営','部長','代表','本部','特別会員'];
@@ -612,10 +619,12 @@ function buildPayOptions(type, isBad, usageMode, ticketRemain, isMemberTrial, is
     if (isBad) return [
       { label: '回数券+¥200' + remainLabel, value: 200, useTicket: true, method: '回数券' },
       { label: '回数券のみ' + remainLabel, value: 0, useTicket: true, method: '回数券' },
+      ...(hasFreeTicket ? [{ label: '🎫無料チケット ¥0', value: 0, method: '無料チケット' }] : []),
       { label: 'その他（理由を選択）', value: 'custom' }
     ];
     return [
       { label: '回数券を使う' + remainLabel, value: 0, useTicket: true, method: '回数券' },
+      ...(hasFreeTicket ? [{ label: '🎫無料チケット ¥0', value: 0, method: '無料チケット' }] : []),
       { label: 'その他（理由を選択）', value: 'custom' }
     ];
   }
@@ -633,6 +642,11 @@ function buildPayOptions(type, isBad, usageMode, ticketRemain, isMemberTrial, is
   }
   const baseAmount = isMinB ? 200 : (isBad ? 700 : 500);
   const ticketOptions = [];
+  // 回数券を持っている人（現金モードの人も）には「回数券を使う」を選べるようにする
+  if (Number(ticketRemain) > 0) {
+    const rl = '（残り' + ticketRemain + '枚）';
+    ticketOptions.push(isBad ? { label: '回数券+¥200' + rl, value: 200, useTicket: true, method: '回数券' } : { label: '回数券を使う' + rl, value: 0, useTicket: true, method: '回数券' });
+  }
   if (hasFreeTicket) ticketOptions.push({ label: '🎫無料チケット ¥0', value: 0, method: '無料チケット' });
   if (hasHalfTicket) ticketOptions.push({ label: '🎫200円引き ¥' + Math.max(baseAmount - 200, 0), value: Math.max(baseAmount - 200, 0), method: '200円引きクーポン' });
   return [...baseOptions, ...ticketOptions, { label: 'その他（理由を選択）', value: 'custom' }];
@@ -692,6 +706,14 @@ function sportMatches(personSport, blockSport) {
 
 // ★変更：同じ日に複数種目（バレー＋バスケ等）がある日は、種目ごとにカードを分けて表示する。
 //         種目が1つだけの日は従来どおり1枚（ブロックID 'today'）。
+// 本日のリストは1回の通信（getStaffDailyBundle）で、全種目分とチケット情報をまとめて取る
+async function fetchDailyBundle(date, sport) {
+  const b = date ? await callGAS('getStaffDailyBundle', date, sport || '') : await callGAS('getStaffDailyBundle');
+  const t = b.tickets || {};
+  applyTicketMaps(t.tickets, t.free, t.half);
+  return b;
+}
+
 async function loadTodayBlock() {
   const el = document.getElementById('daily-list-today');
   const extra = document.getElementById('daily-extra-sports');
@@ -702,27 +724,13 @@ async function loadTodayBlock() {
   if (topBtns) topBtns.style.display = 'flex';
   if (titleEl) titleEl.textContent = '👥 本日の参加リスト';
   try {
-    const [d, ticketRows, freeTickets, halfTickets] = await Promise.all([
-      callGAS('getStaffDailyData'),
-      callGAS('getAllTickets'),
-      callGAS('getAllFreeTickets'),
-      callGAS('getAllHalfPriceTickets')
-    ]);
-    applyTicketMaps(ticketRows, freeTickets, halfTickets);
+    const b = await fetchDailyBundle();
     const rSel = document.getElementById('r-staff-select');
-    if (rSel) rSel.innerHTML = '<option value="">-- 選択 --</option>' + (d.staffMembers||[]).map(x => `<option value="${x[0]}">${x[0]}</option>`).join('');
+    if (rSel) rSel.innerHTML = '<option value="">-- 選択 --</option>' + (b.staffMembers||[]).map(x => `<option value="${x[0]}">${x[0]}</option>`).join('');
+    const blocks = b.blocks || [];
+    if (blocks.length < 2) { renderCheckinBlock('today', blocks[0] || {}); return; }
 
-    // 本日の種目一覧（未報告の日程から。先頭＝d.sport を最初に）
-    const todayKey = dk(d.date || d.today);
-    const sports = [];
-    if (d.sport) sports.push(d.sport);
-    (d.pendingSchedules || []).forEach(r => {
-      if (dk(r[0]) === todayKey && r[4] && sports.indexOf(r[4]) === -1) sports.push(r[4]);
-    });
-    if (sports.length < 2) { renderCheckinBlock('today', d); return; }
-
-    // 複数種目：1つ目は既存の 'today' カードを流用し、2つ目以降をカードで追加
-    if (topBtns) topBtns.style.display = 'none';
+    // 複数種目：先頭は既存の 'today' カード、2つ目以降は種目ごとのカードを追加
     const mk = (id, sp) => `<div class="card" id="daily-card-${id}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div class="card-title" style="margin-bottom:0">${SPORT_ICON[sp] || ''} ${sp}</div>
@@ -732,27 +740,12 @@ async function loadTodayBlock() {
         </div>
       </div>
       <div id="daily-note-${id}" style="font-size:12px;color:#f6ad55;margin-bottom:8px"></div>
-      <div id="daily-list-${id}"><div class="loading">読み込み中...</div></div>
+      <div id="daily-list-${id}"></div>
     </div>`;
-    // 先頭カードは見出しを種目名にして、専用ボタンを見出し行に作り直す
-    const firstCard = el.closest('.card');
-    const head = document.getElementById('daily-title-today');
-    head.textContent = '👥 本日の参加リスト｜' + (SPORT_ICON[sports[0]] || '') + ' ' + sports[0];
-    topBtns.style.display = 'flex';
-    topBtns.innerHTML = `<button onclick="openAddMemberModal('today')" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋追加</button>
-      <button data-save-btn="today" onclick="saveDailyCheckins('today')" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">保存</button>`;
-    renderCheckinBlock('today', d);
-    const ids = [];
-    for (let i = 1; i < sports.length; i++) ids.push('today' + i);
-    extra.innerHTML = ids.map((id, i) => mk(id, sports[i + 1])).join('');
-    await Promise.all(ids.map(async (id, k) => {
-      const sp = sports[k + 1];
-      const listEl = document.getElementById('daily-list-' + id);
-      try {
-        const dd = await callGAS('getStaffDailyData', d.date || d.today, sp);
-        renderCheckinBlock(id, dd);
-      } catch (e) { listEl.innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
-    }));
+    titleEl.textContent = '👥 本日の参加リスト｜' + (SPORT_ICON[blocks[0].sport] || '') + ' ' + blocks[0].sport;
+    renderCheckinBlock('today', blocks[0]);
+    extra.innerHTML = blocks.slice(1).map((blk, i) => mk('today' + (i + 1), blk.sport)).join('');
+    blocks.slice(1).forEach((blk, i) => renderCheckinBlock('today' + (i + 1), blk));
   } catch(e) { el.innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
 }
 
@@ -812,14 +805,8 @@ async function loadPastBlockData(blockId) {
   const el = document.getElementById('daily-list-' + blockId);
   if (!s) { el.innerHTML = '<div class="empty">データが見つかりません</div>'; return; }
   try {
-    const [d, ticketRows, freeTickets, halfTickets] = await Promise.all([
-      callGAS('getStaffDailyData', s.date, s.sport),
-      callGAS('getAllTickets'),
-      callGAS('getAllFreeTickets'),
-      callGAS('getAllHalfPriceTickets')
-    ]);
-    applyTicketMaps(ticketRows, freeTickets, halfTickets);
-    renderCheckinBlock(blockId, d);
+    const b = await fetchDailyBundle(s.date, s.sport);
+    renderCheckinBlock(blockId, b.blocks[0]);
   } catch(e) { el.innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
 }
 
@@ -827,14 +814,8 @@ async function reloadDailyBlock(blockId) {
   const block = _dailyBlocks[blockId];
   if (!block) return;
   try {
-    const [d, ticketRows, freeTickets, halfTickets] = await Promise.all([
-      callGAS('getStaffDailyData', block.date, block.sport),
-      callGAS('getAllTickets'),
-      callGAS('getAllFreeTickets'),
-      callGAS('getAllHalfPriceTickets')
-    ]);
-    applyTicketMaps(ticketRows, freeTickets, halfTickets);
-    renderCheckinBlock(blockId, d);
+    const b = await fetchDailyBundle(block.date, block.sport);
+    renderCheckinBlock(blockId, b.blocks[0]);
   } catch(e) {}
 }
 
@@ -913,7 +894,7 @@ async function saveDailyCheckins(blockId) {
   if (!checked.length) return alert('チェックを入れてください');
   const btn = document.querySelector('[data-save-btn="' + blockId + '"]');
   if (btn) { btn.disabled = true; btn.textContent = '保存中...'; }
-  let done = 0;
+  const items = [], rowEls = [];
   for (const cb of checked) {
     const fullname = cb.dataset.fullname, nickname = cb.dataset.nickname, type = cb.dataset.type;
     const options = JSON.parse(cb.dataset.opts);
@@ -929,19 +910,21 @@ async function saveDailyCheckins(blockId) {
       method = reasonSel ? reasonSel.value : '現金';
     }
     const useTicket = selected ? (selected.useTicket || false) : false;
-    const logRow = [block.date, '沼南体育館', block.sport, nickname, fullname, type, amount, method];
-    try {
-      if (useTicket) {
-        const ticket = await callGAS('getTicket', fullname);
-        if (ticket && ticket[3] > 0) await callGAS('useTicket', fullname);
-        else { logRow[6] = 500; logRow[7] = '回数券なし・現金振替'; }
-      }
-      await callGAS('addAttendanceLog', logRow);
-      done++;
-    } catch(e) {}
+    items.push({ log: [block.date, '沼南体育館', block.sport, nickname, fullname, type, amount, method], useTicket });
+    const row = cb.closest('[id^="daily-item-"]');
+    if (row) { row.style.opacity = '0.4'; row.style.pointerEvents = 'none'; rowEls.push(row); }
   }
-  if (btn) { btn.disabled = false; btn.textContent = '保存'; }
-  showToast(done + '名チェックイン完了！✅');
+  // 全員分を1回の通信でまとめて保存（サーバー側で順に処理する）
+  try {
+    const res = await callGAS('addAttendanceLogsBatch', items);
+    const failed = ((res && res.results) || []).filter(r => !r.ok);
+    showToast(((res && res.done) || 0) + '名チェックイン完了！✅');
+    if (failed.length) alert('保存できなかった人がいます：\n' + failed.map(f => f.fullname + '（' + f.error + '）').join('\n'));
+  } catch(e) {
+    alert('通信でエラーが出ました。保存できているか、リストを見て確認してください。\n' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '保存'; }
+  }
   reloadDailyBlock(blockId);
 }
 
@@ -1413,20 +1396,22 @@ async function fillReportCore(r, existingReportRow) {
 
   try {
     const logs = await callGAS('getAttendanceLog');
-    const filtered = logs.filter(l => l[0] === date && l[2] === sport);
+    const filtered = logs.filter(l => dk(l[0]) === dk(date) && l[2] === sport);
     let general = 0, minb = 0, family = 0, trial = 0, staff = 0, ouendan = 0, zeroPay = 0;
     let generalIncome = 0, minbIncome = 0, familyIncome = 0, trialIncome = 0, staffIncome = 0, ouendanIncome = 0;
     filtered.forEach(log => {
       const type = log[5];
-      const amt = Number(log[6]) || 0;
+      // 金額は表示形式の文字（「¥500」「500円」「1,000」など）でも数字だけを取り出して数える
+      const amt = parseInt(String(log[6] == null ? '' : log[6]).replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).replace(/[^0-9\-]/g, '')) || 0;
       const method = log[7] || '';
       const isZeroPay = method === '回数券' || method === '半額クーポン' || method === '200円引きクーポン' || method === '無料チケット' || method === '練習日' || (!method && amt === 0);
-      if (type === 'ビジター会員' || type === 'カシワのBUKATSU会員') { general++; generalIncome += amt; if (isZeroPay) zeroPay++; }
+      if (type === 'ビジター会員' || type === 'カシワのBUKATSU会員' || type === 'ビジター' || type === 'カシワビジター') { general++; generalIncome += amt; if (isZeroPay) zeroPay++; }
       else if (type === 'みんB会員' || type === 'みんなのBUKATSU会員') { minb++; minbIncome += amt; if (isZeroPay) zeroPay++; }
       else if (type === 'ファミリー会員') { family++; familyIncome += amt; }
       else if (type === '体験') { trial++; trialIncome += amt; }
       else if (['運営', '代表', '部長', '本部', '特別会員'].includes(type)) { staff++; staffIncome += amt; }
       else if (type === '応援団' || type === '応援団会員') { ouendan++; ouendanIncome += amt; }
+      else { general++; generalIncome += amt; if (isZeroPay) zeroPay++; }   // 想定外の種別も人数・収入から漏らさない
     });
     const totalPeople = general + minb + family + trial + staff + ouendan;
     const income = generalIncome + minbIncome + familyIncome + trialIncome + staffIncome + ouendanIncome;
@@ -1441,7 +1426,7 @@ async function fillReportCore(r, existingReportRow) {
     document.getElementById('r-income').value = income;
     document.getElementById('r-total-people').value = totalPeople;
     calcReportPL();
-  } catch(e) {}
+  } catch(e) { showToast('参加者の集計に失敗しました：' + e.message); }
 }
 
 function calcShuttle() { const p = parseFloat(document.getElementById('r-shuttle-cost').dataset.price) || 0; document.getElementById('r-shuttle-cost').value = Math.round(p / 12 * (parseInt(document.getElementById('r-shuttle-select').value) || 0)); calcReportPL(); }
