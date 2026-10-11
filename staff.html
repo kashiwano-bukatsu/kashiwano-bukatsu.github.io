@@ -144,8 +144,8 @@ textarea{min-height:80px;resize:vertical}
 <div id="section-daily" class="section">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="card-title" style="margin-bottom:0">👥 本日の参加リスト</div>
-      <div style="display:flex;gap:8px">
+      <div class="card-title" id="daily-title-today" style="margin-bottom:0">👥 本日の参加リスト</div>
+      <div id="daily-top-btns" style="display:flex;gap:8px">
         <button onclick="openAddMemberModal('today')" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋追加</button>
         <button data-save-btn="today" onclick="saveDailyCheckins('today')" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">保存</button>
       </div>
@@ -153,6 +153,7 @@ textarea{min-height:80px;resize:vertical}
     <div id="daily-note-today" style="font-size:12px;color:#f6ad55;margin-bottom:8px"></div>
     <div id="daily-list-today"><div class="loading">読み込み中...</div></div>
   </div>
+  <div id="daily-extra-sports"></div>
 
   <div class="card" id="unentered-card" style="display:none">
     <div class="card-title">⚠️ 過去未入力</div>
@@ -323,20 +324,34 @@ if ('serviceWorker' in navigator) {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+// 同じ呼び出しが実行中なら結果を共有（二重送信防止）。書き込みは通信失敗でも自動でやり直さない（二重登録防止）
+const _gasRunning = {};
+const _gasReadRe = /^(get|check|search|find|list|preview|resolve|load)/;
 async function callGAS(func, ...args) {
+  let key;
+  try { key = func + '|' + JSON.stringify(args); } catch(e) { key = func + '|' + Date.now() + Math.random(); }
+  if (_gasRunning[key]) return _gasRunning[key];
+  const isRead = _gasReadRe.test(func);
   const attempt = async () => {
     const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ func, args }) });
     const json = await res.json();
-    if (json.status === 'error') throw new Error(json.message);
+    if (json.status === 'error') { const err = new Error(json.message); err.fatal = true; throw err; }
     return json.data;
   };
-  for (let i = 0; i < 3; i++) {
-    try { return await attempt(); }
-    catch(e) {
-      if (i === 2) throw e;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-    }
-  }
+  const p = (async () => {
+    try {
+      const maxTry = isRead ? 3 : 1;
+      for (let i = 0; i < maxTry; i++) {
+        try { return await attempt(); }
+        catch(e) {
+          if (e.fatal || i === maxTry - 1) throw e;
+          await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+        }
+      }
+    } finally { delete _gasRunning[key]; }
+  })();
+  _gasRunning[key] = p;
+  return p;
 }
 const SPORT_ICON = { 'バドミントン': '🏸', 'バスケットボール': '🏀', 'バレーボール': '🏐' };
 
@@ -667,9 +682,25 @@ async function loadDailyTab() {
   await Promise.all([loadTodayBlock(), loadUnenteredCard()]);
 }
 
+const SPORT_KEYWORDS = { 'バスケットボール': 'バスケ', 'バレーボール': 'バレー', 'バドミントン': 'バド' };
+function sportMatches(personSport, blockSport) {
+  const ps = String(personSport || '').trim();
+  if (!blockSport || !ps || ps === '全て') return true;
+  const kw = SPORT_KEYWORDS[blockSport] || blockSport;
+  return ps.indexOf(kw) !== -1 || ps.indexOf(blockSport) !== -1;
+}
+
+// ★変更：同じ日に複数種目（バレー＋バスケ等）がある日は、種目ごとにカードを分けて表示する。
+//         種目が1つだけの日は従来どおり1枚（ブロックID 'today'）。
 async function loadTodayBlock() {
   const el = document.getElementById('daily-list-today');
+  const extra = document.getElementById('daily-extra-sports');
+  const topBtns = document.getElementById('daily-top-btns');
+  const titleEl = document.getElementById('daily-title-today');
   el.innerHTML = '<div class="loading">読み込み中...</div>';
+  if (extra) extra.innerHTML = '';
+  if (topBtns) topBtns.style.display = 'flex';
+  if (titleEl) titleEl.textContent = '👥 本日の参加リスト';
   try {
     const [d, ticketRows, freeTickets, halfTickets] = await Promise.all([
       callGAS('getStaffDailyData'),
@@ -680,7 +711,48 @@ async function loadTodayBlock() {
     applyTicketMaps(ticketRows, freeTickets, halfTickets);
     const rSel = document.getElementById('r-staff-select');
     if (rSel) rSel.innerHTML = '<option value="">-- 選択 --</option>' + (d.staffMembers||[]).map(x => `<option value="${x[0]}">${x[0]}</option>`).join('');
+
+    // 本日の種目一覧（未報告の日程から。先頭＝d.sport を最初に）
+    const todayKey = dk(d.date || d.today);
+    const sports = [];
+    if (d.sport) sports.push(d.sport);
+    (d.pendingSchedules || []).forEach(r => {
+      if (dk(r[0]) === todayKey && r[4] && sports.indexOf(r[4]) === -1) sports.push(r[4]);
+    });
+    if (sports.length < 2) { renderCheckinBlock('today', d); return; }
+
+    // 複数種目：1つ目は既存の 'today' カードを流用し、2つ目以降をカードで追加
+    if (topBtns) topBtns.style.display = 'none';
+    const mk = (id, sp) => `<div class="card" id="daily-card-${id}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">${SPORT_ICON[sp] || ''} ${sp}</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openAddMemberModal('${id}')" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋追加</button>
+          <button data-save-btn="${id}" onclick="saveDailyCheckins('${id}')" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">保存</button>
+        </div>
+      </div>
+      <div id="daily-note-${id}" style="font-size:12px;color:#f6ad55;margin-bottom:8px"></div>
+      <div id="daily-list-${id}"><div class="loading">読み込み中...</div></div>
+    </div>`;
+    // 先頭カードは見出しを種目名にして、専用ボタンを見出し行に作り直す
+    const firstCard = el.closest('.card');
+    const head = document.getElementById('daily-title-today');
+    head.textContent = '👥 本日の参加リスト｜' + (SPORT_ICON[sports[0]] || '') + ' ' + sports[0];
+    topBtns.style.display = 'flex';
+    topBtns.innerHTML = `<button onclick="openAddMemberModal('today')" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋追加</button>
+      <button data-save-btn="today" onclick="saveDailyCheckins('today')" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">保存</button>`;
     renderCheckinBlock('today', d);
+    const ids = [];
+    for (let i = 1; i < sports.length; i++) ids.push('today' + i);
+    extra.innerHTML = ids.map((id, i) => mk(id, sports[i + 1])).join('');
+    await Promise.all(ids.map(async (id, k) => {
+      const sp = sports[k + 1];
+      const listEl = document.getElementById('daily-list-' + id);
+      try {
+        const dd = await callGAS('getStaffDailyData', d.date || d.today, sp);
+        renderCheckinBlock(id, dd);
+      } catch (e) { listEl.innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
+    }));
   } catch(e) { el.innerHTML = '<div class="empty">エラー：' + e.message + '</div>'; }
 }
 
@@ -797,9 +869,9 @@ function renderCheckinBlock(blockId, d) {
     allItems.push({ fullname: r[4], nickname: r[5] || r[4], type: master[2] || 'ビジター会員', usageMode: master[14] || 'スポログ', isNew: false, isMemberTrial });
   });
   const targetKey = dk(dateFmt);
-  const tempUsers = (d.tempAttendees || []).filter(t => dk(t[0]) === targetKey && !(d.attendees || []).find(a => a[1] === t[1]));
+  const tempUsers = (d.tempAttendees || []).filter(t => dk(t[0]) === targetKey && sportMatches(t[2], sport) && !(d.attendees || []).find(a => a[1] === t[1]));
   tempUsers.forEach(u => {
-    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', usageMode: 'スポログ', isNew: true });
+    if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', usageMode: 'スポログ', isNew: true, referrer: u[5] || '' });
   });
   if (!allItems.length) { el.innerHTML = '<div class="empty">対象者がいません<br><span style="font-size:12px">「＋追加」から手動で登録できます</span></div>'; return; }
   allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
@@ -819,6 +891,7 @@ function renderCheckinBlock(blockId, d) {
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:600;color:#fff">${item.isNew ? '<span style="font-size:10px;color:#68d391;border:1px solid #68d391;border-radius:4px;padding:1px 4px;margin-right:4px">NEW</span>' : ''}${isVisitorOnPractice ? '<span style="font-size:10px;color:#f56565;border:1px solid #f56565;border-radius:4px;padding:1px 4px;margin-right:4px">⚠️練習日対象外</span>' : ''}${item.nickname}</div>
         <div style="font-size:11px;color:#aaa">${type}</div>
+        ${item.isNew && item.referrer ? `<div style="font-size:11px;color:#f6ad55;margin-top:2px">📣 ${item.referrer}</div>` : ''}
       </div>
       ${buildPaySelectHtml(safeId, options)}
     </div>`;
@@ -1205,7 +1278,8 @@ async function submitRecruit() {
   if (!/^[ァ-ヶー]+$/.test(fullname)) return alert('カタカナで入力してください');
   if (!source) return alert('流入元を選択してください');
   if (!exp) return alert('スポーツ経験を選択してください');
-  let referrerValue = source;
+  // 紹介以外（Threads等）は、流入元はそのまま記録し、入力した運営メンバーを紹介者（内部ID）にする
+  let referrerValue = (currentUser && currentUser.internalId) ? (source + '|' + currentUser.internalId) : source;
   if (source === '紹介') {
     const internalId = document.getElementById('rec-referrer-search').dataset.internalId;
     if (!internalId) return alert('紹介してくれた会員を検索して確定してください');
@@ -1638,6 +1712,59 @@ async function addStaffMemberAction() {
 
 // ===== ユーティリティ =====
 function getTodayStr() { const d = new Date(); return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0'); }
+</script>
+<script>
+/* ===== 二重押し防止（共通）=====
+   ・書き込み系の通信が実行中のあいだ、そのボタンを押せなくする（終わると自動で戻る）
+   ・ボタン側の個別対応が無い画面も含め、全ボタンに効く
+   ・この仕組みを外したいボタンには data-no-lock を付ける */
+(function(){
+  if (window.__dblGuard) return; window.__dblGuard = true;
+  var seq = 0, pending = new Map();      // id -> 書き込みか
+  var readRe = /^(get|check|search|find|list|preview|resolve|load)/;
+  function isRead(f){
+    try { if (typeof GAS_READ_FUNCS !== 'undefined' && GAS_READ_FUNCS.has && GAS_READ_FUNCS.has(f)) return true; } catch(e){}
+    return readRe.test(String(f));
+  }
+  var orig = window.callGAS;
+  if (typeof orig !== 'function') return;
+  window.callGAS = function(func){
+    var id = ++seq, w = !isRead(func);
+    var p = orig.apply(this, arguments);
+    pending.set(id, w);
+    var done = function(){ pending.delete(id); };
+    Promise.resolve(p).then(done, done);
+    return p;
+  };
+  function writePendingSince(s){
+    var hit = false;
+    pending.forEach(function(w, id){ if (w && id > s) hit = true; });
+    return hit;
+  }
+  function anyPendingSince(s){
+    var hit = false;
+    pending.forEach(function(w, id){ if (id > s) hit = true; });
+    return hit;
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target && e.target.closest ? e.target.closest('button,[onclick],input[type=submit],input[type=button]') : null;
+    if (!b || b.hasAttribute('data-no-lock')) return;
+    if (b.__locked) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+    var startSeq = seq, started = Date.now(), saved = null;
+    (function watch(){
+      if (writePendingSince(startSeq)) {
+        if (!b.__locked) { b.__locked = true; saved = b.style.opacity; b.style.opacity = '0.55'; }
+      } else if (b.__locked) {
+        b.__locked = false; b.style.opacity = saved || '';
+        return;
+      } else if (!anyPendingSince(startSeq) && Date.now() - started > 150) {
+        return;                                  // 通信が起きなかったボタンは何もしない
+      }
+      if (Date.now() - started > 60000) { if (b.__locked) { b.__locked = false; b.style.opacity = saved || ''; } return; }
+      setTimeout(watch, 80);
+    })();
+  }, true);
+})();
 </script>
 </body>
 </html>

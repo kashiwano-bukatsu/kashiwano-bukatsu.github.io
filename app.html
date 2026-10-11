@@ -4115,5 +4115,58 @@ const _headerLogoImg = document.querySelector('.header img');
 if (_headerLogoImg) _headerLogoImg.addEventListener('load', adjustHeaderOffset);
 </script>
 
+<script>
+/* ===== 二重押し防止（共通）=====
+   ・書き込み系の通信が実行中のあいだ、そのボタンを押せなくする（終わると自動で戻る）
+   ・ボタン側の個別対応が無い画面も含め、全ボタンに効く
+   ・この仕組みを外したいボタンには data-no-lock を付ける */
+(function(){
+  if (window.__dblGuard) return; window.__dblGuard = true;
+  var seq = 0, pending = new Map();      // id -> 書き込みか
+  var readRe = /^(get|check|search|find|list|preview|resolve|load)/;
+  function isRead(f){
+    try { if (typeof GAS_READ_FUNCS !== 'undefined' && GAS_READ_FUNCS.has && GAS_READ_FUNCS.has(f)) return true; } catch(e){}
+    return readRe.test(String(f));
+  }
+  var orig = window.callGAS;
+  if (typeof orig !== 'function') return;
+  window.callGAS = function(func){
+    var id = ++seq, w = !isRead(func);
+    var p = orig.apply(this, arguments);
+    pending.set(id, w);
+    var done = function(){ pending.delete(id); };
+    Promise.resolve(p).then(done, done);
+    return p;
+  };
+  function writePendingSince(s){
+    var hit = false;
+    pending.forEach(function(w, id){ if (w && id > s) hit = true; });
+    return hit;
+  }
+  function anyPendingSince(s){
+    var hit = false;
+    pending.forEach(function(w, id){ if (id > s) hit = true; });
+    return hit;
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target && e.target.closest ? e.target.closest('button,[onclick],input[type=submit],input[type=button]') : null;
+    if (!b || b.hasAttribute('data-no-lock')) return;
+    if (b.__locked) { e.stopImmediatePropagation(); e.preventDefault(); return; }
+    var startSeq = seq, started = Date.now(), saved = null;
+    (function watch(){
+      if (writePendingSince(startSeq)) {
+        if (!b.__locked) { b.__locked = true; saved = b.style.opacity; b.style.opacity = '0.55'; }
+      } else if (b.__locked) {
+        b.__locked = false; b.style.opacity = saved || '';
+        return;
+      } else if (!anyPendingSince(startSeq) && Date.now() - started > 150) {
+        return;                                  // 通信が起きなかったボタンは何もしない
+      }
+      if (Date.now() - started > 60000) { if (b.__locked) { b.__locked = false; b.style.opacity = saved || ''; } return; }
+      setTimeout(watch, 80);
+    })();
+  }, true);
+})();
+</script>
 </body>
 </html>
