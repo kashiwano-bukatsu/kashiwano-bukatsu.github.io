@@ -530,6 +530,16 @@ body.sporolog-page .wrapper{padding-top:0}
       <div class="card-title"><div class="card-title-dot"></div>プロフィール編集</div>
       <div class="label" style="margin-top:0">ニックネーム</div>
       <input type="text" id="settings-nickname" placeholder="例：コンペイ">
+      <div class="label">フルネーム（カタカナ・スペースなし）</div>
+      <input type="text" id="pc-name" placeholder="例：ヤマダタロウ">
+      <div class="label">生年月日（変更するときだけ選ぶ）</div>
+      <div style="display:flex;gap:8px">
+        <select id="pc-dob-y" style="flex:2"><option value="">年</option></select>
+        <select id="pc-dob-m" style="flex:1"><option value="">月</option></select>
+        <select id="pc-dob-d" style="flex:1"><option value="">日</option></select>
+      </div>
+      <div style="font-size:11.5px;color:#999;line-height:1.6;margin-top:6px">※フルネーム・生年月日の変更は、事務局の承認後に反映されます。</div>
+      <div id="pc-requests" style="font-size:12.5px;color:#b26a00;margin-top:4px"></div>
       <div class="label">在住エリア</div>
       <select id="settings-area">
         <option value="">選択してください</option><option value="柏市">柏市</option><option value="流山市">流山市</option><option value="我孫子市">我孫子市</option><option value="松戸市">松戸市</option><option value="野田市">野田市</option><option value="八千代市">八千代市</option><option value="印西市">印西市</option><option value="白井市">白井市</option><option value="佐倉市">佐倉市</option><option value="船橋市">船橋市</option><option value="千葉市">千葉市</option><option value="取手市">取手市</option><option value="守谷市">守谷市</option><option value="つくば市">つくば市</option><option value="その他">その他</option>
@@ -543,26 +553,6 @@ body.sporolog-page .wrapper{padding-top:0}
         <option value="">選択してください</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option><option value="回答しない">回答しない</option>
       </select>
       <button class="btn btn-primary" onclick="saveSettingsProfile()" style="margin-top:14px">保存する</button>
-      <div style="border-top:1px solid #e8eef4;margin-top:22px;padding-top:16px">
-        <div style="font-size:14px;font-weight:800;color:#1a1a2e;margin-bottom:4px">フルネーム・生年月日の変更</div>
-        <div style="font-size:12px;color:#888;line-height:1.7;margin-bottom:8px">変更したい項目だけ入力してください。事務局の承認後に反映されます。ファミリーの方の分もここから申請できます。</div>
-        <div class="label" style="margin-top:0">変更する人</div>
-        <select id="pc-target"></select>
-        <div class="label">新しいフルネーム（カタカナ・スペースなし）</div>
-        <input type="text" id="pc-name" placeholder="例：ヤマダタロウ">
-        <div class="label">新しい生年月日</div>
-        <div style="display:flex;gap:8px">
-          <select id="pc-dob-y" style="flex:2"><option value="">年</option></select>
-          <select id="pc-dob-m" style="flex:1"><option value="">月</option></select>
-          <select id="pc-dob-d" style="flex:1"><option value="">日</option></select>
-        </div>
-        <div class="label">理由（任意）</div>
-        <input type="text" id="pc-reason" placeholder="例：結婚で苗字が変わった、入力ミス など">
-        <button class="btn btn-primary" id="pc-btn" onclick="submitProfileChange()" style="margin-top:14px">変更を申請する</button>
-        <div id="pc-msg" style="font-size:13px;margin-top:8px;line-height:1.6"></div>
-        <div class="label">申請の状況</div>
-        <div id="pc-requests"></div>
-      </div>
     </div>
     <!-- プラン変更 -->
     <div class="card">
@@ -2570,53 +2560,50 @@ async function _pcResolveName(){
   }catch(e){}
 }
 async function loadProfileChange(){
-  const sel=document.getElementById('pc-target'),listEl=document.getElementById('pc-requests');
-  if(!sel||!mypageCurrentUser)return;
+  if(!document.getElementById('pc-name')||!mypageCurrentUser)return;
   _pcInitDob();
   await _pcResolveName();
+  const nm=document.getElementById('pc-name');if(nm&&document.activeElement!==nm)nm.value=mypageCurrentUser.fullname||'';
   try{
-    const res=await Promise.all([callGAS('getMyFamily',mypageCurrentUser.fullname),callGAS('getMyProfileChangeRequests',mypageCurrentUser.fullname)]);
-    const fam=res[0]||[],reqs=res[1]||[];
-    const keep=sel.value;
-    sel.innerHTML='<option value="'+_pcEsc(mypageCurrentUser.internalId)+'">'+_pcEsc((mypageCurrentUser.nickname||'自分')+'（自分）')+'</option>'+
-      fam.map(function(f){return '<option value="'+_pcEsc(f.internalId)+'">'+_pcEsc(f.nickname)+'</option>';}).join('');
-    if(keep)sel.value=keep;
-    listEl.innerHTML=reqs.length?reqs.map(function(r){
-      const col=r.status==='承認'?'#188038':r.status==='却下'?'#c62828':'#b26a00';
-      const what=[r.newName?('名前→'+r.newName):'',r.newDob?'生年月日':''].filter(Boolean).join('／');
-      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f4f8"><span>'+_pcEsc(r.nick)+'：'+_pcEsc(what)+'</span><span style="color:'+col+';font-weight:700;white-space:nowrap">'+_pcEsc(r.status)+'</span></div>';
-    }).join(''):'<div style="font-size:13px;color:#aaa">申請はありません</div>';
-  }catch(e){listEl.innerHTML='<div style="font-size:13px;color:#e53935">'+_pcEsc(gasErrorText(e))+'</div>';}
+    const reqs=(await callGAS('getMyProfileChangeRequests',mypageCurrentUser.fullname))||[];
+    const mine=reqs.filter(function(r){return r.targetId===mypageCurrentUser.internalId&&r.status==='承認待ち';});
+    document.getElementById('pc-requests').textContent=mine.length?('承認待ちの変更申請があります（'+mine.map(function(r){return [r.newName?'フルネーム':'',r.newDob?'生年月日':''].filter(Boolean).join('・');}).join('／')+'）'):'';
+  }catch(e){}
 }
-async function submitProfileChange(){
-  const msg=document.getElementById('pc-msg'),btn=document.getElementById('pc-btn');
-  msg.style.color='#e53935';msg.textContent='';
-  const targetId=document.getElementById('pc-target').value;
-  const targetName=document.getElementById('pc-target').selectedOptions[0].textContent.replace('（自分）','');
-  const newName=document.getElementById('pc-name').value.replace(/[\s　]+/g,'');
+// 保存ボタン：ニックネーム等はすぐ反映、フルネーム・生年月日は変更があれば事務局へ申請
+async function saveSettingsProfile(){
+  const nickname=document.getElementById('settings-nickname').value.trim();
+  if(!nickname)return alert('ニックネームを入力してください');
+  const area=document.getElementById('settings-area').value;
+  const sport=document.getElementById('settings-sport').value;
+  const gender=document.getElementById('settings-gender').value;
+  const typed=document.getElementById('pc-name').value.replace(/[\s　]+/g,'');
+  const newName=(typed&&typed!==mypageCurrentUser.fullname)?typed:'';
   const y=document.getElementById('pc-dob-y').value,m=document.getElementById('pc-dob-m').value,d=document.getElementById('pc-dob-d').value;
-  if((y||m||d)&&!(y&&m&&d)){msg.textContent='生年月日は年・月・日をすべて選んでください。';return;}
+  if((y||m||d)&&!(y&&m&&d))return alert('生年月日は年・月・日をすべて選んでください。');
   const newDob=(y&&m&&d)?(y+m+d):'';
-  if(!newName&&!newDob){msg.textContent='変更したい項目を入力してください。';return;}
-  if(newName&&!/^[ァ-ヶー]{2,}$/.test(newName)){msg.textContent=PC_ERRORS.name_format;return;}
-  if(newDob&&_pcAge(newDob)===null){msg.textContent=PC_ERRORS.dob_invalid;return;}
-  const payload={newFullname:newName,newDob:newDob,reason:document.getElementById('pc-reason').value.trim()};
+  if(newName&&!/^[ァ-ヶー]{2,}$/.test(newName))return alert(PC_ERRORS.name_format);
+  if(newDob&&_pcAge(newDob)===null)return alert(PC_ERRORS.dob_invalid);
+  const payload={newFullname:newName,newDob:newDob};
   if(newDob&&_pcAge(newDob)<18){
-    const c=await _pcConsentDialog(targetName);
+    const c=await _pcConsentDialog(nickname);
     if(!c)return;
     payload.emergencyRel=c.rel;payload.emergencyTel=c.tel;payload.consent=true;
   }
-  btn.disabled=true;btn.textContent='送信中...';
   try{
-    const r=await callGAS('requestProfileChange',mypageCurrentUser.fullname,targetId,payload);
-    if(r&&r.ok){
-      msg.style.color='#188038';msg.textContent='申請しました。事務局の承認後に反映されます。';
-      ['pc-name','pc-reason'].forEach(function(id){document.getElementById(id).value='';});
-      ['pc-dob-y','pc-dob-m','pc-dob-d'].forEach(function(id){document.getElementById(id).value='';});
-      loadProfileChange();
-    }else{msg.textContent=PC_ERRORS[r]||('申請できませんでした（'+r+'）');}
-  }catch(e){msg.textContent=gasErrorText(e);}
-  finally{btn.disabled=false;btn.textContent='変更を申請する';}
+    const result=await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
+    if(result==='duplicate')return alert('そのニックネームは既に使われています。別のニックネームを入力してください。');
+    mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
+    saveCurrentUser();
+    document.getElementById('mypage-logged-name').textContent=nickname+' さん';
+    let msg='プロフィールを更新しました';
+    if(newName||newDob){
+      const r=await callGAS('requestProfileChange',mypageCurrentUser.fullname,mypageCurrentUser.internalId,payload);
+      if(r&&r.ok){msg+='\nフルネーム・生年月日の変更は、事務局の承認後に反映されます。';['pc-dob-y','pc-dob-m','pc-dob-d'].forEach(function(id){document.getElementById(id).value='';});loadProfileChange();}
+      else msg+='\n※フルネーム・生年月日の変更は申請できませんでした：'+(PC_ERRORS[r]||r);
+    }
+    alert(msg);
+  }catch(e){alert('エラー：'+gasErrorText(e));}
 }
 (function(){const _lsf=loadSettingsFamily;loadSettingsFamily=function(){_lsf();loadProfileChange();};})();
 
@@ -3326,21 +3313,6 @@ function openSettings(){
 function closeSettings(){
   document.getElementById('section-settings').style.display='none';
   document.body.style.overflow='';
-}
-async function saveSettingsProfile(){
-  const nickname=document.getElementById('settings-nickname').value.trim();
-  if(!nickname)return alert('ニックネームを入力してください');
-  const area=document.getElementById('settings-area').value;
-  const sport=document.getElementById('settings-sport').value;
-  const gender=document.getElementById('settings-gender').value;
-  try{
-    const result=await callGAS('updateMemberProfile',mypageCurrentUser.fullname,nickname,area,sport,gender);
-    if(result==='duplicate')return alert('そのニックネームは既に使われています。別のニックネームを入力してください。');
-    mypageCurrentUser.nickname=nickname;mypageCurrentUser.memberSport=sport||mypageCurrentUser.memberSport;
-    saveCurrentUser();
-    document.getElementById('mypage-logged-name').textContent=nickname+' さん';
-    alert('プロフィールを更新しました');
-  }catch(e){alert('エラー：'+gasErrorText(e));}
 }
 let _settingsUpgradePlan='';
 let _familyMembers=[];
