@@ -574,7 +574,7 @@ function renderHome(d) {
       ? `<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">🏟 予約者：${e.reserverName}</div>`
       : '';
     const practiceBadge = e.isPracticeDay ? `<span style="background:linear-gradient(135deg,#f5a623,#e8871e);color:#fff;font-size:11px;font-weight:800;padding:3px 9px;border-radius:8px;margin-left:6px;vertical-align:middle">⛹️‍♀️練習日 ¥${e.fee||300}</span>` : '';
-    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">${_evIdx ? "同日開催" : "次回開催"}</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}${practiceBadge}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date} ${e.time} / ${e.place}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}${reserverLine}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
+    html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:8px">${_evIdx ? "同日開催" : "次回開催"}</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:32px">${SPORT_ICON[e.sport]||'🏟'}</div><div style="flex:1"><div style="font-size:16px;font-weight:700">${e.sport}${practiceBadge}</div><div style="font-size:13px;color:#aaa;margin-top:2px">${e.date||''} ${e.time||''} / ${e.place||''}</div>${e.court?`<div style="font-size:13px;color:#9fd3ff;margin-top:2px;font-weight:700">📍 ${courtLabel(e.court)}</div>`:''}${reserverLine}</div><div style="background:${e.diff===0?'#fff':'#2c2c2c'};border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:${e.diff===0?'16px':'22px'};font-weight:700;color:${e.diff===0?'#121212':'#fff'}">${e.diff===0?'本日':e.diff}</div><div style="font-size:11px;color:${e.diff===0?'#333':'#aaa'}">${e.diff===0?'開催！':'日後'}</div></div></div>${e.court?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid #333;display:flex;justify-content:center">${courtDiagramHTML(e.court,100)}</div>`:''}</div>`;
   });
   html += `<div class="card"><div style="font-size:11px;color:#aaa;margin-bottom:10px">今月の参加</div><div class="stat-grid"><div class="stat"><div class="stat-label">参加人数</div><div class="stat-val">${d.monthCount}<span style="font-size:14px;color:#aaa">人</span></div></div><div class="stat"><div class="stat-label">開催回数</div><div class="stat-val">${d.sessionCount}<span style="font-size:14px;color:#aaa">回</span></div></div></div></div>`;
   if (d.ranking && d.ranking.length) {
@@ -582,7 +582,7 @@ function renderHome(d) {
     // 同じ回数の人は同じ順位にまとめて表示する（1位 A、B、C 5回）
     let groups = [];
     d.ranking.filter(r => !EXCLUDE.includes(r.type)).forEach(r => {
-      const names = r.names || [r.name];
+      const names = (r.names || [r.name || r.nickname || r.displayName || r.fullname]).filter(Boolean);
       const last = groups[groups.length - 1];
       if (last && last.count === r.count) last.names.push(...names); else groups.push({ count: r.count, names: [...names] });
     });
@@ -660,6 +660,40 @@ function buildPayOptions(type, isBad, usageMode, ticketRemain, isMemberTrial, is
 }
 
 // プルダウンHTML＋「その他」選択時に出す金額入力欄＋理由選択欄をまとめて生成
+// 行のID：名前を16進に変換して必ず一意にする（日本語の名前でも他の人と重ならない）
+function rowKey(blockId, fullname){
+  return blockId + '_' + Array.from(String(fullname || '')).map(c => c.codePointAt(0).toString(16)).join('-');
+}
+
+// 受付でスタッフが「現金モード／回数券モード」を切り替える（その人の設定として保存され、会員アプリにも反映される）
+async function toggleUsageModeRow(safeId){
+  const ctx = (window._rowCtx || {})[safeId];
+  if (!ctx) return;
+  const next = ctx.usageMode === '回数券' ? 'スポログ' : '回数券';
+  const chip = document.getElementById('mode-chip-' + safeId);
+  if (chip) chip.style.opacity = '0.5';
+  try {
+    await callGAS('updateUsageMode', ctx.fullname, next);
+  } catch(e) {
+    if (chip) chip.style.opacity = '1';
+    return alert('モードを切り替えられませんでした：' + ((e && e.message) || e));
+  }
+  ctx.usageMode = next;
+  const options = buildPayOptions(ctx.type, ctx.isBad, next, ctx.remain, ctx.isMemberTrial, ctx.isPracticeDay, ctx.hasFreeTicket, ctx.hasHalfTicket);
+  const row = document.getElementById('daily-item-' + safeId);
+  const cb = row ? row.querySelector('.daily-checkin-box') : null;
+  if (cb) cb.dataset.opts = JSON.stringify(options);
+  const sel = document.getElementById('pay-sel-' + safeId);
+  if (sel) { sel.innerHTML = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join(''); sel.value = '0'; onPaySelChange(safeId); }
+  if (chip) {
+    chip.style.opacity = '1';
+    chip.textContent = next === '回数券' ? '🎫回数券モード' : '現金モード';
+    chip.style.borderColor = next === '回数券' ? '#f6ad55' : '#555';
+    chip.style.color = next === '回数券' ? '#f6ad55' : '#888';
+  }
+  showToast((next === '回数券' ? '回数券モード' : '現金モード') + 'に切り替えました');
+}
+
 function buildPaySelectHtml(safeId, options){
   const optHtml = options.map((o, i) => `<option value="${i}">${o.label}</option>`).join('');
   return `<select id="pay-sel-${safeId}" onchange="onPaySelChange('${safeId}')" style="padding:6px;font-size:12px;width:90px;background:#2c2c2c;color:#e0e0e0;border:1px solid #444;border-radius:6px">${optHtml}</select>
@@ -875,14 +909,19 @@ function renderCheckinBlock(blockId, d) {
     const hasHalfTicket = !!halfTicketMap[item.fullname];
     const options = buildPayOptions(type, isBad, item.usageMode, remain, item.isMemberTrial, isPracticeDay, hasFreeTicket, hasHalfTicket);
     const optData = JSON.stringify(options);
-    const safeId = blockId + '_' + item.fullname.replace(/[^a-zA-Z0-9]/g, '');
+    const safeId = rowKey(blockId, item.fullname);
     const isVisitorOnPractice = isPracticeDay && type === 'ビジター会員';
+    window._rowCtx = window._rowCtx || {};
+    window._rowCtx[safeId] = { fullname: item.fullname, type, isBad, remain, hasFreeTicket, hasHalfTicket, isMemberTrial: item.isMemberTrial, isPracticeDay, usageMode: item.usageMode || 'スポログ' };
+    const canToggleMode = !item.isNew && !item.isMemberTrial && !['体験','運営','代表','部長','本部','特別会員','応援団','応援団会員'].includes(type);
+    const modeChip = canToggleMode ? `<span id="mode-chip-${safeId}" onclick="toggleUsageModeRow('${safeId}')" style="display:inline-block;margin-top:3px;font-size:10px;padding:2px 7px;border-radius:10px;cursor:pointer;border:1px solid ${item.usageMode === '回数券' ? '#f6ad55' : '#555'};color:${item.usageMode === '回数券' ? '#f6ad55' : '#888'}">${item.usageMode === '回数券' ? '🎫回数券モード' : '現金モード'}</span>` : '';
     if (isChecked) return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a;opacity:0.4"><div style="flex:1;font-size:14px;color:#aaa">${item.nickname}</div><div style="font-size:11px;color:#666">済</div></div>`;
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a2a2a" id="daily-item-${safeId}">
       <input type="checkbox" class="daily-checkin-box" data-fullname="${item.fullname}" data-nickname="${item.nickname}" data-type="${type}" data-opts='${optData}' style="width:20px;height:20px;flex-shrink:0;accent-color:#48bb78">
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:600;color:#fff">${item.isNew ? '<span style="font-size:10px;color:#68d391;border:1px solid #68d391;border-radius:4px;padding:1px 4px;margin-right:4px">NEW</span>' : ''}${isVisitorOnPractice ? '<span style="font-size:10px;color:#f56565;border:1px solid #f56565;border-radius:4px;padding:1px 4px;margin-right:4px">⚠️練習日対象外</span>' : ''}${item.nickname}</div>
         <div style="font-size:11px;color:#aaa">${type}</div>
+        ${modeChip}
         ${item.referrer ? `<div style="font-size:11px;color:#f6ad55;margin-top:2px">📣 ${item.referrer}</div>` : ''}
       </div>
       ${buildPaySelectHtml(safeId, options)}
@@ -905,7 +944,7 @@ async function saveDailyCheckins(blockId) {
   for (const cb of checked) {
     const fullname = cb.dataset.fullname, nickname = cb.dataset.nickname, type = cb.dataset.type;
     const options = JSON.parse(cb.dataset.opts);
-    const safeId = blockId + '_' + fullname.replace(/[^a-zA-Z0-9]/g, '');
+    const safeId = rowKey(blockId, fullname);
     const sel = document.getElementById('pay-sel-' + safeId);
     const selected = options[parseInt(sel ? sel.value : 0)];
     let amount = selected ? selected.value : 0;
@@ -965,7 +1004,7 @@ async function addExistingDailyMember(fullname, nickname, type, usageMode) {
   const blockId = _addMemberTarget;
   const block = _dailyBlocks[blockId];
   if (!block) { showToast('対象の日程が読み込まれていません'); return; }
-  const safeId = blockId + '_' + fullname.replace(/[^a-zA-Z0-9]/g, '');
+  const safeId = rowKey(blockId, fullname);
   if (document.getElementById('daily-item-' + safeId)) { showToast('すでにリストにいます'); return; }
   let remain = (window._ticketMap || {})[fullname];
   if (usageMode === '回数券' && remain === undefined) {

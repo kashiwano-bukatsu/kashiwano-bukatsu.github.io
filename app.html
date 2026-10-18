@@ -377,6 +377,11 @@ body.sporolog-page .wrapper{padding-top:0}
           <div style="font-size:22px;font-weight:800" id="mypage-ticketbook-remain">0枚</div>
           <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px">購入 <span id="mypage-ticketbook-total">0</span>枚／チェックインごとに1枚消費されます</div>
         </div>
+        <div id="mypage-ticketbook-mode" style="display:none;font-size:10px;font-weight:800;color:#3a1400;background:linear-gradient(135deg,#FFC988,#E0651F);border-radius:10px;padding:3px 8px;white-space:nowrap">回数券モード</div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="height:10px;background:rgba(255,255,255,0.15);border-radius:6px;overflow:hidden"><div id="mypage-ticketbook-bar" style="height:100%;width:0%;border-radius:6px;background:linear-gradient(90deg,#68d391,#48bb78);transition:width .6s ease"></div></div>
+        <div id="mypage-ticketbook-note" style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:6px"></div>
       </div>
     </div>
 
@@ -1619,6 +1624,19 @@ async function loadMypageData(checkNotice,updateRankCache){
       if(tbTotal>0){
         document.getElementById('mypage-ticketbook-remain').textContent=(d.ticketBookRemain||0)+'枚';
         document.getElementById('mypage-ticketbook-total').textContent=tbTotal;
+        // 残り枚数バー：11枚セットを1本分として、残りが多いときは11の倍数に切り上げた長さで割合を出す
+        const tbRemain=d.ticketBookRemain||0;
+        const tbMax=Math.max(11,Math.ceil(tbRemain/11)*11);
+        const tbPct=Math.max(0,Math.min(100,Math.round(tbRemain/tbMax*100)));
+        const bar=document.getElementById('mypage-ticketbook-bar');
+        if(bar){
+          bar.style.width=tbPct+'%';
+          bar.style.background=tbRemain<=2?'linear-gradient(90deg,#fc8181,#e53e3e)':(tbRemain<=4?'linear-gradient(90deg,#f6ad55,#ed8936)':'linear-gradient(90deg,#68d391,#48bb78)');
+        }
+        const note=document.getElementById('mypage-ticketbook-note');
+        if(note)note.textContent=tbRemain<=0?'使い切りました。次回の購入は受付でもお申し込みできます':(tbRemain<=2?'残りわずかです':'あと'+tbRemain+'回参加できます');
+        const modeEl=document.getElementById('mypage-ticketbook-mode');
+        if(modeEl)modeEl.style.display=(d.usageMode==='回数券')?'block':'none';
         tbCard.style.display='block';
       } else {
         tbCard.style.display='none';
