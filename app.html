@@ -767,7 +767,7 @@ body.sporolog-page .wrapper{padding-top:0}
         <div id="kashiwa-consent-area" style="display:none">
           <div class="consent-box">
             <div style="font-weight:700;font-size:13px;color:#222;margin-bottom:8px">カシワのBUKATSU会員 規約</div>
-            入会金：スタートアップキャンペーン期間中（7月末まで）1,650円。通常3,300円。<br>
+            入会金：3,300円。<br>
             入会金は当日現金にてお支払いください。<br>
             回数券：4,000円（11枚）。有効期限なし。<br>
             退会時の返金はできません。<br><br>
@@ -2719,7 +2719,7 @@ async function submitTicketPurchase(){
 // ===== アップグレード =====
 function openUpgradeModal(){
   const ov=document.createElement('div');ov.className='ticket-overlay';ov.id='upgrade-modal-overlay';
-  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">プランアップグレード</div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"><div onclick="selectUpgradePlan(\'カシワ会員\')" id="up-kashiwa" style="border:2px solid #e0e8f0;border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">カシワのBUKATSU会員</div><div style="font-size:12px;color:#888;line-height:1.8">入会金 1,650円（7月末まで）<br>当日現金にてお支払いください</div></div><div onclick="selectUpgradePlan(\'応援団\')" id="up-ouendan" style="border:2px solid #e0e8f0;border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">応援団会員</div><div style="font-size:12px;color:#888;line-height:1.8">月額 2,200円 / 初回 +3,300円<br>参加費定額・何回でも参加し放題</div></div></div><button id="up-submit-btn" onclick="submitUpgradeRequest()" style="display:none;width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">申請する</button><button onclick="document.getElementById(\'upgrade-modal-overlay\').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;">キャンセル</button></div>';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">プランアップグレード</div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"><div onclick="selectUpgradePlan(\'カシワ会員\')" id="up-kashiwa" style="border:2px solid #e0e8f0;border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">カシワのBUKATSU会員</div><div style="font-size:12px;color:#888;line-height:1.8">入会金 3,300円<br>当日現金にてお支払いください</div></div><div onclick="selectUpgradePlan(\'応援団\')" id="up-ouendan" style="border:2px solid #e0e8f0;border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:4px">応援団会員</div><div style="font-size:12px;color:#888;line-height:1.8">月額 2,200円 / 初回 +3,300円<br>参加費定額・何回でも参加し放題</div></div></div><button id="up-submit-btn" onclick="submitUpgradeRequest()" style="display:none;width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">申請する</button><button onclick="document.getElementById(\'upgrade-modal-overlay\').remove()" style="width:100%;padding:14px;background:#f0f4f8;color:#555;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;">キャンセル</button></div>';
   document.body.appendChild(ov);
 }
 let _sup='';
@@ -2826,7 +2826,7 @@ async function renderRegFamilyFee(){
 
 function openKashiwaInfo(){
   const ov=document.createElement('div');ov.className='ticket-overlay';
-  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">カシワのBUKATSU会員とは？</div><div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px"><div style="background:#f0f9ff;border-radius:12px;padding:14px"><div style="font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:6px">ビジター会員との違い</div><div style="font-size:13px;color:#444;line-height:2">・回数券が割引（4,000円/11枚）<br>・他種目の体験参加が無料<br>・優先予約あり<br>・活動記録動画が閲覧可能</div></div><div style="background:#fffde7;border:1.5px solid #f5d060;border-radius:12px;padding:14px"><div style="font-size:13px;font-weight:700;color:#b8860b;margin-bottom:6px">スタートアップキャンペーン</div><div style="font-size:13px;color:#444;line-height:2">入会金 通常3,300円 → 1,650円<br>7月末まで限定！</div></div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
+  ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">カシワのBUKATSU会員とは？</div><div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px"><div style="background:#f0f9ff;border-radius:12px;padding:14px"><div style="font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:6px">ビジター会員との違い</div><div style="font-size:13px;color:#444;line-height:2">・回数券が割引（4,000円/11枚）<br>・他種目の体験参加が無料<br>・優先予約あり<br>・活動記録動画が閲覧可能</div></div><div style="background:#f7f8fa;border-radius:12px;padding:14px"><div style="font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:6px">入会金</div><div style="font-size:13px;color:#444;line-height:2">3,300円</div></div></div><button onclick="this.closest(\'.ticket-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;">閉じる</button></div>';
   document.body.appendChild(ov);
 }
 
@@ -2922,7 +2922,7 @@ async function registerAttendee(){
     closeRegisterModal();resetRegFlow();
 
     let successMsg='ようこそカシワのBUKATSUへ！';
-    if(selectedPlan==='kashiwa')successMsg='入会金 1,650円を当日スタッフにお支払いください。';
+    if(selectedPlan==='kashiwa')successMsg='入会金 3,300円を当日スタッフにお支払いください。';
 
     const ov=document.createElement('div');ov.className='ticket-overlay';
     ov.innerHTML='<div class="ticket-blur-bg"></div><div class="ticket-modal" style="text-align:center"><div style="font-size:56px;margin-bottom:8px">🎉</div><div style="font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:6px">登録完了！</div><div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:4px">'+nickname+' さん</div><div style="font-size:13px;color:#888;margin-bottom:16px">'+successMsg+'</div><div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:20px"><div style="font-size:11px;color:#aaa;margin-bottom:4px">会員番号</div><div style="font-size:24px;font-weight:800;color:#1a1a2e;letter-spacing:2px">'+memberNumber+'</div></div><button onclick="this.closest(\'.ticket-overlay\').remove();showMypageMain();" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer">マイページへ</button></div>';
@@ -2959,7 +2959,7 @@ function initReferralTab(){
 
 function showVisitorReferralWarning(){
   const ov=document.createElement('div');ov.className='ticket-overlay';ov.id='visitor-warning-overlay';
-  ov.innerHTML='<div class="ticket-blur-bg"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">ちょっと待って！</div><div style="font-size:15px;color:#444;line-height:1.8;margin-bottom:20px;text-align:center">ビジター会員のままでは<br>紹介チケットがもらえません。</div><div style="display:flex;flex-direction:column;gap:10px"><button onclick="document.getElementById(\'visitor-warning-overlay\').remove();document.getElementById(\'referral-authed-area\').style.display=\'block\';loadReferralSchedules();" style="width:100%;padding:16px;background:#f0f4f8;color:#555;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;">このまま紹介する<div style="font-size:12px;margin-top:4px;opacity:0.7">チケットなし</div></button><button onclick="document.getElementById(\'visitor-warning-overlay\').remove();openUpgradeModal();" style="width:100%;padding:16px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">カシワ会員にアップグレードして<br>無料チケットをもらう<div style="font-size:12px;margin-top:4px;font-weight:600">1,650円　7月末キャンペーン中</div></button></div></div>';
+  ov.innerHTML='<div class="ticket-blur-bg"></div><div class="ticket-modal" style="text-align:left;"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;text-align:center">ちょっと待って！</div><div style="font-size:15px;color:#444;line-height:1.8;margin-bottom:20px;text-align:center">ビジター会員のままでは<br>紹介チケットがもらえません。</div><div style="display:flex;flex-direction:column;gap:10px"><button onclick="document.getElementById(\'visitor-warning-overlay\').remove();document.getElementById(\'referral-authed-area\').style.display=\'block\';loadReferralSchedules();" style="width:100%;padding:16px;background:#f0f4f8;color:#555;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;">このまま紹介する<div style="font-size:12px;margin-top:4px;opacity:0.7">チケットなし</div></button><button onclick="document.getElementById(\'visitor-warning-overlay\').remove();openUpgradeModal();" style="width:100%;padding:16px;background:linear-gradient(135deg,#f5d060,#c8a415);color:#1a1a2e;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">カシワ会員にアップグレードして<br>無料チケットをもらう<div style="font-size:12px;margin-top:4px;font-weight:600">入会金 '+((typeof findPrice==='function'&&findPrice(_priceMasterCache,'入会金','カシワのBUKATSU会員','共通'))||3300).toLocaleString()+'円</div></button></div></div>';
   document.body.appendChild(ov);
 }
 
@@ -3328,7 +3328,7 @@ function openPlanDetailSettings(plan){
     },
     kashiwa:{
       title:'カシワのBUKATSU会員',
-      body:'入会金：1,650円（7月末キャンペーン中）\n　　　　通常 3,300円\n参加費：バスケ・バレー 500円／バドミントン 700円\n回数券：4,000円（11枚）\n他種目の体験参加無料\n活動記録動画の閲覧可能'
+      body:'入会金：3,300円\n参加費：バスケ・バレー 500円／バドミントン 700円\n回数券：4,000円（11枚）\n他種目の体験参加無料\n活動記録動画の閲覧可能'
     },
     family:{
       title:'ファミリー会員',
@@ -3556,15 +3556,15 @@ async function openPlanDetailPopup(plan){
   const visitorBad=fp('参加費','ビジター会員','バドミントン',700);
   const ticketVisitor=fp('回数券','ビジター会員','11枚セット',5000);
 
-  const kashiwaFee=fp('入会金','カシワのBUKATSU会員','共通',1650);
+  const kashiwaFee=fp('入会金','カシワのBUKATSU会員','共通',3300);
   const kashiwaNormal=normalOf('入会金','カシワのBUKATSU会員',3300);
-  const kashiwaCampaign=isCampaignOf('入会金','カシワのBUKATSU会員');
+  const kashiwaCampaign=false; // キャンペーン表記は使わない
   const ticketKashiwa=fp('回数券','カシワのBUKATSU会員','11枚セット',4000);
 
   const fam1=fp('入会金','ファミリー会員','1人目',3300);
   const fam2=fp('入会金','ファミリー会員','2人目',880);
   const fam3=fp('入会金','ファミリー会員','3人目以降',440);
-  const famCampaign=isCampaignOf('入会金','ファミリー会員');
+  const famCampaign=false; // キャンペーン表記は使わない
   // ファミリーは項目(1人目/2人目/3人目以降)ごとに行が分かれているため、各々の通常価格を個別取得
   const fam1NormalRow=(list.find(p=>p.category==='入会金'&&p.type==='ファミリー会員'&&p.item==='1人目')||{}).normalPrice??3300;
   const fam2NormalRow=(list.find(p=>p.category==='入会金'&&p.type==='ファミリー会員'&&p.item==='2人目')||{}).normalPrice??1650;
@@ -3780,8 +3780,8 @@ registerAttendee = async function(){
   const _priceList = await getPrices();
   let feeHtml = '';
   if(selectedPlan === 'kashiwa'){
-    const kashiwaFee = findPrice(_priceList,'入会金','カシワのBUKATSU会員','共通') ?? 1650;
-    feeHtml = '<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">入会金：<strong>'+kashiwaFee.toLocaleString()+'円</strong>（キャンペーン中）<br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>';
+    const kashiwaFee = findPrice(_priceList,'入会金','カシワのBUKATSU会員','共通') ?? 3300;
+    feeHtml = '<div style="background:#fff8e1;border-radius:10px;padding:12px;border:1px solid #f5d060;margin-top:8px;font-size:13px;color:#444;line-height:2">入会金：<strong>'+kashiwaFee.toLocaleString()+'円</strong><br><span style="font-size:11px;color:#888">当日現金でお支払いください</span></div>';
   } else if(selectedPlan === 'family'){
     const fee1 = findPrice(_priceList,'入会金','ファミリー会員','1人目') ?? 3300;
     let total = fee1;
@@ -3870,9 +3870,9 @@ async function _execRegister(){
     const _welcomePriceList = await getPrices();
     let welcomeMsg = `ご登録ありがとうございます！\n一緒にスポーツを楽しみましょう！\n\n会員番号：${memberNumber}`;
     if(selectedPlan === 'kashiwa'){
-      const kashiwaFee = findPrice(_welcomePriceList,'入会金','カシワのBUKATSU会員','共通') ?? 1650;
+      const kashiwaFee = findPrice(_welcomePriceList,'入会金','カシワのBUKATSU会員','共通') ?? 3300;
       const kashiwaNormal = (_welcomePriceList.find(p=>p.category==='入会金'&&p.type==='カシワのBUKATSU会員')||{}).normalPrice ?? 3300;
-      welcomeMsg += `\n\n入会金 ${kashiwaFee.toLocaleString()}円を次回ご参加時にスタッフへお支払いください。\n（キャンペーン価格：通常${kashiwaNormal.toLocaleString()}円）`;
+      welcomeMsg += `\n\n入会金 ${kashiwaFee.toLocaleString()}円を次回ご参加時にスタッフへお支払いください。`;
     } else if(selectedPlan === 'family'){
       const fee1 = findPrice(_welcomePriceList,'入会金','ファミリー会員','1人目') ?? 3300;
       let total = fee1;
@@ -3890,7 +3890,7 @@ async function _execRegister(){
     familyMembers = [];
 
     // 完了画面
-    const _kashiwaFeeForComplete = findPrice(_welcomePriceList,'入会金','カシワのBUKATSU会員','共通') ?? 1650;
+    const _kashiwaFeeForComplete = findPrice(_welcomePriceList,'入会金','カシワのBUKATSU会員','共通') ?? 3300;
     const ov = document.createElement('div');
     ov.className = 'ticket-overlay';
     ov.innerHTML = `
