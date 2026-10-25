@@ -286,7 +286,7 @@ body.sporolog-page .wrapper{padding-top:0}
     <div id="home-countdown-content" onclick="toggleCountdownDetail()" style="cursor:pointer;text-align:center;padding:8px 0"></div>
     <div id="home-countdown-detail" style="display:none;margin-top:16px;border-top:1px solid #f0f4f8;padding-top:16px"></div>
   </div>
-  <div class="card">
+  <div class="card" id="home-calendar-card">
     <div class="card-title"><div class="card-title-dot"></div>📅 開催カレンダー</div>
     <div id="home-month-calendar"><div class="empty">読み込み中...</div></div>
     <div style="border-top:1px solid #f0f4f8;margin-top:16px;padding-top:14px">
@@ -1326,7 +1326,7 @@ window.addEventListener('load',()=>{
   const skipSplash=sessionStorage.getItem('bukatsu_skip_splash')==='true';
   sessionStorage.removeItem('bukatsu_skip_splash');
   // ★第3段：起動画面を出している間に、裏でデータの読み込みを始めておく
-  callGAS('getReceptionHomeData').catch(()=>{});
+  try{if(localStorage.getItem('bukatsu_user'))callGAS('getReceptionHomeData').catch(()=>{});}catch(e){}
   try{
     if(!MAINTENANCE_MODE&&(localStorage.getItem('bukatsu_auto_login')==='true'||skipSplash)){
       const _saved=localStorage.getItem('bukatsu_user');
@@ -1390,6 +1390,7 @@ function updateTabVisibility(){
 
 // ===== HOME =====
 async function loadHomeData(){
+  if(!mypageCurrentUser){applyHomePrivacy();return;}   // ログイン前は開催予定を表示しない（取得もしない）
   try{
     const d=await callGAS('getReceptionHomeData');
     const today=formatDate(new Date());
@@ -3294,6 +3295,7 @@ let calendarCurrentMonth=new Date();
 async function loadMonthCalendar(){
   const el=document.getElementById('home-month-calendar');
   if(!el)return;
+  if(!mypageCurrentUser){applyHomePrivacy();return;}   // ログイン前は取得しない
   try{
     calendarSchedules=await callGAS('getUpcomingSchedules','全て',true)||[];
     renderMonthCalendar(calendarCurrentMonth);
@@ -4364,6 +4366,37 @@ function closeTerms(){
   if(el)el.style.display='none';
   document.body.style.overflow='';
 }
+
+// ===== ログイン前は、開催予定（本日の開催・カウントダウン・カレンダー・次回開催）を見せない =====
+function applyHomePrivacy(){
+  const li=!!mypageCurrentUser;
+  const cal=document.getElementById('home-calendar-card');
+  if(cal)cal.style.display=li?'':'none';
+  if(!li){
+    ['home-today-card','home-countdown-card'].forEach(function(id){const e=document.getElementById(id);if(e)e.style.display='none';});
+    const d=document.getElementById('home-countdown-detail');if(d){d.innerHTML='';d.style.display='none';}
+    const t=document.getElementById('home-today-info');if(t)t.innerHTML='';
+    const n=document.getElementById('home-next-events');if(n)n.innerHTML='';
+    const m=document.getElementById('home-month-calendar');if(m)m.innerHTML='';
+    window._countdownEvent=null;
+  }
+}
+(function(){
+  const _prev2=updateTabVisibility;
+  updateTabVisibility=function(){
+    _prev2();
+    applyHomePrivacy();
+    if(mypageCurrentUser){
+      if(window._homeLoadedFor!==mypageCurrentUser.fullname){
+        window._homeLoadedFor=mypageCurrentUser.fullname;
+        loadHomeData();loadMonthCalendar();
+      }
+    }else{
+      window._homeLoadedFor=null;
+    }
+  };
+})();
+document.addEventListener('DOMContentLoaded',function(){applyHomePrivacy();});
 </script>
 
 </body>
