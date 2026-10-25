@@ -225,7 +225,16 @@ body.sporolog-page .wrapper{padding-top:0}
 
 /* ===== ヘッダーのベル（運営からの通知）＆利用規約 ===== */
 .header-bell{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top,0px));width:42px;height:42px;border:none;border-radius:50%;background:#f0f4f8;display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 1px 4px rgba(26,58,92,0.12)}
-.header-bell.show{display:flex}
+.header-bell.show{display:none}
+.header-menu{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top,0px));width:42px;height:42px;border:none;border-radius:50%;background:#f0f4f8;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 1px 4px rgba(26,58,92,0.12)}
+.header-menu svg{width:22px;height:22px}
+.header-menu-badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e53935;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;border:2px solid #fff;box-sizing:content-box;display:none}
+.drawer-ov{position:fixed;inset:0;z-index:6000;background:rgba(15,25,40,.45);opacity:0;pointer-events:none;transition:opacity .25s}
+.drawer-ov.open{opacity:1;pointer-events:auto}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:82%;max-width:320px;background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.drawer-ov.open .drawer{transform:none}
+.drawer-item{display:flex;align-items:center;gap:12px;padding:16px 20px;border:none;border-bottom:1px solid #f0f4f8;background:#fff;width:100%;text-align:left;font-size:15px;font-weight:700;color:#1a1a2e;cursor:pointer;font-family:inherit}
+.drawer-item .dbadge{margin-left:auto;background:#e53935;color:#fff;border-radius:10px;font-size:11px;font-weight:800;padding:1px 8px}
 .header-bell svg{width:22px;height:22px}
 .header-bell-badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e53935;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;border:2px solid #fff;box-sizing:content-box;display:none}
 .guide-row{display:flex;align-items:center;gap:10px;background:#f0f4f8;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;font-family:inherit}
@@ -252,6 +261,10 @@ body.sporolog-page .wrapper{padding-top:0}
   <button class="header-bell" id="header-bell" onclick="openMessageList()" aria-label="運営からの通知" data-no-lock>
     <svg viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
     <span class="header-bell-badge" id="header-bell-badge"></span>
+  </button>
+  <button class="header-menu" id="header-menu" onclick="openDrawer()" aria-label="メニュー" data-no-lock>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    <span class="header-menu-badge" id="header-menu-badge"></span>
   </button>
 </div>
 
@@ -325,8 +338,6 @@ body.sporolog-page .wrapper{padding-top:0}
   <div class="card" style="text-align:center">
     <a href="https://kashiwano-bukatsu.github.io/" target="_blank" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none">公式サイトを見る</a>
   </div>
-  <button class="terms-link" onclick="openTerms()" data-no-lock style="margin-top:4px">利用規約</button>
-  <button class="terms-link" onclick="openInfoPage('company')" data-no-lock style="margin-top:2px">運営者情報・プライバシーポリシー</button>
   <div style="text-align:center;padding:8px 0 16px;color:#bbb;font-size:11px">一般社団法人みんなのBUKATSU</div>
 </div>
 
@@ -348,8 +359,6 @@ body.sporolog-page .wrapper{padding-top:0}
         <div style="font-size:12px;font-weight:400;color:#888;margin-top:4px">はじめての方</div>
       </button>
     </div>
-    <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約</button>
-    <button class="terms-link" onclick="openInfoPage('company')" data-no-lock>運営者情報・プライバシーポリシー</button>
   </div>
 
   <!-- ログイン済み -->
@@ -427,12 +436,7 @@ body.sporolog-page .wrapper{padding-top:0}
     </div>
 
     <div class="card">
-      <div class="card-title"><div class="card-title-dot"></div>つながる・問い合わせ</div>
-      <a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn">
-        <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.2 1.1 1 .6s6.3-3.7 8.6-6.3c1.6-1.7 2.4-3.5 2.4-5.5 0-5.5-5.6-9.3-12.5-9.3z"/><text x="20" y="22" font-size="7.5" font-weight="900" font-family="Arial,sans-serif" fill="#fff" text-anchor="middle">LINE</text></svg>
-        <div style="flex:1"><div style="font-size:15px;font-weight:800">代表にLINEで連絡する</div><div style="font-size:11.5px;opacity:0.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div>
-        <div style="font-size:20px">›</div>
-      </a>
+      <div class="card-title"><div class="card-title-dot"></div>オープンチャット</div>
       <div id="openchat-list">
         <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></div><div style="font-size:18px;color:#aaa">›</div></a>
       </div>
@@ -444,8 +448,6 @@ body.sporolog-page .wrapper{padding-top:0}
         <button onclick="openInfoPage('access')" data-no-lock class="guide-row"><span style="font-size:22px">📍</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">体育館へのアクセス・当日の流れ</span><span style="color:#aaa">›</span></button>
         <button onclick="openInfoPage('pricing')" data-no-lock class="guide-row"><span style="font-size:22px">💴</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">料金プラン・おトク比較・お見積もり</span><span style="color:#aaa">›</span></button>
       </div>
-      <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約を見る</button>
-      <button class="terms-link" onclick="openInfoPage('company')" data-no-lock style="margin-top:4px">運営者情報・プライバシーポリシー</button>
 </div>
     </div>
   </div>
@@ -787,11 +789,6 @@ body.sporolog-page .wrapper{padding-top:0}
 
       <div style="margin-top:24px;padding-top:14px;border-top:1px solid #f0f4f8;font-size:12px;color:#aaa;text-align:center;line-height:1.8">カシワのBUKATSU 運営事務局<br>一般社団法人みんなのBUKATSU</div>
     </div>
-    <a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn" style="margin-top:4px">
-      <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.2 1.1 1 .6s6.3-3.7 8.6-6.3c1.6-1.7 2.4-3.5 2.4-5.5 0-5.5-5.6-9.3-12.5-9.3z"/><text x="20" y="22" font-size="7.5" font-weight="900" font-family="Arial,sans-serif" fill="#fff" text-anchor="middle">LINE</text></svg>
-      <div style="flex:1"><div style="font-size:14px;font-weight:800">規約について代表に連絡する</div><div style="font-size:11px;opacity:0.9;margin-top:2px">公式LINE</div></div>
-      <div style="font-size:20px">›</div>
-    </a>
   </div>
 </div>
 
@@ -4590,8 +4587,7 @@ function openInfoPage(key){
   const body=_$('info-body');
   body.innerHTML='<div class="card" style="text-align:center;color:#aaa;padding:30px 0">読み込み中…</div>';
   el.style.display='block';el.scrollTop=0;document.body.style.overflow='hidden';
-  if(key==='company')body.innerHTML=_infoCompanyHTML();
-  else if(key==='access')_infoAccess(body);
+  if(key==='access')_infoAccess(body);
   else if(key==='pricing')_infoPricing(body);
 }
 function closeInfoPage(){
@@ -4603,14 +4599,15 @@ function _lineBtn(label){
   return '<a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn" style="margin-top:12px"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.3 1.2 1 .7s7-4.1 9.5-7c1.8-1.9 2.6-3.8 2.6-5.8 0-5.5-5.6-9.9-12.4-9.9z"/></svg><div style="flex:1"><div style="font-size:14px;font-weight:800">'+label+'</div><div style="font-size:11px;opacity:.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div><div style="font-size:20px">›</div></a>';
 }
 function _infoCompanyHTML(){
-  return '<div class="card" style="padding:22px 20px">'+
-  '<div class="terms-h" style="margin-top:0">運営者情報</div>'+
+  return ''+
   '<table style="width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.8">'+
-  [['名称','カシワのBUKATSU'],['運営','一般社団法人みんなのBUKATSU'],['代表','SHOHEY（理事）'],['活動場所','千葉県柏市（沼南体育館ほか）'],['活動内容','バスケットボール・バレーボール・バドミントンの地域スポーツ活動'],['お問い合わせ','公式LINE（下のボタン）'],['設立','2025年9月']]
+  [['名称','カシワのBUKATSU'],['運営','一般社団法人みんなのBUKATSU'],['代表','SHOHEY（理事）'],['活動場所','千葉県柏市（沼南体育館ほか）'],['活動内容','バスケットボール・バレーボール・バドミントンの地域スポーツ活動'],['お問い合わせ','メニューの「公式LINEで問い合わせ」から'],['設立','2025年9月']]
   .map(function(r){return '<tr><td style="padding:7px 8px 7px 0;color:#888;white-space:nowrap;vertical-align:top;border-bottom:1px solid #f0f4f8">'+r[0]+'</td><td style="padding:7px 0;border-bottom:1px solid #f0f4f8;color:#333">'+r[1]+'</td></tr>';}).join('')+
-  '</table>'+_lineBtn('代表にLINEで連絡する')+
-  '<div class="terms-h">プライバシーポリシー</div>'+
-  '<div class="terms-p">カシワのBUKATSU（以下「当団体」）は、会員の皆さまの個人情報を、次のとおり大切に取り扱います。</div>'+
+  '</table>';
+}
+function _infoPrivacyHTML(){
+  return ''+
+    '<div class="terms-p">カシワのBUKATSU（以下「当団体」）は、会員の皆さまの個人情報を、次のとおり大切に取り扱います。</div>'+
   '<div class="terms-h" style="font-size:14px">1. 取得する情報</div>'+
   '<div class="terms-p"><ul><li>お名前・ニックネーム・生年月日・性別・お住まいのエリア</li><li>緊急連絡先（続柄・電話番号）</li><li>参加の記録・予約の内容・お支払いの記録</li><li>（未成年の方）保護者の同意の確認</li></ul></div>'+
   '<div class="terms-h" style="font-size:14px">2. 利用目的</div>'+
@@ -4624,12 +4621,23 @@ function _infoCompanyHTML(){
   '<div class="terms-h" style="font-size:14px">6. 写真・動画の撮影</div>'+
   '<div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。</div>'+
   '<div class="terms-h" style="font-size:14px">7. ご本人からの請求</div>'+
-  '<div class="terms-p">ご自身の情報の確認・訂正・削除を希望される場合は、上の公式LINEからご連絡ください。ご本人であることを確認のうえ、対応します。</div>'+
+  '<div class="terms-p">ご自身の情報の確認・訂正・削除を希望される場合は、メニューの「公式LINEで問い合わせ」からご連絡ください。ご本人であることを確認のうえ、対応します。</div>'+
   '<div class="terms-h" style="font-size:14px">8. 改定</div>'+
-  '<div class="terms-p">必要に応じてこの内容を見直します。変更後は、本アプリに掲載した時点から効力を持ちます。</div>'+
-  '<div style="margin-top:18px"><button class="terms-link" onclick="closeInfoPage();openTerms()" data-no-lock>利用規約を見る</button></div>'+
-  '</div>';
+  '<div class="terms-p">必要に応じてこの内容を見直します。変更後は、本アプリに掲載した時点から効力を持ちます。</div>';
 }
+
+// 運営者情報・プライバシーポリシーは、ポップアップで表示
+function openInfoPopup(key){
+  closeDrawer();
+  const old=document.getElementById('info-popup');if(old)old.remove();
+  const ov=document.createElement('div');ov.id='info-popup';
+  ov.style.cssText='position:fixed;inset:0;z-index:7000;background:rgba(15,25,40,.55);display:flex;align-items:center;justify-content:center;padding:18px;';
+  ov.onclick=function(e){if(e.target===ov)closeInfoPopup();};
+  const title=key==='privacy'?'プライバシーポリシー':'運営者情報';
+  ov.innerHTML='<div style="background:#fff;border-radius:20px;width:100%;max-width:440px;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f4f8"><div style="font-size:17px;font-weight:800;color:#1a1a2e">'+title+'</div><button onclick="closeInfoPopup()" data-no-lock style="background:#f0f4f8;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#666;cursor:pointer">×</button></div><div style="overflow-y:auto;padding:4px 20px 22px;-webkit-overflow-scrolling:touch">'+(key==='privacy'?_infoPrivacyHTML():_infoCompanyHTML())+'</div></div>';
+  document.body.appendChild(ov);
+}
+function closeInfoPopup(){const e=document.getElementById('info-popup');if(e)e.remove();}
 function _infoAccessHTML(){ return '<div class="card" id="venue-box" style="padding:20px"><div style="text-align:center;color:#aaa">会場情報を読み込み中…</div></div><div id="access-rest"></div>'; }
 async function _infoAccess(body){
   body.innerHTML=_infoAccessHTML();
@@ -4645,7 +4653,7 @@ async function _infoAccess(body){
     '<div class="terms-p">室内シューズ・動きやすい服装・タオル・飲み物<br><span style="font-size:12.5px;color:#888">※バドミントンはラケットの貸し出しがあります</span></div>'+
     '<div class="terms-h">参加レベル</div><div class="terms-p">初心者・久しぶりの方も大歓迎です。</div>'+
     '<div class="terms-h">お願い</div><div class="terms-p">競技志向でのプレーをご希望の方は、ご遠慮をお願いする場合があります。体育館のルールを守って、気持ちよく使いましょう。</div>'+
-    _lineBtn('わからないことは公式LINEへ')+'</div>';
+    '</div>';
   let venues=[],ups=[];
   try{venues=await callGAS('getVenueInfo');}catch(e){}
   try{ups=window._reserveAllSchedules||await callGAS('getUpcomingSchedules','全て');}catch(e){}
@@ -4781,6 +4789,43 @@ async function loadOpenChats(){
   }catch(e){}
 }
 setTimeout(loadOpenChats,1200);
+
+
+// ---------- 右からのメニュー（三本線）：お知らせ・利用規約・運営者情報・プライバシーポリシー・公式LINE ----------
+function openDrawer(){
+  let ov=document.getElementById('drawer-ov');
+  if(!ov){
+    ov=document.createElement('div');ov.id='drawer-ov';ov.className='drawer-ov';
+    ov.onclick=function(e){if(e.target===ov)closeDrawer();};
+    ov.innerHTML='<div class="drawer"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e8edf3"><div style="font-size:16px;font-weight:800;color:#1a3a5c">メニュー</div><button onclick="closeDrawer()" data-no-lock style="background:#f0f4f8;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#666;cursor:pointer">×</button></div><div id="drawer-body" style="flex:1;overflow-y:auto"></div></div>';
+    document.body.appendChild(ov);
+  }
+  const unread=parseInt((document.getElementById('header-bell-badge')||{}).textContent,10)||0;
+  const item=function(icon,label,fn,extra){return '<button class="drawer-item" onclick="'+fn+'" data-no-lock><span style="font-size:20px;width:26px;text-align:center">'+icon+'</span>'+label+(extra||'')+'</button>';};
+  let h='';
+  if(mypageCurrentUser)h+=item('🔔','お知らせ',"closeDrawer();openMessageList()",unread>0?'<span class="dbadge">'+unread+'</span>':'');
+  h+=item('📄','利用規約',"closeDrawer();openTerms()");
+  h+=item('🏢','運営者情報',"openInfoPopup('company')");
+  h+=item('🔒','プライバシーポリシー',"openInfoPopup('privacy')");
+  h+='<div style="padding:18px 20px"><a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn" onclick="closeDrawer()"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.3 1.2 1 .7s7-4.1 9.5-7c1.8-1.9 2.6-3.8 2.6-5.8 0-5.5-5.6-9.9-12.4-9.9z"/></svg><div style="flex:1"><div style="font-size:14px;font-weight:800">公式LINEで問い合わせ</div><div style="font-size:11px;opacity:.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div><div style="font-size:20px">›</div></a></div>';
+  document.getElementById('drawer-body').innerHTML=h;
+  requestAnimationFrame(function(){ov.classList.add('open');});
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  const ov=document.getElementById('drawer-ov');
+  if(ov)ov.classList.remove('open');
+  if(!document.getElementById('section-terms')||document.getElementById('section-terms').style.display==='none')document.body.style.overflow='';
+}
+(function(){
+  const f=setBellBadge;
+  setBellBadge=function(c){
+    f(c);
+    const b=document.getElementById('header-menu-badge');if(!b)return;
+    c=Number(c)||0;
+    if(c>0){b.textContent=c>99?'99+':String(c);b.style.display='block';}else{b.style.display='none';}
+  };
+})();
 
 </script>
 
