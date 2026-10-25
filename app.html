@@ -690,7 +690,7 @@ body.sporolog-page .wrapper{padding-top:0}
   <div style="padding:16px;max-width:600px;margin:0 auto;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))">
     <div class="card" style="padding:22px 20px">
       <div style="font-size:12px;color:#888;line-height:1.8">カシワのBUKATSU 利用規約<br>制定日：2026年10月22日</div>
-      <div class="terms-p" style="margin-top:10px">この規約は、カシワのBUKATSU（以下「当部活」）の活動への参加、および当部活の会員アプリ（以下「本アプリ」）の利用について定めるものです。参加・利用された方は、この規約に同意したものとみなします。</div>
+      <div class="terms-p" style="margin-top:10px">この規約は、カシワのBUKATSU（以下「当団体」）の活動への参加、および当団体の会員アプリ（以下「本アプリ」）の利用について定めるものです。参加・利用された方は、この規約に同意したものとみなします。</div>
 
       <div class="terms-h">第1条（会員区分）</div>
       <div class="terms-p">会員区分は次のとおりです。料金・特典の詳細は、本アプリ内の各プランの「詳細」をご確認ください。
@@ -717,7 +717,7 @@ body.sporolog-page .wrapper{padding-top:0}
       <div class="terms-p">
         <ul>
           <li>参加は、本アプリでの予約が基本です。参加ステータス（⭕参加／△未定／❌不参加）は、予定が変わったら早めに更新してください。</li>
-          <li>参加できなくなった場合は、本アプリから予約をキャンセルしてください。<span class="terms-tbd">【要確認】キャンセルの期限・無断欠席時の扱い</span></li>
+          <li>参加できなくなった場合は、本アプリから予約をキャンセルしてください。</li>
           <li>定員を超えた場合は、次の優先順位で参加が確定し、同じ順位の中では予約が早い順になります。超えた分はキャンセル待ちとなります。<br>
             ① 運営・代表・部長・本部<br>
             ② カシワのBUKATSU会員・ファミリー会員・応援団<br>
@@ -752,7 +752,7 @@ body.sporolog-page .wrapper{padding-top:0}
           <li>他の参加者や運営スタッフ、体育館の利用者への迷惑行為、誹謗中傷、暴力的な言動</li>
           <li>体育館や施設の利用ルールに反する行為、備品の乱暴な扱い</li>
           <li>本アプリの不正な利用（他人のアカウントの使用、虚偽の登録、記録の改ざんなど）</li>
-          <li>その他、当部活の運営を妨げる行為</li>
+          <li>その他、当団体の運営を妨げる行為</li>
         </ul>
         上記に当たる場合、運営の判断で、参加のお断りまたは退会としていただくことがあります。特に勧誘行為が確認された場合は、即時退会となります。</div>
 
@@ -766,7 +766,7 @@ body.sporolog-page .wrapper{padding-top:0}
       <div class="terms-p">18歳未満の方が登録・参加する場合は、保護者の同意が必要です。登録時に、緊急連絡先と保護者の同意をご確認いただきます。</div>
 
       <div class="terms-h">第11条（写真・動画の撮影）</div>
-      <div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。<span class="terms-tbd">【要確認】撮影・掲載の扱い（NGの方への対応など）</span></div>
+      <div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。</div>
 
       <div class="terms-h">第12条（退会）</div>
       <div class="terms-p">退会を希望される方は、第13条の窓口からご連絡ください。退会後の返金については、第2条のとおりです。</div>
@@ -1164,7 +1164,7 @@ const GAS_READ_FUNCS=new Set([
   'loginAttendee','getMemberDashboard','getReceptionHomeData','getUpcomingSchedules','getReserveTabData',
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
-  'getVideoList','getUrgentNotice','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
+  'getVideoList','getUrgentNotice','getVenueInfo','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
   'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
@@ -4448,7 +4448,7 @@ function renderReserveReminder(data){
   const box=_$('reserve-reminder');if(!box)return;
   box.innerHTML='';box.style.display='none';
   if(!data||!mypageCurrentUser)return;
-  const tK=_tokyoKey(0),tmK=_tokyoKey(1);
+  const tK=_tokyoKey(0);
   const lines=[];
   const timeOf=function(date,sport){
     const s=(data.allSchedules||[]).find(function(x){return dk(x[0])===dk(date)&&x[4]===sport;});
@@ -4457,27 +4457,26 @@ function renderReserveReminder(data){
   const add=function(rows,name,nick,isSelf){
     (rows||[]).forEach(function(r){
       const k=dk(r[1]),st=r[7]||'⭕';
-      if(st==='❌')return;
-      if(k!==tK&&k!==tmK)return;
+      if(st==='❌'||k!==tK)return;
       lines.push({k:k,date:r[1],sport:r[2],place:r[3],st:st,name:name,nick:nick,isSelf:isSelf,time:timeOf(r[1],r[2])});
     });
   };
-  add(data.reservations,mypageCurrentUser.fullname,'あなた',true);
+  add(data.reservations,mypageCurrentUser.fullname,String(mypageCurrentUser.nickname||'あなた').split(/[\s　]/)[0],true);
   (data.family||[]).forEach(function(f){add((data.familyReservations||{})[f.fullname],f.fullname,String(f.nickname||'').split(/[\s　]/)[0],false);});
   if(!lines.length)return;
-  lines.sort(function(a,b){return a.k-b.k||String(a.time).localeCompare(String(b.time));});
-  const groups=[[tK,'本日'],[tmK,'明日']];
+  lines.sort(function(a,b){return String(a.time).localeCompare(String(b.time));});
+  const people=[];
+  lines.forEach(function(l){if(people.indexOf(l.name)<0)people.push(l.name);});
   let h='';
-  groups.forEach(function(g){
-    const ls=lines.filter(function(l){return l.k===g[0];});
-    if(!ls.length)return;
+  people.forEach(function(nm){
+    const ls=lines.filter(function(l){return l.name===nm;});
     h+='<div style="background:linear-gradient(135deg,#fff8ec,#fff2dc);border:1.5px solid #f5c36b;border-radius:16px;padding:14px 16px;margin-bottom:12px">'+
-      '<div style="font-size:13px;font-weight:800;color:#b25f00;margin-bottom:8px">⏰ '+g[1]+'の参加予定（'+_keyToLabel(g[0])+'）</div>'+
+      '<div style="font-size:13px;font-weight:800;color:#b25f00;margin-bottom:8px">⏰ '+_esc(ls[0].nick)+'さんの次回参加予約（本日 '+_keyToLabel(tK)+'）</div>'+
       ls.map(function(l,i){
         const stLabel={'⭕':'参加','△':'未定'}[l.st]||l.st;
         return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(i?'border-top:1px dashed #f0d6a6;':'')+'">'+
           '<div style="font-size:26px">'+(SPORT_ICON[l.sport]||'🏟')+'</div>'+
-          '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+(l.isSelf?'':'<span style="font-size:11px;color:#fff;background:#1a3a5c;border-radius:8px;padding:1px 7px;margin-right:6px">'+_esc(l.nick)+'さん</span>')+_esc(l.sport)+'</div>'+
+          '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+_esc(l.sport)+'</div>'+
           '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+' ／ '+_esc(l.st)+' '+stLabel+'</div></div>'+
           '<button onclick="reminderManage(\''+_esc(l.date)+'\',\''+_esc(l.sport)+'\',\''+_esc(l.name)+'\','+(l.isSelf?'true':'false')+')" style="padding:8px 10px;background:#fff;border:1.5px solid #e0a548;color:#b25f00;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">変更・取消</button></div>';
       }).join('')+
@@ -4577,7 +4576,7 @@ function openInfoPage(key){
   body.innerHTML='<div class="card" style="text-align:center;color:#aaa;padding:30px 0">読み込み中…</div>';
   el.style.display='block';el.scrollTop=0;document.body.style.overflow='hidden';
   if(key==='company')body.innerHTML=_infoCompanyHTML();
-  else if(key==='access')body.innerHTML=_infoAccessHTML();
+  else if(key==='access')_infoAccess(body);
   else if(key==='pricing')_infoPricing(body);
 }
 function closeInfoPage(){
@@ -4592,11 +4591,11 @@ function _infoCompanyHTML(){
   return '<div class="card" style="padding:22px 20px">'+
   '<div class="terms-h" style="margin-top:0">運営者情報</div>'+
   '<table style="width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.8">'+
-  [['名称','カシワのBUKATSU'],['運営','一般社団法人みんなのBUKATSU'],['代表','大谷 悠樹 '+_TBD('代表者名の表記・掲載してよいか')],['活動場所','千葉県柏市（沼南体育館ほか）'],['活動内容','バスケットボール・バレーボール・バドミントンの地域スポーツ活動'],['お問い合わせ','公式LINE（下のボタン）'],['所在地・設立',_TBD('所在地・設立年月')]]
+  [['名称','カシワのBUKATSU'],['運営','一般社団法人みんなのBUKATSU'],['代表','SHOHEY（理事）'],['活動場所','千葉県柏市（沼南体育館ほか）'],['活動内容','バスケットボール・バレーボール・バドミントンの地域スポーツ活動'],['お問い合わせ','公式LINE（下のボタン）'],['設立','2025年9月']]
   .map(function(r){return '<tr><td style="padding:7px 8px 7px 0;color:#888;white-space:nowrap;vertical-align:top;border-bottom:1px solid #f0f4f8">'+r[0]+'</td><td style="padding:7px 0;border-bottom:1px solid #f0f4f8;color:#333">'+r[1]+'</td></tr>';}).join('')+
   '</table>'+_lineBtn('代表にLINEで連絡する')+
   '<div class="terms-h">プライバシーポリシー</div>'+
-  '<div class="terms-p">カシワのBUKATSU（以下「当部活」）は、会員の皆さまの個人情報を、次のとおり大切に取り扱います。</div>'+
+  '<div class="terms-p">カシワのBUKATSU（以下「当団体」）は、会員の皆さまの個人情報を、次のとおり大切に取り扱います。</div>'+
   '<div class="terms-h" style="font-size:14px">1. 取得する情報</div>'+
   '<div class="terms-p"><ul><li>お名前・ニックネーム・生年月日・性別・お住まいのエリア</li><li>緊急連絡先（続柄・電話番号）</li><li>参加の記録・予約の内容・お支払いの記録</li><li>（未成年の方）保護者の同意の確認</li></ul></div>'+
   '<div class="terms-h" style="font-size:14px">2. 利用目的</div>'+
@@ -4608,7 +4607,7 @@ function _infoCompanyHTML(){
   '<div class="terms-h" style="font-size:14px">5. 管理</div>'+
   '<div class="terms-p">取得した情報は、運営に必要な範囲の者だけが取り扱い、不正な利用や漏えいを防ぐよう努めます。</div>'+
   '<div class="terms-h" style="font-size:14px">6. 写真・動画の撮影</div>'+
-  '<div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。 '+_TBD('撮影・掲載のNG申告の方法')+'</div>'+
+  '<div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。</div>'+
   '<div class="terms-h" style="font-size:14px">7. ご本人からの請求</div>'+
   '<div class="terms-p">ご自身の情報の確認・訂正・削除を希望される場合は、上の公式LINEからご連絡ください。ご本人であることを確認のうえ、対応します。</div>'+
   '<div class="terms-h" style="font-size:14px">8. 改定</div>'+
@@ -4616,23 +4615,50 @@ function _infoCompanyHTML(){
   '<div style="margin-top:18px"><button class="terms-link" onclick="closeInfoPage();openTerms()" data-no-lock>利用規約を見る</button></div>'+
   '</div>';
 }
-function _infoAccessHTML(){
+function _infoAccessHTML(){ return '<div class="card" id="venue-box" style="padding:20px"><div style="text-align:center;color:#aaa">会場情報を読み込み中…</div></div><div id="access-rest"></div>'; }
+async function _infoAccess(body){
+  body.innerHTML=_infoAccessHTML();
   const step=function(n,t,d){return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="width:28px;height:28px;border-radius:50%;background:#1a3a5c;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+n+'</div><div><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+t+'</div><div style="font-size:13px;color:#666;line-height:1.7;margin-top:2px">'+d+'</div></div></div>';};
-  return '<div class="card" style="padding:20px"><div class="terms-h" style="margin-top:0">📍 会場</div>'+
-    '<div class="terms-p">主な会場：<b>沼南体育館</b>（千葉県柏市）</div>'+
-    '<a href="https://maps.google.com/?q=沼南体育館+柏市" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-top:10px;text-decoration:none;color:#1a1a2e"><div style="font-size:22px">🗺️</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Googleマップで開く</div><div style="font-size:11.5px;color:#888">道順をナビで確認できます</div></div><div style="color:#aaa">›</div></a>'+
-    '<div class="terms-p" style="margin-top:10px">住所：'+_TBD('住所')+'<br>駐車場：'+_TBD('駐車場の場所・台数・料金')+'<br>入口・更衣室：'+_TBD('入口の場所・更衣室の有無')+'<br>開場・受付の時間：'+_TBD('何分前から入れるか')+'</div></div>'+
+  _$('access-rest').innerHTML=
     '<div class="card" style="padding:20px"><div class="terms-h" style="margin-top:0">🧭 当日の流れ</div>'+
-    step(1,'体育館に着いたら','運営スタッフに「参加します」と声をかけてください。')+
-    step(2,'受付','会員の方は、アプリの会員証（マイページ）を見せてください。初めての方は、お名前をお伝えください。')+
-    step(3,'参加費のお支払い','原則として現金です。回数券・チケットをお持ちの方は、受付でお伝えください。')+
-    step(4,'準備運動のあと、スタート','ルール・チーム分けは、その場でスタッフがご案内します。')+
+    step(1,'会場へ到着','体育館には到着次第入れます。アリーナは開催時間になってから入場できます。')+
+    step(2,'参加費の支払い','受付で支払います。')+
+    step(3,'準備・ウォーミングアップ','各自で準備運動をしてください。')+
+    step(4,'集合・チーム分け（19:20〜30ごろ）','集合して、チーム分けと番号の振り分けをします。')+
     '</div>'+
     '<div class="card" style="padding:20px"><div class="terms-h" style="margin-top:0">🎒 持ち物</div>'+
     '<div class="terms-p">室内シューズ・動きやすい服装・タオル・飲み物<br><span style="font-size:12.5px;color:#888">※バドミントンはラケットの貸し出しがあります</span></div>'+
     '<div class="terms-h">参加レベル</div><div class="terms-p">初心者・久しぶりの方も大歓迎です。</div>'+
     '<div class="terms-h">お願い</div><div class="terms-p">競技志向でのプレーをご希望の方は、ご遠慮をお願いする場合があります。体育館のルールを守って、気持ちよく使いましょう。</div>'+
     _lineBtn('わからないことは公式LINEへ')+'</div>';
+  let venues=[],ups=[];
+  try{venues=await callGAS('getVenueInfo');}catch(e){}
+  try{ups=window._reserveAllSchedules||await callGAS('getUpcomingSchedules','全て');}catch(e){}
+  if(!Array.isArray(venues))venues=[];
+  // 次回開催が近い順に会場を並べる（開催のない会場は出さない。開催予定が全く取れない時だけ全会場）
+  const order=[],nextDate={};
+  (ups||[]).slice().sort(function(a,b){return dk(a[0])-dk(b[0]);}).forEach(function(r){
+    const p=String(r[2]||'').trim();
+    if(p&&order.indexOf(p)<0){order.push(p);nextDate[p]=r[0];}
+  });
+  let list=order.map(function(p){return venues.find(function(v){return v.name===p;})||{name:p};});
+  if(!list.length)list=venues;
+  list=list.slice(0,4);
+  const yesno=function(v){v=String(v||'').trim();return v?_esc(v):null;};
+  const html=list.map(function(v,i){
+    const q=v.mapQuery||(v.name+' 柏市');
+    const rows=[];
+    if(v.address)rows.push('住所：'+_esc(v.address));
+    const pk=yesno(v.parking),lk=yesno(v.locker);
+    if(pk)rows.push('駐車場：'+pk);
+    if(lk)rows.push('更衣室：'+lk);
+    if(v.memo)rows.push(_esc(v.memo));
+    return (i?'<div style="border-top:1px solid #f0f4f8;margin:16px 0"></div>':'')+
+      '<div class="terms-h" style="margin-top:0">📍 '+_esc(v.name)+(nextDate[v.name]?'<span style="font-size:11.5px;color:#888;font-weight:600;margin-left:8px">次回 '+_esc(nextDate[v.name])+'</span>':'')+'</div>'+
+      (rows.length?'<div class="terms-p">'+rows.join('<br>')+'</div>':'<div class="terms-p" style="color:#aaa">会場の詳細は準備中です</div>')+
+      '<a href="https://maps.google.com/?q='+encodeURIComponent(q)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-top:10px;text-decoration:none;color:#1a1a2e"><div style="font-size:22px">🗺️</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Googleマップで開く</div><div style="font-size:11.5px;color:#888">道順をナビで確認できます</div></div><div style="color:#aaa">›</div></a>';
+  }).join('');
+  _$('venue-box').innerHTML=html||'<div class="terms-p" style="color:#aaa">会場の情報は準備中です</div>';
 }
 async function _infoPricing(body){
   let list=[];
@@ -4644,7 +4670,7 @@ async function _infoPricing(body){
   const bb=function(t){return yen(fp('参加費',t,'バスケ/バレー'));};
   const bd=function(t){return yen(fp('参加費',t,'バドミントン'));};
   const html=
-    '<div style="font-size:12px;color:#888;margin:0 4px 10px">現在の料金です。お支払いは原則として当日現金です。</div>'+
+    '<div style="font-size:12px;color:#888;margin:0 4px 10px">現在の料金です。</div>'+
     plan('体験参加','はじめての方',[row('参加費（バスケ・バレー）',bb('ビジター会員')),row('参加費（バドミントン）',bd('ビジター会員')),row('入会金','なし')],'#9aa8b8')+
     plan('ビジター会員','まずは気軽に参加したい方',[row('入会金',yen(fp('入会金','ビジター会員','共通'))),row('参加費（バスケ・バレー）',bb('ビジター会員')),row('参加費（バドミントン）',bd('ビジター会員')),row('回数券（11枚）',yen(fp('回数券','ビジター会員','11枚セット')))],'#7aa7d9')+
     plan('カシワのBUKATSU会員','しっかり続けたい方',[row('入会金',yen(fp('入会金','カシワのBUKATSU会員','共通'))),row('参加費（バスケ・バレー）',bb('カシワのBUKATSU会員')),row('参加費（バドミントン）',bd('カシワのBUKATSU会員')),row('回数券（11枚）',yen(fp('回数券','カシワのBUKATSU会員','11枚セット'))),row('特典','他種目の体験無料・スポログ・活動記録動画')],'#1a3a5c')+
