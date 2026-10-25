@@ -863,6 +863,32 @@ async function reloadDailyBlock(blockId) {
 // 本日カード／過去未入力の各ブロックで共通して使う描画関数。
 // ★変更：blockIdごとに日付・種目・練習日フラグを _dailyBlocks に保持する（グローバル1個から脱却）。
 //         safeId にも blockId を混ぜているので、同じ人が複数日にまたがってもDOM IDが衝突しない。
+function buildDailySummary(blockId) {
+  const b = _dailyBlocks[blockId]; if (!b || !b.items) return '';
+  const [y, m, dd] = String(b.date).split('/').map(Number);
+  const dow = ['日','月','火','水','木','金','土'][new Date(y, m - 1, dd).getDay()];
+  const list = b.items.filter(i => i.checked).length ? b.items.filter(i => i.checked) : b.items;
+  const label = b.items.some(i => i.checked) ? '参加者' : '参加予定';
+  const nick = i => i.nickname + (i.isNew ? '（初参加）' : (i.isTrial ? '（体験）' : ''));
+  const line = '━━━━━━━━━━';
+  let t = '【' + m + '/' + dd + '（' + dow + '）' + (b.sport || '') + ' ' + label + '】\n';
+  if (b.place) t += '📍' + b.place + (b.time ? ' ' + b.time : '') + '\n';
+  t += line + '\n';
+  t += '合計 ' + list.length + '名\n';
+  const news = list.filter(i => i.isNew || i.isTrial);
+  if (news.length) t += '（うち体験・初参加 ' + news.length + '名）\n';
+  t += '\n' + list.map(nick).join('\n') + '\n' + line + '\nカシワのBUKATSU';
+  return t;
+}
+async function copyDailySummary(blockId) {
+  const t = buildDailySummary(blockId);
+  if (!t) { alert('まだ読み込み中です'); return; }
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (_) {} ta.remove(); }
+  const b = document.getElementById('daily-copy-' + blockId);
+  if (b) { const o = b.textContent; b.textContent = '✅ コピーしました！LINEに貼り付けてください'; setTimeout(() => { b.textContent = o; }, 2500); }
+}
+
 function renderCheckinBlock(blockId, d) {
   const el = document.getElementById('daily-list-' + blockId);
   if (!el) return;
@@ -899,6 +925,20 @@ function renderCheckinBlock(blockId, d) {
   tempUsers.forEach(u => {
     if (!allItems.find(i => i.fullname === u[1])) allItems.push({ fullname: u[1], nickname: u[1], type: '体験', usageMode: 'スポログ', isNew: true, referrer: u[5] || '' });
   });
+  try {
+    _dailyBlocks[blockId].items = allItems.map(i => ({ nickname: i.nickname, type: i.type, isNew: !!i.isNew, isTrial: !!i.isMemberTrial || i.type === '体験', checked: checkedInNames.has(i.fullname) }));
+    _dailyBlocks[blockId].place = d.todaySchedule ? d.todaySchedule[2] : '';
+    _dailyBlocks[blockId].time = d.todaySchedule ? d.todaySchedule[1] : '';
+    if (!document.getElementById('daily-copy-' + blockId)) {
+      const b = document.createElement('button');
+      b.id = 'daily-copy-' + blockId;
+      b.textContent = '📋 参加者まとめをコピー（LINE用）';
+      b.setAttribute('data-no-lock', '');
+      b.style.cssText = 'width:100%;padding:11px;margin-bottom:10px;background:#2b6cb0;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer';
+      b.onclick = () => copyDailySummary(blockId);
+      el.parentNode.insertBefore(b, el);
+    }
+  } catch (e) {}
   if (!allItems.length) { el.innerHTML = '<div class="empty">対象者がいません<br><span style="font-size:12px">「＋追加」から手動で登録できます</span></div>'; return; }
   allItems.sort((a,b) => getTypeOrder(a.type) - getTypeOrder(b.type));
   el.innerHTML = allItems.map(item => {

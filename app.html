@@ -254,6 +254,8 @@ body.sporolog-page .wrapper{padding-top:0}
   </button>
 </div>
 
+<div id="urgent-banner" style="display:none;background:linear-gradient(135deg,#d93025,#b3261e);color:#fff;padding:12px 16px"></div>
+
 <div class="tabs">
   <button class="tab" id="tab-home" onclick="showTab('home')">HOME</button>
   <button class="tab active" id="tab-mypage" onclick="showTab('mypage')">マイページ</button>
@@ -263,6 +265,7 @@ body.sporolog-page .wrapper{padding-top:0}
 
 <!-- HOME -->
 <div id="section-home" class="section">
+  <div id="home-birthday-card" class="card" style="display:none;background:linear-gradient(135deg,#fff3e0,#ffe8cc);border:1.5px solid #f5c36b"></div>
   <!-- メンテナンス中バナー（一番上、固定） -->
   <div id="maintenance-banner" class="card" style="display:none;background:linear-gradient(135deg,#fff8e1,#fffde7);border:1.5px solid #f5d060">
     <div style="display:flex;align-items:flex-start;gap:10px">
@@ -322,6 +325,7 @@ body.sporolog-page .wrapper{padding-top:0}
     <a href="https://kashiwano-bukatsu.github.io/" target="_blank" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none">公式サイトを見る</a>
   </div>
   <button class="terms-link" onclick="openTerms()" data-no-lock style="margin-top:4px">利用規約</button>
+  <button class="terms-link" onclick="openInfoPage('company')" data-no-lock style="margin-top:2px">運営者情報・プライバシーポリシー</button>
   <div style="text-align:center;padding:8px 0 16px;color:#bbb;font-size:11px">一般社団法人みんなのBUKATSU</div>
 </div>
 
@@ -344,6 +348,7 @@ body.sporolog-page .wrapper{padding-top:0}
       </button>
     </div>
     <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約</button>
+    <button class="terms-link" onclick="openInfoPage('company')" data-no-lock>運営者情報・プライバシーポリシー</button>
   </div>
 
   <!-- ログイン済み -->
@@ -427,7 +432,12 @@ body.sporolog-page .wrapper{padding-top:0}
         <div style="font-size:20px">›</div>
       </a>
       <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></div><div style="font-size:18px;color:#aaa">›</div></a>
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr;gap:8px">
+        <button onclick="openInfoPage('access')" data-no-lock style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left"><span style="font-size:22px">📍</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">体育館へのアクセス・当日の流れ</span><span style="color:#aaa">›</span></button>
+        <button onclick="openInfoPage('pricing')" data-no-lock style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left"><span style="font-size:22px">💴</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">料金・プランとお見積もり</span><span style="color:#aaa">›</span></button>
+      </div>
       <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約を見る</button>
+      <button class="terms-link" onclick="openInfoPage('company')" data-no-lock style="margin-top:4px">運営者情報・プライバシーポリシー</button>
       </div>
     </div>
   </div>
@@ -473,6 +483,7 @@ body.sporolog-page .wrapper{padding-top:0}
   </div>
   <div id="reserve-main" style="display:none">
     <div style="text-align:right;margin-bottom:8px"><button onclick="refreshNow('reserve')" style="background:#fff;border:1px solid #d5dde6;color:#1a3a5c;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 最新に更新</button></div>
+    <div id="reserve-reminder" style="display:none"></div>
     <div id="next-member-card" class="next-member-card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>次回の参加予定メンバー</div>
       <div id="next-member-sport-tabs" style="display:flex;gap:6px;margin-bottom:10px"></div>
@@ -1153,7 +1164,7 @@ const GAS_READ_FUNCS=new Set([
   'loginAttendee','getMemberDashboard','getReceptionHomeData','getUpcomingSchedules','getReserveTabData',
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
-  'getVideoList','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
+  'getVideoList','getUrgentNotice','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
   'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
@@ -1820,6 +1831,8 @@ async function loadReserveData(){
     if(window._reserveViewName&&!window._reserveFamily.some(function(f){return f.fullname===window._reserveViewName;}))window._reserveViewName=null;
     window._reserveAllSchedulesPre=Array.isArray(data.allSchedules)?data.allSchedules:null;
     renderScheduleList(data.schedules, data.reservations);
+    window._capacityBySchedule=data.capacityBySchedule||{};
+    try{renderReserveReminder(data);decorateCapacity();}catch(e){}
     // ★第2段：GASが1回でまとめて返したデータを使う（無い場合＝GAS未更新なら従来どおり個別に取得）
     window._reserveAllSchedules=Array.isArray(data.allSchedules)?data.allSchedules:null;
     window._reserveMembersMap=data.membersBySchedule||null;
@@ -4397,6 +4410,277 @@ function applyHomePrivacy(){
   };
 })();
 document.addEventListener('DOMContentLoaded',function(){applyHomePrivacy();});
+// ===================================================================
+// 会員アプリ追加機能：緊急バナー／リマインド／定員表示／誕生日／案内ページ（運営者情報・アクセス・料金）
+// ===================================================================
+(function(){
+  try{ if(typeof GAS_READ_FUNCS!=='undefined'&&GAS_READ_FUNCS.add){GAS_READ_FUNCS.add('getUrgentNotice');} }catch(e){}
+})();
+function _$(id){return document.getElementById(id);}
+function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function _tokyoKey(offsetDays){
+  const d=new Date(Date.now()+(offsetDays||0)*86400000);
+  return dk(d.toLocaleDateString('en-CA',{timeZone:'Asia/Tokyo'}).replace(/-/g,'/'));
+}
+function _keyToLabel(k){
+  const y=Math.floor(k/10000),m=Math.floor(k/100)%100,d=k%100;
+  const s=y+'/'+String(m).padStart(2,'0')+'/'+String(d).padStart(2,'0');
+  return m+'/'+d+'（'+getDow(s)+'）';
+}
+
+// ---------- 10) 緊急のお知らせ ----------
+async function loadUrgentNotice(){
+  const el=_$('urgent-banner');if(!el)return;
+  try{
+    const r=await callGAS('getUrgentNotice');
+    const text=r&&r.text?String(r.text):'';
+    if(!text){el.style.display='none';el.innerHTML='';return;}
+    el.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:22px;line-height:1.2">🚨</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:800;letter-spacing:.04em;opacity:.9">緊急のお知らせ</div><div style="font-size:14.5px;font-weight:700;line-height:1.6;margin-top:2px;white-space:pre-line">'+_esc(text)+'</div>'+(r.updatedAt?'<div style="font-size:11px;opacity:.8;margin-top:4px">'+_esc(r.updatedAt)+' 更新</div>':'')+'</div></div>';
+    el.style.display='block';
+  }catch(e){}
+}
+setTimeout(loadUrgentNotice,600);
+setInterval(loadUrgentNotice,5*60*1000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)loadUrgentNotice();});
+
+// ---------- 3) 前日・当日のリマインド（予約タブの「参加予定メンバー」の上）----------
+function renderReserveReminder(data){
+  const box=_$('reserve-reminder');if(!box)return;
+  box.innerHTML='';box.style.display='none';
+  if(!data||!mypageCurrentUser)return;
+  const tK=_tokyoKey(0),tmK=_tokyoKey(1);
+  const lines=[];
+  const timeOf=function(date,sport){
+    const s=(data.allSchedules||[]).find(function(x){return dk(x[0])===dk(date)&&x[4]===sport;});
+    return s?s[1]:'';
+  };
+  const add=function(rows,name,nick,isSelf){
+    (rows||[]).forEach(function(r){
+      const k=dk(r[1]),st=r[7]||'⭕';
+      if(st==='❌')return;
+      if(k!==tK&&k!==tmK)return;
+      lines.push({k:k,date:r[1],sport:r[2],place:r[3],st:st,name:name,nick:nick,isSelf:isSelf,time:timeOf(r[1],r[2])});
+    });
+  };
+  add(data.reservations,mypageCurrentUser.fullname,'あなた',true);
+  (data.family||[]).forEach(function(f){add((data.familyReservations||{})[f.fullname],f.fullname,String(f.nickname||'').split(/[\s　]/)[0],false);});
+  if(!lines.length)return;
+  lines.sort(function(a,b){return a.k-b.k||String(a.time).localeCompare(String(b.time));});
+  const groups=[[tK,'本日'],[tmK,'明日']];
+  let h='';
+  groups.forEach(function(g){
+    const ls=lines.filter(function(l){return l.k===g[0];});
+    if(!ls.length)return;
+    h+='<div style="background:linear-gradient(135deg,#fff8ec,#fff2dc);border:1.5px solid #f5c36b;border-radius:16px;padding:14px 16px;margin-bottom:12px">'+
+      '<div style="font-size:13px;font-weight:800;color:#b25f00;margin-bottom:8px">⏰ '+g[1]+'の参加予定（'+_keyToLabel(g[0])+'）</div>'+
+      ls.map(function(l,i){
+        const stLabel={'⭕':'参加','△':'未定'}[l.st]||l.st;
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(i?'border-top:1px dashed #f0d6a6;':'')+'">'+
+          '<div style="font-size:26px">'+(SPORT_ICON[l.sport]||'🏟')+'</div>'+
+          '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+(l.isSelf?'':'<span style="font-size:11px;color:#fff;background:#1a3a5c;border-radius:8px;padding:1px 7px;margin-right:6px">'+_esc(l.nick)+'さん</span>')+_esc(l.sport)+'</div>'+
+          '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+' ／ '+_esc(l.st)+' '+stLabel+'</div></div>'+
+          '<button onclick="reminderManage(\''+_esc(l.date)+'\',\''+_esc(l.sport)+'\',\''+_esc(l.name)+'\','+(l.isSelf?'true':'false')+')" style="padding:8px 10px;background:#fff;border:1.5px solid #e0a548;color:#b25f00;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">変更・取消</button></div>';
+      }).join('')+
+      '<div style="font-size:11px;color:#a8803a;margin-top:6px">予定が変わったら、早めにステータスを更新してください。</div></div>';
+  });
+  box.innerHTML=h;box.style.display='block';
+}
+function reminderManage(date,sport,name,isSelf){
+  const body=_$('reserve-form-body');
+  if(body&&body.style.display==='none')toggleReserveAccordion('reserve-form-body','reserve-form-arrow');
+  if(typeof _famActive==='function'&&_famActive()){
+    famSelectView(isSelf?null:name);
+  }
+  setTimeout(function(){
+    const list=window._reserveSchedules||[];
+    const i=list.findIndex(function(s){return dk(s.date)===dk(date)&&s.sport===sport;});
+    if(i<0)return;
+    const d=_$('mypage-detail-'+i);
+    if(d&&d.style.display!=='block')toggleScheduleDetail(i);
+    const row=d?d.parentNode:null;
+    if(row&&row.scrollIntoView)row.scrollIntoView({behavior:'smooth',block:'center'});
+  },80);
+}
+
+// ---------- 1) 定員と空き状況（予約タブの日程）----------
+function decorateCapacity(){
+  const map=window._capacityBySchedule||{};
+  const list=window._reserveSchedules||[];
+  document.querySelectorAll('#mypage-schedule-list .schedule-item').forEach(function(row,i){
+    row.querySelectorAll('.cap-badge').forEach(function(e){e.remove();});
+    const it=list[i];if(!it)return;
+    const cap=map[dk(it.date)+'|'+it.sport];if(!cap)return;
+    const box=row.querySelector('div[onclick^="toggleScheduleDetail"]');
+    if(!box||!box.children[1])return;
+    const left=cap.limit-cap.total;
+    let txt,bg,col;
+    if(left<=0){txt='満員（キャンセル待ち）';bg='#fde8e8';col='#c53030';}
+    else if(left<=3){txt=cap.total+'/'+cap.limit+'人（あと'+left+'人）';bg='#fff1de';col='#b25f00';}
+    else{txt=cap.total+'/'+cap.limit+'人';bg='#eef4fb';col='#1a3a5c';}
+    const b=document.createElement('span');
+    b.className='cap-badge';
+    b.style.cssText='display:inline-block;margin-left:8px;font-size:11px;font-weight:700;border-radius:8px;padding:1px 8px;background:'+bg+';color:'+col;
+    b.textContent=txt;
+    box.children[1].appendChild(b);
+  });
+}
+(function(){
+  const f=renderScheduleListFam;
+  renderScheduleListFam=function(){f.apply(this,arguments);try{decorateCapacity();}catch(e){}};
+  const l=renderScheduleList_legacy;
+  renderScheduleList_legacy=function(){l.apply(this,arguments);try{decorateCapacity();}catch(e){}};
+})();
+
+// ---------- 4) 誕生日のひとこと ----------
+async function checkBirthday(){
+  if(!mypageCurrentUser||!mypageCurrentUser.internalId)return;
+  const key='bday_'+mypageCurrentUser.internalId+'_'+_tokyoKey(0);
+  try{if(localStorage.getItem(key)==='1')return;}catch(e){}
+  try{
+    const d=await callGAS('getMemberDashboard',mypageCurrentUser.internalId);
+    const card=_$('home-birthday-card');if(!card)return;
+    if(!d||!d.birthdayToday){card.style.display='none';return;}
+    const nm=_esc(d.nickname||mypageCurrentUser.nickname||'');
+    card.innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:38px">🎂</div><div style="flex:1"><div style="font-size:16px;font-weight:800;color:#8a3b00">'+nm+'さん、お誕生日おめでとうございます！</div><div style="font-size:12.5px;color:#9a6a30;margin-top:3px">今日も楽しく体を動かしましょう。素敵な1年になりますように🎉</div></div><button onclick="closeBirthday(\''+key+'\')" data-no-lock style="background:none;border:none;font-size:20px;color:#c28a4a;cursor:pointer">×</button></div>';
+    card.style.display='block';
+  }catch(e){}
+}
+function closeBirthday(key){
+  try{localStorage.setItem(key,'1');}catch(e){}
+  const c=_$('home-birthday-card');if(c)c.style.display='none';
+}
+(function(){
+  const prev=updateTabVisibility;
+  updateTabVisibility=function(){
+    prev();
+    if(mypageCurrentUser){
+      if(window._bdayFor!==mypageCurrentUser.internalId){window._bdayFor=mypageCurrentUser.internalId;checkBirthday();}
+    }else{
+      window._bdayFor=null;
+      const c=_$('home-birthday-card');if(c)c.style.display='none';
+    }
+  };
+})();
+
+// ---------- 案内ページ（運営者情報・アクセス・料金）----------
+function openInfoPage(key){
+  let el=_$('section-info');
+  if(!el){
+    el=document.createElement('div');el.id='section-info';
+    el.style.cssText='display:none;position:fixed;inset:0;background:#f0f4f8;z-index:5000;overflow-y:auto;';
+    el.innerHTML='<div style="background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1"><button onclick="closeInfoPage()" data-no-lock style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">← 戻る</button><div id="info-title" style="font-size:18px;font-weight:800"></div></div><div style="padding:16px;max-width:600px;margin:0 auto;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))"><div id="info-body"></div></div>';
+    document.body.appendChild(el);
+  }
+  const titles={company:'運営者情報・プライバシーポリシー',access:'体育館へのアクセス・当日の流れ',pricing:'料金・プランとお見積もり'};
+  _$('info-title').textContent=titles[key]||'ご案内';
+  const body=_$('info-body');
+  body.innerHTML='<div class="card" style="text-align:center;color:#aaa;padding:30px 0">読み込み中…</div>';
+  el.style.display='block';el.scrollTop=0;document.body.style.overflow='hidden';
+  if(key==='company')body.innerHTML=_infoCompanyHTML();
+  else if(key==='access')body.innerHTML=_infoAccessHTML();
+  else if(key==='pricing')_infoPricing(body);
+}
+function closeInfoPage(){
+  const el=_$('section-info');if(el)el.style.display='none';
+  document.body.style.overflow='';
+}
+const _TBD=function(t){return '<span class="terms-tbd">【要確認】'+t+'</span>';};
+function _lineBtn(label){
+  return '<a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn" style="margin-top:12px"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.3 1.2 1 .7s7-4.1 9.5-7c1.8-1.9 2.6-3.8 2.6-5.8 0-5.5-5.6-9.9-12.4-9.9z"/></svg><div style="flex:1"><div style="font-size:14px;font-weight:800">'+label+'</div><div style="font-size:11px;opacity:.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div><div style="font-size:20px">›</div></a>';
+}
+function _infoCompanyHTML(){
+  return '<div class="card" style="padding:22px 20px">'+
+  '<div class="terms-h" style="margin-top:0">運営者情報</div>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.8">'+
+  [['名称','カシワのBUKATSU'],['運営','一般社団法人みんなのBUKATSU'],['代表','大谷 悠樹 '+_TBD('代表者名の表記・掲載してよいか')],['活動場所','千葉県柏市（沼南体育館ほか）'],['活動内容','バスケットボール・バレーボール・バドミントンの地域スポーツ活動'],['お問い合わせ','公式LINE（下のボタン）'],['所在地・設立',_TBD('所在地・設立年月')]]
+  .map(function(r){return '<tr><td style="padding:7px 8px 7px 0;color:#888;white-space:nowrap;vertical-align:top;border-bottom:1px solid #f0f4f8">'+r[0]+'</td><td style="padding:7px 0;border-bottom:1px solid #f0f4f8;color:#333">'+r[1]+'</td></tr>';}).join('')+
+  '</table>'+_lineBtn('代表にLINEで連絡する')+
+  '<div class="terms-h">プライバシーポリシー</div>'+
+  '<div class="terms-p">カシワのBUKATSU（以下「当部活」）は、会員の皆さまの個人情報を、次のとおり大切に取り扱います。</div>'+
+  '<div class="terms-h" style="font-size:14px">1. 取得する情報</div>'+
+  '<div class="terms-p"><ul><li>お名前・ニックネーム・生年月日・性別・お住まいのエリア</li><li>緊急連絡先（続柄・電話番号）</li><li>参加の記録・予約の内容・お支払いの記録</li><li>（未成年の方）保護者の同意の確認</li></ul></div>'+
+  '<div class="terms-h" style="font-size:14px">2. 利用目的</div>'+
+  '<div class="terms-p">出席確認、緊急時の連絡、参加履歴の管理、スケジュールや重要なお知らせの連絡、紹介制度やスポログなど会員向け特典の運用、活動の改善のための集計に利用します。この目的以外には使用しません。</div>'+
+  '<div class="terms-h" style="font-size:14px">3. 第三者への提供</div>'+
+  '<div class="terms-p">法令に基づく場合や、人の生命・身体を守るために必要な場合を除き、本人の同意なく第三者へ提供しません。</div>'+
+  '<div class="terms-h" style="font-size:14px">4. 他の参加者への表示</div>'+
+  '<div class="terms-p">予約・参加予定の画面で他の会員に表示されるのは、ニックネーム（同じ名前が重なる場合は区別できる表示）などに限り、生年月日・緊急連絡先などは表示しません。</div>'+
+  '<div class="terms-h" style="font-size:14px">5. 管理</div>'+
+  '<div class="terms-p">取得した情報は、運営に必要な範囲の者だけが取り扱い、不正な利用や漏えいを防ぐよう努めます。</div>'+
+  '<div class="terms-h" style="font-size:14px">6. 写真・動画の撮影</div>'+
+  '<div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。 '+_TBD('撮影・掲載のNG申告の方法')+'</div>'+
+  '<div class="terms-h" style="font-size:14px">7. ご本人からの請求</div>'+
+  '<div class="terms-p">ご自身の情報の確認・訂正・削除を希望される場合は、上の公式LINEからご連絡ください。ご本人であることを確認のうえ、対応します。</div>'+
+  '<div class="terms-h" style="font-size:14px">8. 改定</div>'+
+  '<div class="terms-p">必要に応じてこの内容を見直します。変更後は、本アプリに掲載した時点から効力を持ちます。</div>'+
+  '<div style="margin-top:18px"><button class="terms-link" onclick="closeInfoPage();openTerms()" data-no-lock>利用規約を見る</button></div>'+
+  '</div>';
+}
+function _infoAccessHTML(){
+  const step=function(n,t,d){return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f4f8"><div style="width:28px;height:28px;border-radius:50%;background:#1a3a5c;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+n+'</div><div><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+t+'</div><div style="font-size:13px;color:#666;line-height:1.7;margin-top:2px">'+d+'</div></div></div>';};
+  return '<div class="card" style="padding:20px"><div class="terms-h" style="margin-top:0">📍 会場</div>'+
+    '<div class="terms-p">主な会場：<b>沼南体育館</b>（千葉県柏市）</div>'+
+    '<a href="https://maps.google.com/?q=沼南体育館+柏市" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-top:10px;text-decoration:none;color:#1a1a2e"><div style="font-size:22px">🗺️</div><div style="flex:1"><div style="font-size:14px;font-weight:700">Googleマップで開く</div><div style="font-size:11.5px;color:#888">道順をナビで確認できます</div></div><div style="color:#aaa">›</div></a>'+
+    '<div class="terms-p" style="margin-top:10px">住所：'+_TBD('住所')+'<br>駐車場：'+_TBD('駐車場の場所・台数・料金')+'<br>入口・更衣室：'+_TBD('入口の場所・更衣室の有無')+'<br>開場・受付の時間：'+_TBD('何分前から入れるか')+'</div></div>'+
+    '<div class="card" style="padding:20px"><div class="terms-h" style="margin-top:0">🧭 当日の流れ</div>'+
+    step(1,'体育館に着いたら','運営スタッフに「参加します」と声をかけてください。')+
+    step(2,'受付','会員の方は、アプリの会員証（マイページ）を見せてください。初めての方は、お名前をお伝えください。')+
+    step(3,'参加費のお支払い','原則として現金です。回数券・チケットをお持ちの方は、受付でお伝えください。')+
+    step(4,'準備運動のあと、スタート','ルール・チーム分けは、その場でスタッフがご案内します。')+
+    '</div>'+
+    '<div class="card" style="padding:20px"><div class="terms-h" style="margin-top:0">🎒 持ち物</div>'+
+    '<div class="terms-p">室内シューズ・動きやすい服装・タオル・飲み物<br><span style="font-size:12.5px;color:#888">※バドミントンはラケットの貸し出しがあります</span></div>'+
+    '<div class="terms-h">参加レベル</div><div class="terms-p">初心者・久しぶりの方も大歓迎です。</div>'+
+    '<div class="terms-h">お願い</div><div class="terms-p">競技志向でのプレーをご希望の方は、ご遠慮をお願いする場合があります。体育館のルールを守って、気持ちよく使いましょう。</div>'+
+    _lineBtn('わからないことは公式LINEへ')+'</div>';
+}
+async function _infoPricing(body){
+  let list=[];
+  try{list=await getPrices();}catch(e){list=[];}
+  const fp=function(c,t,i){return findPrice(list,c,t,i);};
+  const yen=function(n){return (n==null||isNaN(n))?'—':Number(n).toLocaleString()+'円';};
+  const row=function(l,v){return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #f4f6f9;font-size:13.5px"><span style="color:#666">'+l+'</span><span style="font-weight:700;color:#1a1a2e;text-align:right">'+v+'</span></div>';};
+  const plan=function(name,sub,rows,accent){return '<div class="card" style="padding:16px 18px;border-left:5px solid '+accent+'"><div style="font-size:16px;font-weight:800;color:#1a1a2e">'+name+'</div>'+(sub?'<div style="font-size:12px;color:#888;margin:2px 0 6px">'+sub+'</div>':'')+rows.join('')+'</div>';};
+  const bb=function(t){return yen(fp('参加費',t,'バスケ/バレー'));};
+  const bd=function(t){return yen(fp('参加費',t,'バドミントン'));};
+  const html=
+    '<div style="font-size:12px;color:#888;margin:0 4px 10px">現在の料金です。お支払いは原則として当日現金です。</div>'+
+    plan('体験参加','はじめての方',[row('参加費（バスケ・バレー）',bb('ビジター会員')),row('参加費（バドミントン）',bd('ビジター会員')),row('入会金','なし')],'#9aa8b8')+
+    plan('ビジター会員','まずは気軽に参加したい方',[row('入会金',yen(fp('入会金','ビジター会員','共通'))),row('参加費（バスケ・バレー）',bb('ビジター会員')),row('参加費（バドミントン）',bd('ビジター会員')),row('回数券（11枚）',yen(fp('回数券','ビジター会員','11枚セット')))],'#7aa7d9')+
+    plan('カシワのBUKATSU会員','しっかり続けたい方',[row('入会金',yen(fp('入会金','カシワのBUKATSU会員','共通'))),row('参加費（バスケ・バレー）',bb('カシワのBUKATSU会員')),row('参加費（バドミントン）',bd('カシワのBUKATSU会員')),row('回数券（11枚）',yen(fp('回数券','カシワのBUKATSU会員','11枚セット'))),row('特典','他種目の体験無料・スポログ・活動記録動画')],'#1a3a5c')+
+    plan('ファミリー会員','ご家族でまとめて',[row('入会金（1人目）',yen(fp('入会金','ファミリー会員','1人目'))),row('入会金（2人目）',yen(fp('入会金','ファミリー会員','2人目'))),row('入会金（3人目以降）',yen(fp('入会金','ファミリー会員','3人目以降'))),row('参加費（1人目）',yen(fp('参加費','ファミリー会員','1人目'))),row('参加費（2人目以降）',yen(fp('参加費','ファミリー会員','2人目以降'))),row('回数券（11枚）',yen(fp('回数券','ファミリー会員','11枚セット'))+'<br><span style="font-size:11px;color:#888;font-weight:400">家族でシェアできます</span>')],'#e9a23b')+
+    plan('みんなのBUKATSU会員','',[row('入会金',yen(fp('入会金','みんなのBUKATSU会員','共通'))),row('参加費（バドミントン）',yen(fp('参加費','みんなのBUKATSU会員','バドミントン'))),row('参加費（その他）',yen(fp('参加費','みんなのBUKATSU会員','その他'))),row('回数券（11枚）',yen(fp('回数券','みんなのBUKATSU会員','11枚セット')))],'#8fbf8f')+
+    plan('応援団会員','',[row('入会金（初回）',yen(fp('入会金','応援団会員','初回'))),row('月額（月払い）',yen(fp('月額','応援団会員','月払い'))),row('月額（半年一括）',yen(fp('月額','応援団会員','半年一括'))),row('参加費','月額に含む')],'#c39bd3')+
+    '<div class="card" style="padding:18px"><div style="font-size:16px;font-weight:800;color:#1a1a2e;margin-bottom:4px">👨‍👩‍👧 ファミリーおトク計算</div>'+
+    '<div style="font-size:12px;color:#888;margin-bottom:10px">ビジター会員のままの場合と、ファミリー会員になった場合を比べます（バスケ・バレー、全員そろって参加した場合）。</div>'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:#1a3a5c">ご家族の人数</span><select id="famsim-n" onchange="famSimUpdate()" style="padding:8px 12px;border:1.5px solid #cfd8e3;border-radius:10px;font-size:15px;font-weight:700;color:#1a3a5c;background:#fff">'+[2,3,4,5,6].map(function(n){return '<option value="'+n+'"'+(n===4?' selected':'')+'>'+n+'人</option>';}).join('')+'</select></div>'+
+    '<div id="famsim-out"></div></div>';
+  body.innerHTML=html;
+  window._famSimPrices={f1:fp('入会金','ファミリー会員','1人目'),f2:fp('入会金','ファミリー会員','2人目'),f3:fp('入会金','ファミリー会員','3人目以降'),p1:fp('参加費','ファミリー会員','1人目'),p2:fp('参加費','ファミリー会員','2人目以降'),v:fp('参加費','ビジター会員','バスケ/バレー')};
+  famSimUpdate();
+}
+function famSimUpdate(){
+  const o=_$('famsim-out'),sel=_$('famsim-n'),p=window._famSimPrices;
+  if(!o||!sel||!p)return;
+  const n=parseInt(sel.value,10);
+  if([p.f1,p.f2,p.f3,p.p1,p.p2,p.v].some(function(x){return x==null;})){o.innerHTML='<div class="empty">料金を読み込めませんでした</div>';return;}
+  const join=p.f1+(n>=2?p.f2:0)+Math.max(0,n-2)*p.f3;
+  const fam=p.p1+(n-1)*p.p2;
+  const vis=n*p.v;
+  const save=vis-fam;
+  const yen=function(x){return Number(x).toLocaleString()+'円';};
+  let h='<div style="background:#f1f5fa;border-radius:12px;padding:12px 14px;margin-bottom:10px"><div style="font-size:12px;color:#888;font-weight:700">入会金の合計（はじめの1回だけ）</div><div style="font-size:22px;font-weight:800;color:#1a3a5c">'+yen(join)+'</div><div style="font-size:11.5px;color:#888;margin-top:2px">'+yen(p.f1)+(n>=2?' ＋ '+yen(p.f2):'')+(n>=3?' ＋ '+yen(p.f3)+(n>3?' × '+(n-2):''):'')+'</div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="border:1.5px solid #d5dde8;border-radius:12px;padding:10px 12px"><div style="font-size:11px;color:#888;font-weight:700">ビジターのまま（1回）</div><div style="font-size:18px;font-weight:800">'+yen(vis)+'</div></div><div style="border:1.5px solid #e9a23b;background:#fff9ee;border-radius:12px;padding:10px 12px"><div style="font-size:11px;color:#b25f00;font-weight:700">ファミリー会員（1回）</div><div style="font-size:18px;font-weight:800;color:#c4741a">'+yen(fam)+'</div></div></div>';
+  if(save>0){
+    const be=Math.ceil(join/save);
+    h+='<div style="margin-top:10px;background:#1a3a5c;color:#fff;border-radius:12px;padding:12px;text-align:center"><div style="font-size:13px">1回あたり <b style="color:#ffd27a;font-size:17px">'+yen(save)+'</b> おトク</div><div style="font-size:12.5px;margin-top:4px;opacity:.95">みんなで <b style="color:#ffd27a">'+be+'回</b> 参加すると、入会金の元が取れます</div></div>'+
+      '<div style="font-size:11px;color:#888;margin-top:8px;line-height:1.6">※12回参加した場合：ビジターのまま '+yen(vis*12)+' ／ ファミリー会員 '+yen(join+fam*12)+'（'+(vis*12-(join+fam*12)>=0?'おトク ':'差額 ')+yen(Math.abs(vis*12-(join+fam*12)))+'）</div>';
+  }else{
+    h+='<div style="font-size:12.5px;color:#888;margin-top:10px">この人数では、参加費の差が出ません。</div>';
+  }
+  o.innerHTML=h;
+}
+
 </script>
 
 </body>

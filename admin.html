@@ -423,6 +423,9 @@ tr:hover td{background:var(--card-soft);}
     <div class="nav-item" data-view="notice" onclick="switchView('notice')">
       <div class="nav-left"><span class="nav-icon">◎</span>お知らせ管理</div>
     </div>
+    <div class="nav-item" data-view="report" onclick="switchView('report')">
+      <div class="nav-left"><span class="nav-icon">📈</span>月次レポート</div>
+    </div>
     <div class="nav-item" data-view="log" onclick="switchView('log')">
       <div class="nav-left"><span class="nav-icon">≡</span>操作ログ</div>
     </div>
@@ -586,6 +589,16 @@ tr:hover td{background:var(--card-soft);}
 
     <!-- ===== お知らせ管理 ===== -->
     <div class="view" id="view-notice">
+      <div class="card" style="border:1.5px solid var(--danger)">
+        <div class="card-title"><div class="dot" style="background:var(--danger)"></div>🚨 緊急のお知らせバナー</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px">会員アプリの一番上に赤いバナーで表示されます（ログイン前の人にも見えます）。中止・変更の連絡に使ってください。空にして保存すると消えます。</div>
+        <textarea id="urgent-input" placeholder="例：本日の沼南体育館は雨漏りのため中止です" rows="3" maxlength="500" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;font-family:inherit"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="saveUrgentAdmin()">表示する</button>
+          <button class="btn btn-sm" onclick="clearUrgentAdmin()">バナーを消す</button>
+        </div>
+        <div id="urgent-status" style="font-size:12px;color:var(--ink-soft);margin-top:8px"></div>
+      </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>新規投稿</div>
         <input id="notice-title-input" type="text" placeholder="タイトル" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;display:block">
@@ -596,6 +609,19 @@ tr:hover td{background:var(--card-soft);}
         <div class="card-title"><div class="dot"></div>投稿済み一覧</div>
         <div id="notice-list-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
+    </div>
+
+    <!-- ===== 月次レポート ===== -->
+    <div class="view" id="view-report">
+      <div class="card">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="reportShift(-1)">← 前月</button>
+          <input type="month" id="report-month" onchange="loadReport()" style="padding:8px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:14px">
+          <button class="btn btn-sm" onclick="reportShift(1)">翌月 →</button>
+          <button class="btn btn-primary btn-sm" onclick="copyReport()" style="margin-left:auto">📋 テキストでコピー</button>
+        </div>
+      </div>
+      <div id="report-body"><div class="card"><div class="loading-text">読み込み中...</div></div></div>
     </div>
 
     <!-- ===== 予定・予約 ===== -->
@@ -833,7 +859,7 @@ const GAS_READ_FUNCS = new Set([
   'getProfileChangeRequests','getProfileChangePreview','getFinanceSummary','getPlaces','getPriceMaster','getMemberNotices',
   'getNoticeTargets','getNotificationsFor','getTempAttendees','getOperationLog','getStaffMembers','getLotteryData',
   'getAllFreeTickets','getAllHalfPriceTickets','getCancelNoShowStats','getInactiveMembers','getEquipment','getShuttleStock',
-  'getCashLedger','getCashDenominationHistory','getStaffSummaryData','searchMemberProfile'
+  'getUrgentNotice','getMonthlyReport','getCashLedger','getCashDenominationHistory','getStaffSummaryData','searchMemberProfile'
 ]);
 const GAS_CACHE_TTL_MS = 30000;
 const _gasCache = {}, _gasRunning = {};
@@ -885,6 +911,7 @@ async function callGAS(func, ...args){
 
 // ===== 画面切り替え =====
 const VIEW_TITLES = {
+  report: ['月次レポート', '月ごとの参加・会員・収支を自動で集計します'],
   dashboard: ['ダッシュボード', '今日対応すべきことを一覧で確認できます'],
   approval: ['会員承認', '人マスタでステータスが「会員(申請中)」「会員(支払い確認中)」の方を確認・承認します'],
   temp: ['体験者管理', '体験予定の方を検索・確認します'],
@@ -924,7 +951,8 @@ function switchView(view){
   if (view === 'messages') renderMessagesView();
   if (view === 'ticket') renderTicketView();
   if (view === 'price') renderPriceView();
-  if (view === 'notice') renderNoticeView();
+  if (view === 'notice') { renderNoticeView(); loadUrgentAdmin(); }
+  if (view === 'report') initReportView();
   if (view === 'log') renderLogView();
   if (view === 'finance') renderFinanceView();
 }
@@ -2736,6 +2764,101 @@ async function sendChatMessageAdmin(){
     })();
   }, true);
 })();
+
+// ===== 緊急お知らせ ===== 
+async function loadUrgentAdmin(){
+  try{
+    const r=await callGAS('getUrgentNotice');
+    document.getElementById('urgent-input').value=(r&&r.text)||'';
+    document.getElementById('urgent-status').textContent=(r&&r.text)?('現在表示中（'+(r.updatedAt||'')+' 更新）'):'現在は表示していません';
+  }catch(e){document.getElementById('urgent-status').textContent='読み込みに失敗しました';}
+}
+async function saveUrgentAdmin(){
+  const t=document.getElementById('urgent-input').value.trim();
+  if(!t){clearUrgentAdmin();return;}
+  try{await callGAS('setUrgentNotice',t);showToastAdmin('バナーを表示しました');loadUrgentAdmin();}
+  catch(e){alert('保存に失敗しました：'+(e.message||e));}
+}
+async function clearUrgentAdmin(){
+  try{await callGAS('setUrgentNotice','');document.getElementById('urgent-input').value='';showToastAdmin('バナーを消しました');loadUrgentAdmin();}
+  catch(e){alert('保存に失敗しました：'+(e.message||e));}
+}
+// ===== 月次レポート =====
+let _reportData=null;
+function _ymNow(){const d=new Date(Date.now()+9*3600000);return d.toISOString().slice(0,7);}
+function initReportView(){
+  const el=document.getElementById('report-month');
+  if(!el.value)el.value=_ymNow();
+  loadReport();
+}
+function reportShift(n){
+  const el=document.getElementById('report-month');
+  const [y,m]=(el.value||_ymNow()).split('-').map(Number);
+  const d=new Date(y,m-1+n,1);
+  el.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  loadReport();
+}
+async function loadReport(){
+  const ym=document.getElementById('report-month').value||_ymNow();
+  const body=document.getElementById('report-body');
+  body.innerHTML='<div class="card"><div class="loading-text">集計中...</div></div>';
+  try{
+    const r=await callGAS('getMonthlyReport',ym.replace('-','/'));
+    _reportData=_normReport(r);renderReport(r);
+  }catch(e){body.innerHTML='<div class="card"><div class="loading-text">集計に失敗しました：'+escapeHtmlR(e.message||e)+'</div></div>';}
+}
+function escapeHtmlR(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function _yenR(n){return (Number(n)||0).toLocaleString()+'円';}
+function _kvTable(obj,fmt){
+  const ks=Object.keys(obj||{});
+  if(!ks.length)return '<div style="color:var(--ink-faint);font-size:12.5px">データなし</div>';
+  return '<table style="width:100%;border-collapse:collapse;font-size:13px">'+ks.sort((a,b)=>(obj[b]||0)-(obj[a]||0)).map(k=>'<tr><td style="padding:6px 0;border-bottom:1px solid var(--line)">'+escapeHtmlR(k)+'</td><td style="padding:6px 0;border-bottom:1px solid var(--line);text-align:right;font-weight:700">'+fmt(obj[k])+'</td></tr>').join('')+'</table>';
+}
+function _asObj(x){
+  if(Array.isArray(x)){const o={};x.forEach(i=>{o[i.name]=i.value;});return o;}
+  return x||{};
+}
+function _normReport(r){
+  const o=Object.assign({},r);
+  ['bySport','byType','feeByMethod','joinedByType','incomeBy','expenseBy'].forEach(k=>{o[k]=_asObj(r[k]);});
+  const mn=r.membersNow;
+  o.membersNowByType=_asObj(mn);
+  o.membersNow=Array.isArray(mn)?mn.reduce((a,i)=>a+(Number(i.value)||0),0):(Number(mn)||0);
+  return o;
+}
+function renderReport(r){
+  r=_normReport(r);
+  const stat=(l,v,u,foot)=>'<div class="stat-card" style="cursor:default"><div class="stat-card-label">'+l+'</div><div class="stat-card-value">'+v+'<span class="unit">'+(u||'')+'</span></div>'+(foot?'<div class="stat-card-foot">'+foot+'</div>':'')+'</div>';
+  const n=x=>(Number(x)||0).toLocaleString();
+  let h='<div class="stat-grid">'+
+    stat('開催回数',n(r.sessions),'回')+
+    stat('延べ参加者',n(r.totalVisits),'人','平均 '+(r.avgPerSession||0)+'人 / 回')+
+    stat('参加した人数',n(r.uniquePeople),'人','実人数')+
+    stat('新規体験',n(r.newTrials),'人')+
+    stat('新規入会',n(r.newJoined),'人','現在の会員 '+n(r.membersNow)+'人')+
+    stat('参加費の合計',n(r.feeTotal),'円')+
+    stat('収入',n(r.income),'円')+
+    stat('収支',(r.balance>=0?'+':'')+n(r.balance),'円','支出 '+n(r.expense)+'円')+
+  '</div>';
+  const card=(t,inner)=>'<div class="card"><div class="card-title"><div class="dot"></div>'+t+'</div>'+inner+'</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">'+
+    card('種目別の延べ参加',_kvTable(r.bySport,v=>n(v)+'人'))+
+    card('会員種別の延べ参加',_kvTable(r.byType,v=>n(v)+'人'))+
+    card('参加費の受け取り方法',_kvTable(r.feeByMethod,v=>_yenR(v)))+
+    card('新規入会の種別',_kvTable(r.joinedByType,v=>n(v)+'人'))+
+    card('現在の会員（種別ごと）',_kvTable(r.membersNowByType,v=>n(v)+'人'))+
+    card('収入の内訳',_kvTable(r.incomeBy,v=>_yenR(v)))+
+    card('支出の内訳',_kvTable(r.expenseBy,v=>_yenR(v)))+
+  '</div>';
+  document.getElementById('report-body').innerHTML=h;
+}
+function copyReport(){
+  const r=_reportData;if(!r)return;
+  const n=x=>(Number(x)||0).toLocaleString();
+  const kv=(o,f)=>Object.keys(o||{}).map(k=>'  '+k+'：'+f(o[k])).join('\n')||'  なし';
+  const t='【'+r.month+' 月次レポート】\n開催 '+r.sessions+'回 ／ 延べ '+n(r.totalVisits)+'人（平均 '+(r.avgPerSession||0)+'人）／ 実人数 '+n(r.uniquePeople)+'人\n新規体験 '+n(r.newTrials)+'人 ／ 新規入会 '+n(r.newJoined)+'人 ／ 会員 '+n(r.membersNow)+'人\n\n■種目別\n'+kv(r.bySport,v=>n(v)+'人')+'\n■会員種別\n'+kv(r.byType,v=>n(v)+'人')+'\n■参加費 '+n(r.feeTotal)+'円\n'+kv(r.feeByMethod,_yenR)+'\n■収支\n  収入 '+n(r.income)+'円 ／ 支出 '+n(r.expense)+'円 ／ 差引 '+n(r.balance)+'円';
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>showToastAdmin('コピーしました')).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();showToastAdmin('コピーしました');});
+}
 </script>
 </body>
 </html>
