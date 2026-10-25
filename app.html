@@ -222,6 +222,18 @@ body.sporolog-page .wrapper{padding-top:0}
 .imo-hot .imo-emoji{ text-shadow:0 0 8px rgba(255,210,140,0.75); }
 @keyframes imoHaloPulse{0%,100%{transform:scale(0.94);opacity:.8}50%{transform:scale(1.05);opacity:1}}
 .imo-ms{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);white-space:nowrap;font-size:8.5px;font-weight:900;color:#FFB65C;letter-spacing:.01em;z-index:2}
+
+/* ===== ヘッダーのベル（運営からの通知）＆利用規約 ===== */
+.header-bell{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top,0px));width:42px;height:42px;border:none;border-radius:50%;background:#f0f4f8;display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 1px 4px rgba(26,58,92,0.12)}
+.header-bell.show{display:flex}
+.header-bell svg{width:22px;height:22px}
+.header-bell-badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e53935;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;border:2px solid #fff;box-sizing:content-box;display:none}
+.terms-link{display:block;text-align:center;margin-top:14px;font-size:12.5px;color:#7a8aa0;text-decoration:underline;cursor:pointer;background:none;border:none;width:100%}
+.line-contact-btn{display:flex;align-items:center;gap:12px;background:#06C755;color:#fff;border-radius:14px;padding:12px 16px;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+.terms-h{font-size:15px;font-weight:800;color:#1a1a2e;margin:22px 0 6px}
+.terms-p{font-size:13.5px;line-height:1.9;color:#444}
+.terms-p li{margin-left:1.3em;margin-bottom:2px}
+.terms-tbd{background:#fff3cd;color:#8a6500;font-weight:700;border-radius:4px;padding:0 4px;font-size:12px}
 </style>
 </head>
 <body>
@@ -236,6 +248,10 @@ body.sporolog-page .wrapper{padding-top:0}
   <img src="bukatsu-logo.png" alt="カシワのBUKATSU">
   <p id="today-info">読み込み中...</p>
   <div id="app-version" class="header-ver"></div>
+  <button class="header-bell" id="header-bell" onclick="openMessageList()" aria-label="運営からの通知" data-no-lock>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    <span class="header-bell-badge" id="header-bell-badge"></span>
+  </button>
 </div>
 
 <div class="tabs">
@@ -305,6 +321,7 @@ body.sporolog-page .wrapper{padding-top:0}
   <div class="card" style="text-align:center">
     <a href="https://kashiwano-bukatsu.github.io/" target="_blank" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none">公式サイトを見る</a>
   </div>
+  <button class="terms-link" onclick="openTerms()" data-no-lock style="margin-top:4px">利用規約</button>
   <div style="text-align:center;padding:8px 0 16px;color:#bbb;font-size:11px">一般社団法人みんなのBUKATSU</div>
 </div>
 
@@ -326,6 +343,7 @@ body.sporolog-page .wrapper{padding-top:0}
         <div style="font-size:12px;font-weight:400;color:#888;margin-top:4px">はじめての方</div>
       </button>
     </div>
+    <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約</button>
   </div>
 
   <!-- ログイン済み -->
@@ -403,9 +421,13 @@ body.sporolog-page .wrapper{padding-top:0}
 
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>問い合わせはこちら</div>
-      <div style="display:flex;gap:12px">
-        <button onclick="openMessageList()" style="flex:1;text-align:center;background:#f0f4ff;border:1.5px solid rgba(26,58,92,0.15);border-radius:14px;padding:16px;cursor:pointer"><div style="font-size:32px;margin-bottom:6px">🔔</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">運営からの通知</div><div style="font-size:11px;color:#888;margin-top:2px">個別のお知らせ</div></button>
-        <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="flex:1;text-align:center;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:16px;text-decoration:none"><div style="font-size:32px;margin-bottom:6px">📢</div><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></a>
+      <a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn">
+        <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.2 1.1 1 .6s6.3-3.7 8.6-6.3c1.6-1.7 2.4-3.5 2.4-5.5 0-5.5-5.6-9.3-12.5-9.3z"/><text x="20" y="22" font-size="7.5" font-weight="900" font-family="Arial,sans-serif" fill="#fff" text-anchor="middle">LINE</text></svg>
+        <div style="flex:1"><div style="font-size:15px;font-weight:800">代表にLINEで連絡する</div><div style="font-size:11.5px;opacity:0.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div>
+        <div style="font-size:20px">›</div>
+      </a>
+      <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></div><div style="font-size:18px;color:#aaa">›</div></a>
+      <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約を見る</button>
       </div>
     </div>
   </div>
@@ -425,8 +447,8 @@ body.sporolog-page .wrapper{padding-top:0}
 
     <div id="sporolog-visitor-note" style="display:none;text-align:center;padding:30px 16px">
       <div style="font-size:28px">🔒</div>
-      <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.75);margin-top:8px">スポログは会員限定機能です</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px">本会員登録でご利用いただけます</div>
+      <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.75);margin-top:8px">カシワのBUKATSU会員限定機能</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px">カシワのBUKATSU会員になるとご利用いただけます</div>
     </div>
 
     <div id="sporolog-card">
@@ -645,6 +667,112 @@ body.sporolog-page .wrapper{padding-top:0}
       <div id="settings-family-requests"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- 利用規約フルページ -->
+<div id="section-terms" style="display:none;position:fixed;inset:0;background:#f0f4f8;z-index:5000;overflow-y:auto;">
+  <div style="background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1">
+    <button onclick="closeTerms()" data-no-lock style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">← 戻る</button>
+    <div style="font-size:18px;font-weight:800">利用規約</div>
+  </div>
+  <div style="padding:16px;max-width:600px;margin:0 auto;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))">
+    <div class="card" style="padding:22px 20px">
+      <div style="font-size:12px;color:#888;line-height:1.8">カシワのBUKATSU 利用規約<br>制定日：2026年10月22日</div>
+      <div class="terms-p" style="margin-top:10px">この規約は、カシワのBUKATSU（以下「当部活」）の活動への参加、および当部活の会員アプリ（以下「本アプリ」）の利用について定めるものです。参加・利用された方は、この規約に同意したものとみなします。</div>
+
+      <div class="terms-h">第1条（会員区分）</div>
+      <div class="terms-p">会員区分は次のとおりです。料金・特典の詳細は、本アプリ内の各プランの「詳細」をご確認ください。
+        <ul style="margin-top:6px">
+          <li>ビジター会員</li>
+          <li>カシワのBUKATSU会員</li>
+          <li>ファミリー会員</li>
+          <li>みんなのBUKATSU会員</li>
+          <li>応援団</li>
+        </ul>
+        会員区分の変更は、本アプリからの申請と事務局の承認により行います。</div>
+
+      <div class="terms-h">第2条（参加費・回数券・お支払い）</div>
+      <div class="terms-p">
+        <ul>
+          <li>参加費・入会金・回数券の金額は、会員区分ごとに本アプリ内に表示されたものとします。</li>
+          <li>お支払いは、原則として当日、運営スタッフへの現金払いとします。</li>
+          <li>回数券（11枚セット）に有効期限はありません。</li>
+          <li>お支払い済みの入会金・回数券・参加費は、退会時を含め、原則として返金できません。</li>
+          <li>金額は事前にお知らせのうえ変更することがあります。</li>
+        </ul></div>
+
+      <div class="terms-h">第3条（予約・キャンセル）</div>
+      <div class="terms-p">
+        <ul>
+          <li>参加は、本アプリでの予約が基本です。参加ステータス（⭕参加／△未定／❌不参加）は、予定が変わったら早めに更新してください。</li>
+          <li>参加できなくなった場合は、本アプリから予約をキャンセルしてください。<span class="terms-tbd">【要確認】キャンセルの期限・無断欠席時の扱い</span></li>
+          <li>定員を超えた場合は、次の優先順位で参加が確定し、同じ順位の中では予約が早い順になります。超えた分はキャンセル待ちとなります。<br>
+            ① 運営・代表・部長・本部<br>
+            ② カシワのBUKATSU会員・ファミリー会員・応援団<br>
+            ③ 新規の体験参加<br>
+            ④ みんなのBUKATSU会員<br>
+            ⑤ ビジター会員</li>
+          <li>「練習日」は、会員区分による優先順位を設けず申込順とします。ビジター会員・体験参加の方は参加できません。回数券・無料チケット・200円引きチケットは使えません。参加人数が少ない場合は、開催を中止することがあります。</li>
+          <li>体育館の確保状況や天候などにより、開催内容を変更・中止することがあります。</li>
+        </ul></div>
+
+      <div class="terms-h">第4条（体験参加）</div>
+      <div class="terms-p">カシワのBUKATSU会員などが利用できる「体験参加」は、まだ参加したことのない種目に対し、1種目につき1回までです。対象となる種目・条件は、本アプリの表示に従います。</div>
+
+      <div class="terms-h">第5条（スポログ・チケット）</div>
+      <div class="terms-p">
+        <ul>
+          <li>スポログは、参加の記録に応じて特典を得られる仕組みです。現金での参加が5回に達すると200円引きチケット、10回に達すると無料チケットが付与されます。</li>
+          <li>ビジター・体験での参加はカウントされません。ビジター会員から会員に切り替わった場合は、切り替わり以降の参加が対象です。</li>
+          <li>同じ日・同じ種目の記録が重複した場合は、1回として数えます。練習日の参加は0.5回として数えます。</li>
+          <li>チケットは、運営スタッフの確認のうえで使用します。他人への譲渡、換金はできません。</li>
+          <li>ご不明な点や記録の誤りがあれば、運営までご連絡ください。内容を確認のうえ修正します。</li>
+          <li>特典の内容・条件は、お知らせのうえ変更することがあります。</li>
+        </ul></div>
+
+      <div class="terms-h">第6条（ファミリー会員）</div>
+      <div class="terms-p">ファミリーのひも付けは、代表者の申請と事務局の承認により行います。ひも付けられた方は、予約・キャンセル・参加ステータスの変更をまとめて行えます。ご家族の紹介は、紹介ボーナスの対象外です。</div>
+
+      <div class="terms-h">第7条（禁止事項）</div>
+      <div class="terms-p">次の行為は禁止します。
+        <ul style="margin-top:6px">
+          <li>他の参加者への、ネットワークビジネス（MLM）・宗教・その他の勧誘行為</li>
+          <li>他の参加者や運営スタッフ、体育館の利用者への迷惑行為、誹謗中傷、暴力的な言動</li>
+          <li>体育館や施設の利用ルールに反する行為、備品の乱暴な扱い</li>
+          <li>本アプリの不正な利用（他人のアカウントの使用、虚偽の登録、記録の改ざんなど）</li>
+          <li>その他、当部活の運営を妨げる行為</li>
+        </ul>
+        上記に当たる場合、運営の判断で、参加のお断りまたは退会としていただくことがあります。特に勧誘行為が確認された場合は、即時退会となります。</div>
+
+      <div class="terms-h">第8条（ケガ・事故）</div>
+      <div class="terms-p">活動中のケガや事故について、運営は応急処置に努めますが、損害についての責任は負いかねます。体調に不安のある方は、無理をせず参加を控えてください。また、会場の物を壊した場合は、原因となった方に弁償をお願いすることがあります。</div>
+
+      <div class="terms-h">第9条（個人情報の取り扱い）</div>
+      <div class="terms-p">収集した個人情報は、出席確認・緊急連絡・参加履歴の管理・スケジュールの連絡・紹介制度の運用の目的にのみ使用します。法令に基づく場合を除き、第三者へ提供しません。</div>
+
+      <div class="terms-h">第10条（未成年の方）</div>
+      <div class="terms-p">18歳未満の方が登録・参加する場合は、保護者の同意が必要です。登録時に、緊急連絡先と保護者の同意をご確認いただきます。</div>
+
+      <div class="terms-h">第11条（写真・動画の撮影）</div>
+      <div class="terms-p">活動の様子を、記録やSNS・活動記録動画などで公開するために撮影することがあります。<span class="terms-tbd">【要確認】撮影・掲載の扱い（NGの方への対応など）</span></div>
+
+      <div class="terms-h">第12条（退会）</div>
+      <div class="terms-p">退会を希望される方は、第13条の窓口からご連絡ください。退会後の返金については、第2条のとおりです。</div>
+
+      <div class="terms-h">第13条（お問い合わせ）</div>
+      <div class="terms-p">本規約や活動に関するご質問は、マイページの「問い合わせはこちら」から、代表へLINEでご連絡ください。</div>
+
+      <div class="terms-h">第14条（規約の変更）</div>
+      <div class="terms-p">この規約は、必要に応じて変更することがあります。変更後の規約は、本アプリに掲載した時点から効力を持ちます。</div>
+
+      <div style="margin-top:24px;padding-top:14px;border-top:1px solid #f0f4f8;font-size:12px;color:#aaa;text-align:center;line-height:1.8">カシワのBUKATSU 運営事務局<br>一般社団法人みんなのBUKATSU</div>
+    </div>
+    <a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn" style="margin-top:4px">
+      <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.2 1.1 1 .6s6.3-3.7 8.6-6.3c1.6-1.7 2.4-3.5 2.4-5.5 0-5.5-5.6-9.3-12.5-9.3z"/><text x="20" y="22" font-size="7.5" font-weight="900" font-family="Arial,sans-serif" fill="#fff" text-anchor="middle">LINE</text></svg>
+      <div style="flex:1"><div style="font-size:14px;font-weight:800">規約について代表に連絡する</div><div style="font-size:11px;opacity:0.9;margin-top:2px">公式LINE</div></div>
+      <div style="font-size:20px">›</div>
+    </a>
   </div>
 </div>
 
@@ -1586,7 +1714,7 @@ async function loadMypageData(checkNotice,updateRankCache){
         '<div style="text-align:center;padding:8px 0"><div class="prep-spinner" style="border-color:rgba(255,255,255,0.15);border-top-color:#FFD93D"></div><div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7)">準備中です</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px">事務局の確認が完了するとご利用いただけます</div></div>';
     } else if(mypageCurrentUser.isPendingPayment){
       document.getElementById('mypage-progress-area').innerHTML=
-        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px">🔒</div><div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7);margin-top:6px">会員限定コンテンツ</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px">入会費のお支払い確認後、スポログ機能が解放されます</div></div>';
+        '<div style="text-align:center;padding:8px 0"><div style="font-size:28px">🔒</div><div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7);margin-top:6px">カシワのBUKATSU会員限定機能</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px">入会費のお支払い確認後、スポログ機能が解放されます</div></div>';
     } else if(isMaxed){
       renderMaxedUI();
       if(shouldShowSporlogAnim(10,lap)) playSporlogAnim('achievement10.mp4', ()=>{});
@@ -1598,6 +1726,7 @@ async function loadMypageData(checkNotice,updateRankCache){
     const c=d.unreadCount||0;
     const b=document.getElementById('mypage-message-banner');
     if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}
+    setBellBadge(c);
     // 申請中チケットカード
     const hasPT=d.pendingTickets&&d.pendingTickets.length>0;
     const ptCard=document.getElementById('mypage-ticket-pending-card');
@@ -3093,7 +3222,7 @@ async function loadMemberChatMessages(){
       el.scrollTop=0;
       // 既読にする（待たずに裏で）。バナーも消す
       if(list.some(m=>!m.read)){
-        callGAS('markMyNotificationsRead',mypageCurrentUser.fullname).then(()=>{const b=document.getElementById('mypage-message-banner');if(b)b.style.display='none';}).catch(()=>{});
+        callGAS('markMyNotificationsRead',mypageCurrentUser.fullname).then(()=>{const b=document.getElementById('mypage-message-banner');if(b)b.style.display='none';setBellBadge(0);}).catch(()=>{});
       }
     }
   }catch(e){
@@ -3111,7 +3240,7 @@ function closeMemberChat(){
 
 async function refreshMessageBanner(){
   if(!mypageCurrentUser)return;
-  try{const c=await callGAS('getNotificationUnreadCount',mypageCurrentUser.fullname);const b=document.getElementById('mypage-message-banner');if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}}catch(e){}
+  try{const c=await callGAS('getNotificationUnreadCount',mypageCurrentUser.fullname);const b=document.getElementById('mypage-message-banner');if(b){b.style.display=c>0?'block':'none';if(c>0)document.getElementById('mypage-message-banner-count').textContent='未読 '+c+'件';}setBellBadge(c);}catch(e){}
 }
 
 // ===== スポログ・ランク情報 =====
@@ -4203,5 +4332,39 @@ if (_headerLogoImg) _headerLogoImg.addEventListener('load', adjustHeaderOffset);
   }, true);
 })();
 </script>
+<script>
+// ===== ヘッダーのベル（運営からの通知）・利用規約 =====
+function setBellBadge(c){
+  const badge=document.getElementById('header-bell-badge');
+  if(!badge)return;
+  c=Number(c)||0;
+  if(c>0){badge.textContent=c>99?'99+':String(c);badge.style.display='block';}
+  else{badge.style.display='none';}
+}
+function updateBellVisibility(){
+  const bell=document.getElementById('header-bell');
+  if(!bell)return;
+  const on=!!mypageCurrentUser;
+  bell.classList.toggle('show',on);
+  if(!on)setBellBadge(0);
+}
+(function(){
+  const _prev=updateTabVisibility;
+  updateTabVisibility=function(){_prev();updateBellVisibility();};
+})();
+function openTerms(){
+  const el=document.getElementById('section-terms');
+  if(!el)return;
+  el.style.display='block';
+  el.scrollTop=0;
+  document.body.style.overflow='hidden';
+}
+function closeTerms(){
+  const el=document.getElementById('section-terms');
+  if(el)el.style.display='none';
+  document.body.style.overflow='';
+}
+</script>
+
 </body>
 </html>
