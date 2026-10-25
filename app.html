@@ -228,6 +228,7 @@ body.sporolog-page .wrapper{padding-top:0}
 .header-bell.show{display:flex}
 .header-bell svg{width:22px;height:22px}
 .header-bell-badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e53935;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;border:2px solid #fff;box-sizing:content-box;display:none}
+.guide-row{display:flex;align-items:center;gap:10px;background:#f0f4f8;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;font-family:inherit}
 .terms-link{display:block;text-align:center;margin-top:14px;font-size:12.5px;color:#7a8aa0;text-decoration:underline;cursor:pointer;background:none;border:none;width:100%}
 .line-contact-btn{display:flex;align-items:center;gap:12px;background:#06C755;color:#fff;border-radius:14px;padding:12px 16px;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
 .terms-h{font-size:15px;font-weight:800;color:#1a1a2e;margin:22px 0 6px}
@@ -417,6 +418,7 @@ body.sporolog-page .wrapper{padding-top:0}
         </div>
         <div style="font-size:20px;color:#c8a415">›</div>
       </div>
+      <div id="sporolog-ticket-btns" style="display:none;margin-top:12px" onclick="event.stopPropagation()"></div>
     </div>
     <!-- 活動記録 -->
     <div id="videos-card" class="card" style="display:none">
@@ -425,20 +427,26 @@ body.sporolog-page .wrapper{padding-top:0}
     </div>
 
     <div class="card">
-      <div class="card-title"><div class="card-title-dot"></div>問い合わせはこちら</div>
+      <div class="card-title"><div class="card-title-dot"></div>つながる・問い合わせ</div>
       <a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn">
         <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.2 1.1 1 .6s6.3-3.7 8.6-6.3c1.6-1.7 2.4-3.5 2.4-5.5 0-5.5-5.6-9.3-12.5-9.3z"/><text x="20" y="22" font-size="7.5" font-weight="900" font-family="Arial,sans-serif" fill="#fff" text-anchor="middle">LINE</text></svg>
         <div style="flex:1"><div style="font-size:15px;font-weight:800">代表にLINEで連絡する</div><div style="font-size:11.5px;opacity:0.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div>
         <div style="font-size:20px">›</div>
       </a>
-      <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></div><div style="font-size:18px;color:#aaa">›</div></a>
-      <div style="margin-top:14px;display:grid;grid-template-columns:1fr;gap:8px">
-        <button onclick="openInfoPage('access')" data-no-lock style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left"><span style="font-size:22px">📍</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">体育館へのアクセス・当日の流れ</span><span style="color:#aaa">›</span></button>
-        <button onclick="openInfoPage('pricing')" data-no-lock style="display:flex;align-items:center;gap:10px;background:#f0f4f8;border:none;border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left"><span style="font-size:22px">💴</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">料金・プランとお見積もり</span><span style="color:#aaa">›</span></button>
+      <div id="openchat-list">
+        <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></div><div style="font-size:18px;color:#aaa">›</div></a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>ご案内</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px">
+        <button onclick="openInfoPage('access')" data-no-lock class="guide-row"><span style="font-size:22px">📍</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">体育館へのアクセス・当日の流れ</span><span style="color:#aaa">›</span></button>
+        <button onclick="openInfoPage('pricing')" data-no-lock class="guide-row"><span style="font-size:22px">💴</span><span style="flex:1;font-size:14px;font-weight:700;color:#1a1a2e">料金プラン・おトク比較・お見積もり</span><span style="color:#aaa">›</span></button>
       </div>
       <button class="terms-link" onclick="openTerms()" data-no-lock>利用規約を見る</button>
       <button class="terms-link" onclick="openInfoPage('company')" data-no-lock style="margin-top:4px">運営者情報・プライバシーポリシー</button>
-      </div>
+</div>
     </div>
   </div>
 </div>
@@ -1164,7 +1172,7 @@ const GAS_READ_FUNCS=new Set([
   'loginAttendee','getMemberDashboard','getReceptionHomeData','getUpcomingSchedules','getReserveTabData',
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
-  'getVideoList','getUrgentNotice','getVenueInfo','getReferralSlots','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
+  'getVideoList','getOpenChats','getUrgentNotice','getVenueInfo','getReferralSlots','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
   'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
@@ -1686,6 +1694,7 @@ async function loadMypageData(checkNotice,updateRankCache){
     currentHalfPriceCount=d.halfPriceTicketCount||0;
     const hpBox=document.getElementById('halfprice-stat-box');
     document.getElementById('mypage-halfprice-count').textContent=currentHalfPriceCount+'枚';
+    try{updateSporologTicketButtons();}catch(e){}
     const tb=document.getElementById('ticket-stat-box');
     const rank=d.rank||getMemberRank(d.totalCount);
     if(updateRankCache){
@@ -4576,7 +4585,7 @@ function openInfoPage(key){
     el.innerHTML='<div style="background:linear-gradient(135deg,#2d4a7a,#0f2744);color:#fff;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1"><button onclick="closeInfoPage()" data-no-lock style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;">← 戻る</button><div id="info-title" style="font-size:18px;font-weight:800"></div></div><div style="padding:16px;max-width:600px;margin:0 auto;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))"><div id="info-body"></div></div>';
     document.body.appendChild(el);
   }
-  const titles={company:'運営者情報・プライバシーポリシー',access:'体育館へのアクセス・当日の流れ',pricing:'料金・プランとお見積もり'};
+  const titles={company:'運営者情報・プライバシーポリシー',access:'体育館へのアクセス・当日の流れ',pricing:'料金プラン・おトク比較'};
   _$('info-title').textContent=titles[key]||'ご案内';
   const body=_$('info-body');
   body.innerHTML='<div class="card" style="text-align:center;color:#aaa;padding:30px 0">読み込み中…</div>';
@@ -4669,49 +4678,109 @@ async function _infoAccess(body){
 async function _infoPricing(body){
   let list=[];
   try{list=await getPrices();}catch(e){list=[];}
-  const fp=function(c,t,i){return findPrice(list,c,t,i);};
-  const yen=function(n){return (n==null||isNaN(n))?'—':Number(n).toLocaleString()+'円';};
+  const fp=function(c,t,i,fb){const v=findPrice(list,c,t,i);return v==null?fb:v;};
+  const P={
+    vBB:fp('参加費','ビジター会員','バスケ/バレー',500), vBad:fp('参加費','ビジター会員','バドミントン',700),
+    vTk:fp('回数券','ビジター会員','11枚セット',5000), kTk:fp('回数券','カシワのBUKATSU会員','11枚セット',4000),
+    kJoin:fp('入会金','カシワのBUKATSU会員','共通',3300),
+    f1:fp('入会金','ファミリー会員','1人目',3300), f2:fp('入会金','ファミリー会員','2人目',880), f3:fp('入会金','ファミリー会員','3人目以降',440),
+    fp1:fp('参加費','ファミリー会員','1人目',500), fp2:fp('参加費','ファミリー会員','2人目以降',200), fTk:fp('回数券','ファミリー会員','11枚セット',4000),
+    mBad:fp('参加費','みんなのBUKATSU会員','バドミントン',400), mOth:fp('参加費','みんなのBUKATSU会員','その他',200), mTk:fp('回数券','みんなのBUKATSU会員','11枚セット',4000),
+    mJoin:fp('入会金','みんなのBUKATSU会員','共通',0),
+    oMonth:fp('月額','応援団会員','月払い',null), oHalf:fp('月額','応援団会員','半年一括',null), oJoin:fp('入会金','応援団会員','初回',null)
+  };
+  window._priceP=P;
+  const yen=function(n){return (n==null||isNaN(n))?'—':Math.round(n).toLocaleString()+'円';};
   const row=function(l,v){return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #f4f6f9;font-size:13.5px"><span style="color:#666">'+l+'</span><span style="font-weight:700;color:#1a1a2e;text-align:right">'+v+'</span></div>';};
   const plan=function(name,sub,rows,accent){return '<div class="card" style="padding:16px 18px;border-left:5px solid '+accent+'"><div style="font-size:16px;font-weight:800;color:#1a1a2e">'+name+'</div>'+(sub?'<div style="font-size:12px;color:#888;margin:2px 0 6px">'+sub+'</div>':'')+rows.join('')+'</div>';};
-  const bb=function(t){return yen(fp('参加費',t,'バスケ/バレー'));};
-  const bd=function(t){return yen(fp('参加費',t,'バドミントン'));};
-  const html=
-    '<div style="font-size:12px;color:#888;margin:0 4px 10px">現在の料金です。</div>'+
-    plan('体験参加','はじめての方',[row('参加費（バスケ・バレー）',bb('ビジター会員')),row('参加費（バドミントン）',bd('ビジター会員')),row('入会金','なし')],'#9aa8b8')+
-    plan('ビジター会員','まずは気軽に参加したい方',[row('入会金',yen(fp('入会金','ビジター会員','共通'))),row('参加費（バスケ・バレー）',bb('ビジター会員')),row('参加費（バドミントン）',bd('ビジター会員')),row('回数券（11枚）',yen(fp('回数券','ビジター会員','11枚セット')))],'#7aa7d9')+
-    plan('カシワのBUKATSU会員','しっかり続けたい方',[row('入会金',yen(fp('入会金','カシワのBUKATSU会員','共通'))),row('参加費（バスケ・バレー）',bb('カシワのBUKATSU会員')),row('参加費（バドミントン）',bd('カシワのBUKATSU会員')),row('回数券（11枚）',yen(fp('回数券','カシワのBUKATSU会員','11枚セット'))),row('特典','他種目の体験無料・スポログ・活動記録動画')],'#1a3a5c')+
-    plan('ファミリー会員','ご家族でまとめて',[row('入会金（1人目）',yen(fp('入会金','ファミリー会員','1人目'))),row('入会金（2人目）',yen(fp('入会金','ファミリー会員','2人目'))),row('入会金（3人目以降）',yen(fp('入会金','ファミリー会員','3人目以降'))),row('参加費（1人目）',yen(fp('参加費','ファミリー会員','1人目'))),row('参加費（2人目以降）',yen(fp('参加費','ファミリー会員','2人目以降'))),row('回数券（11枚）',yen(fp('回数券','ファミリー会員','11枚セット'))+'<br><span style="font-size:11px;color:#888;font-weight:400">家族でシェアできます</span>')],'#e9a23b')+
-    plan('みんなのBUKATSU会員','',[row('入会金',yen(fp('入会金','みんなのBUKATSU会員','共通'))),row('参加費（バドミントン）',yen(fp('参加費','みんなのBUKATSU会員','バドミントン'))),row('参加費（その他）',yen(fp('参加費','みんなのBUKATSU会員','その他'))),row('回数券（11枚）',yen(fp('回数券','みんなのBUKATSU会員','11枚セット')))],'#8fbf8f')+
-    plan('応援団会員','',[row('入会金（初回）',yen(fp('入会金','応援団会員','初回'))),row('月額（月払い）',yen(fp('月額','応援団会員','月払い'))),row('月額（半年一括）',yen(fp('月額','応援団会員','半年一括'))),row('参加費','月額に含む')],'#c39bd3')+
-    '<div class="card" style="padding:18px"><div style="font-size:16px;font-weight:800;color:#1a1a2e;margin-bottom:4px">👨‍👩‍👧 ファミリーおトク計算</div>'+
-    '<div style="font-size:12px;color:#888;margin-bottom:10px">ビジター会員のままの場合と、ファミリー会員になった場合を比べます（バスケ・バレー、全員そろって参加した場合）。</div>'+
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:#1a3a5c">ご家族の人数</span><select id="famsim-n" onchange="famSimUpdate()" style="padding:8px 12px;border:1.5px solid #cfd8e3;border-radius:10px;font-size:15px;font-weight:700;color:#1a3a5c;background:#fff">'+[2,3,4,5,6].map(function(n){return '<option value="'+n+'"'+(n===4?' selected':'')+'>'+n+'人</option>';}).join('')+'</select></div>'+
-    '<div id="famsim-out"></div></div>';
-  body.innerHTML=html;
-  window._famSimPrices={f1:fp('入会金','ファミリー会員','1人目'),f2:fp('入会金','ファミリー会員','2人目'),f3:fp('入会金','ファミリー会員','3人目以降'),p1:fp('参加費','ファミリー会員','1人目'),p2:fp('参加費','ファミリー会員','2人目以降'),v:fp('参加費','ビジター会員','バスケ/バレー')};
-  famSimUpdate();
+  // 1回あたり比較（バスケ・バレー）
+  const per=[
+    {n:'ビジター（現金）',v:P.vBB,c:'#9aa8b8'},
+    {n:'ビジター（回数券）',v:P.vTk/11,c:'#7aa7d9'},
+    {n:'カシワ会員（回数券）',v:P.kTk/11,c:'#1a3a5c',best:true},
+    {n:'ファミリー 2人目以降（現金）',v:P.fp2,c:'#e9a23b'}
+  ];
+  const mx=Math.max.apply(null,per.map(function(x){return x.v;}));
+  const bars=per.map(function(x){return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px"><span style="font-weight:700;color:#1a1a2e">'+x.n+(x.best?' <span style="font-size:10px;background:#ffd27a;color:#6b4300;border-radius:6px;padding:1px 6px;margin-left:4px">おトク</span>':'')+'</span><span style="font-weight:800;color:'+x.c+'">約'+yen(x.v)+'</span></div><div style="height:10px;background:#eef1f5;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+Math.max(8,Math.round(x.v/mx*100))+'%;background:'+x.c+';border-radius:6px"></div></div></div>';}).join('');
+  const save=P.vBB-P.kTk/11;
+  const hero='<div class="card" style="padding:18px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff"><div style="font-size:12px;color:#ffd27a;font-weight:800;letter-spacing:.06em">とってもおトク</div><div style="font-size:19px;font-weight:800;margin:4px 0 8px;line-height:1.4">続けるほど、<br>1回あたりの参加費が安くなります</div><div style="font-size:12.5px;opacity:.9;line-height:1.7">回数券（11枚）はカシワ会員なら '+yen(P.kTk)+'。現金500円で参加するより、1回あたり約'+yen(save)+'おトク。回数券に有効期限はありません。</div></div>'+
+    '<div class="card" style="padding:18px"><div style="font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:12px">1回あたりの参加費（バスケ・バレー）</div>'+bars+'</div>';
+  const plans=
+    plan('体験参加','はじめての方',[row('参加費（バスケ・バレー）',yen(P.vBB)),row('参加費（バドミントン）',yen(P.vBad)),row('入会金','なし')],'#9aa8b8')+
+    plan('ビジター会員','まずは気軽に参加したい方',[row('入会金',yen(fp('入会金','ビジター会員','共通',0))),row('参加費（バスケ・バレー）',yen(P.vBB)),row('参加費（バドミントン）',yen(P.vBad)),row('回数券（11枚）',yen(P.vTk))],'#7aa7d9')+
+    plan('カシワのBUKATSU会員','しっかり続けたい方',[row('入会金',yen(P.kJoin)),row('参加費（バスケ・バレー）',yen(P.vBB)),row('参加費（バドミントン）',yen(P.vBad)),row('回数券（11枚）',yen(P.kTk)+'<br><span style="font-size:11px;color:#c4741a;font-weight:700">ビジターより '+yen(P.vTk-P.kTk)+' おトク</span>'),row('特典','他種目の体験無料・スポログ・活動記録動画')],'#1a3a5c')+
+    plan('ファミリー会員','ご家族でまとめて',[row('入会金（1人目）',yen(P.f1)),row('入会金（2人目）',yen(P.f2)),row('入会金（3人目以降）',yen(P.f3)),row('参加費（1人目）',yen(P.fp1)),row('参加費（2人目以降）',yen(P.fp2)+'<br><span style="font-size:11px;color:#c4741a;font-weight:700">2人目からは大幅おトク</span>'),row('回数券（11枚）',yen(P.fTk)+'<br><span style="font-size:11px;color:#888;font-weight:400">家族でシェアできます</span>')],'#e9a23b')+
+    plan('みんなのBUKATSU会員','',[row('入会金',P.mJoin?yen(P.mJoin):'無料（八千代BUKATSU入会済の方）'),row('参加費（バドミントン）',yen(P.mBad)),row('参加費（その他）',yen(P.mOth)),row('回数券（11枚）',yen(P.mTk))],'#8fbf8f')+
+    (P.oMonth!=null?plan('応援団会員','',[row('入会金（初回）',yen(P.oJoin)),row('月額（月払い）',yen(P.oMonth)),row('月額（半年一括）',yen(P.oHalf)),row('参加費','月額に含む')],'#c39bd3'):'');
+  const sel=function(id,opts,def){return '<select id="'+id+'" onchange="priceEstUpdate()" style="padding:8px 12px;border:1.5px solid #cfd8e3;border-radius:10px;font-size:15px;font-weight:700;color:#1a3a5c;background:#fff">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===def?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';};
+  const est='<div class="card" style="padding:18px"><div style="font-size:16px;font-weight:800;color:#1a1a2e;margin-bottom:4px">🧮 かんたんお見積もり（1年間）</div>'+
+    '<div style="font-size:12px;color:#888;margin-bottom:12px">人数と参加ペースを選ぶと、どのプランがいちばんおトクか分かります。</div>'+
+    '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:center;margin-bottom:14px">'+
+      '<span style="font-size:13px;font-weight:700;color:#1a3a5c">人数</span>'+sel('est-n',[1,2,3,4,5,6].map(function(n){return [String(n),n+'人'];}),'1')+
+      '<span style="font-size:13px;font-weight:700;color:#1a3a5c">1人の月の参加回数</span>'+sel('est-v',[1,2,3,4,6,8].map(function(n){return [String(n),'月'+n+'回'];}),'4')+
+      '<span style="font-size:13px;font-weight:700;color:#1a3a5c">種目</span>'+sel('est-s',[['bb','バスケ・バレー'],['bad','バドミントン']],'bb')+
+    '</div><div id="est-out"></div></div>';
+  body.innerHTML=hero+plans+est;
+  priceEstUpdate();
 }
-function famSimUpdate(){
-  const o=_$('famsim-out'),sel=_$('famsim-n'),p=window._famSimPrices;
-  if(!o||!sel||!p)return;
-  const n=parseInt(sel.value,10);
-  if([p.f1,p.f2,p.f3,p.p1,p.p2,p.v].some(function(x){return x==null;})){o.innerHTML='<div class="empty">料金を読み込めませんでした</div>';return;}
-  const join=p.f1+(n>=2?p.f2:0)+Math.max(0,n-2)*p.f3;
-  const fam=p.p1+(n-1)*p.p2;
-  const vis=n*p.v;
-  const save=vis-fam;
-  const yen=function(x){return Number(x).toLocaleString()+'円';};
-  let h='<div style="background:#f1f5fa;border-radius:12px;padding:12px 14px;margin-bottom:10px"><div style="font-size:12px;color:#888;font-weight:700">入会金の合計（はじめの1回だけ）</div><div style="font-size:22px;font-weight:800;color:#1a3a5c">'+yen(join)+'</div><div style="font-size:11.5px;color:#888;margin-top:2px">'+yen(p.f1)+(n>=2?' ＋ '+yen(p.f2):'')+(n>=3?' ＋ '+yen(p.f3)+(n>3?' × '+(n-2):''):'')+'</div></div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="border:1.5px solid #d5dde8;border-radius:12px;padding:10px 12px"><div style="font-size:11px;color:#888;font-weight:700">ビジターのまま（1回）</div><div style="font-size:18px;font-weight:800">'+yen(vis)+'</div></div><div style="border:1.5px solid #e9a23b;background:#fff9ee;border-radius:12px;padding:10px 12px"><div style="font-size:11px;color:#b25f00;font-weight:700">ファミリー会員（1回）</div><div style="font-size:18px;font-weight:800;color:#c4741a">'+yen(fam)+'</div></div></div>';
-  if(save>0){
-    const be=Math.ceil(join/save);
-    h+='<div style="margin-top:10px;background:#1a3a5c;color:#fff;border-radius:12px;padding:12px;text-align:center"><div style="font-size:13px">1回あたり <b style="color:#ffd27a;font-size:17px">'+yen(save)+'</b> おトク</div><div style="font-size:12.5px;margin-top:4px;opacity:.95">みんなで <b style="color:#ffd27a">'+be+'回</b> 参加すると、入会金の元が取れます</div></div>'+
-      '<div style="font-size:11px;color:#888;margin-top:8px;line-height:1.6">※12回参加した場合：ビジターのまま '+yen(vis*12)+' ／ ファミリー会員 '+yen(join+fam*12)+'（'+(vis*12-(join+fam*12)>=0?'おトク ':'差額 ')+yen(Math.abs(vis*12-(join+fam*12)))+'）</div>';
-  }else{
-    h+='<div style="font-size:12.5px;color:#888;margin-top:10px">この人数では、参加費の差が出ません。</div>';
+function priceEstUpdate(){
+  const o=_$('est-out'),P=window._priceP;if(!o||!P)return;
+  const n=parseInt(_$('est-n').value,10),v=parseInt(_$('est-v').value,10),bad=_$('est-s').value==='bad';
+  const visits=n*v*12;                         // 1年間ののべ参加回数
+  const fee=bad?P.vBad:P.vBB;
+  const yen=function(x){return Math.round(x).toLocaleString()+'円';};
+  const opts=[];
+  opts.push({name:'ビジター（毎回現金）',total:visits*fee,note:'入会金なし'});
+  opts.push({name:'ビジター＋回数券',total:visits*(P.vTk/11),note:'回数券 1回あたり約'+yen(P.vTk/11)});
+  const kJoin=n*P.kJoin;
+  opts.push({name:'カシワ会員＋回数券',total:kJoin+visits*(P.kTk/11),note:'入会金 '+yen(kJoin)+'（'+n+'人分）＋回数券 1回あたり約'+yen(P.kTk/11),pick:true});
+  if(n>=2){
+    const fJoin=P.f1+P.f2+Math.max(0,n-2)*P.f3;
+    const fCash=v*12*(P.fp1+(n-1)*P.fp2);
+    opts.push({name:'ファミリー会員（現金）',total:fJoin+fCash,note:'入会金 '+yen(fJoin)+'＋参加費（1人目'+yen(P.fp1)+'／2人目以降'+yen(P.fp2)+'）',pick:true});
+    opts.push({name:'ファミリー会員＋回数券',total:fJoin+visits*(P.fTk/11),note:'入会金 '+yen(fJoin)+'＋回数券（家族でシェア）',pick:true});
   }
-  o.innerHTML=h;
+  const base=opts[0].total;
+  const sorted=opts.slice().sort(function(a,b){return a.total-b.total;});
+  const best=sorted[0];
+  o.innerHTML=sorted.map(function(x,i){
+    const diff=base-x.total;
+    const isBest=x===best;
+    return '<div style="border:1.5px solid '+(isBest?'#e9a23b':'#e3e8ef')+';background:'+(isBest?'#fff9ee':'#fff')+';border-radius:14px;padding:12px 14px;margin-bottom:8px;position:relative">'+
+      (isBest?'<div style="position:absolute;top:-9px;right:12px;background:#e9a23b;color:#fff;font-size:11px;font-weight:800;border-radius:8px;padding:2px 10px">いちばんおトク</div>':'')+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:14px;font-weight:800;color:#1a1a2e">'+x.name+'</span><span style="font-size:19px;font-weight:800;color:'+(isBest?'#c4741a':'#1a3a5c')+'">'+yen(x.total)+'</span></div>'+
+      '<div style="font-size:11.5px;color:#888;margin-top:3px;line-height:1.6">'+x.note+'</div>'+
+      (x!==opts[0]&&diff>0?'<div style="font-size:12.5px;font-weight:800;color:#188038;margin-top:4px">ビジター現金より 年間 '+yen(diff)+' おトク</div>':'')+'</div>';
+  }).join('')+'<div style="font-size:11px;color:#999;margin-top:6px;line-height:1.7">※1年目の合計（入会金を含む）の目安です。回数券は有効期限がないため、1回あたりの金額で計算しています。実際の金額は、その時点の料金になります。</div>';
 }
+
+
+
+// ---------- マイページ：スポログカードの「チケットを使う」ボタン（持っている時だけ表示）----------
+function updateSporologTicketButtons(){
+  const box=_$('sporolog-ticket-btns');if(!box)return;
+  const f=typeof currentTicketCount==='number'?currentTicketCount:0;
+  const h=typeof currentHalfPriceCount==='number'?currentHalfPriceCount:0;
+  const btn=function(fn,icon,label,n,bg){return '<button onclick="'+fn+'" data-no-lock style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;background:'+bg+';color:#3a1400;border:none;border-radius:999px;padding:12px 18px;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 3px 0 rgba(150,70,10,.35)"><span style="font-size:18px">'+icon+'</span>'+label+'<span style="font-size:12px;opacity:.8">（'+n+'枚）</span></button>';};
+  let h2='';
+  if(f>0)h2+=btn('openTicketModal()','🎟','無料チケットを使う',f,'linear-gradient(135deg,#FFE08A,#F5B73B)');
+  if(h>0)h2+=btn('openHalfPriceModal()','💰','200円引きチケットを使う',h,'linear-gradient(135deg,#FFC988,#E8883A)');
+  box.innerHTML=h2;
+  box.style.display=h2?'block':'none';
+}
+
+// ---------- つながる：オープンチャット一覧（シート「オープンチャット」から）----------
+async function loadOpenChats(){
+  const box=_$('openchat-list');if(!box)return;
+  try{
+    const list=await callGAS('getOpenChats');
+    if(!Array.isArray(list)||!list.length)return;   // 取れなければ最初から入っている「最新情報チャット」のまま
+    box.innerHTML=list.map(function(o,i){
+      return '<a href="'+_esc(o.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">'+(o.icon||(i===0?'📢':'💬'))+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#1a1a2e">'+_esc(o.name)+'</div>'+(o.desc?'<div style="font-size:11px;color:#888;margin-top:2px">'+_esc(o.desc)+'</div>':'')+'</div><div style="font-size:18px;color:#aaa">›</div></a>';
+    }).join('');
+  }catch(e){}
+}
+setTimeout(loadOpenChats,1200);
 
 </script>
 
