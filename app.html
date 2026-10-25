@@ -422,12 +422,11 @@ body.sporolog-page .wrapper{padding-top:0}
       <div style="display:flex;align-items:center;gap:14px">
         <div style="font-size:30px">🎫</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800;color:#1a1a2e">スポログ</div>
-          <div style="font-size:12px;color:#8a7030;margin-top:2px">参加記録・獲得チケットはこちら</div>
+          <div id="sporolog-card-title" style="font-size:14px;font-weight:800;color:#1a1a2e">スポログ</div>
+          <div id="sporolog-card-sub" style="font-size:12px;color:#8a7030;margin-top:2px">参加記録・獲得チケットはこちら</div>
         </div>
         <div style="font-size:20px;color:#c8a415">›</div>
       </div>
-      <div id="sporolog-ticket-btns" style="display:none;margin-top:12px" onclick="event.stopPropagation()"></div>
     </div>
     <!-- 活動記録 -->
     <div id="videos-card" class="card" style="display:none">
@@ -441,6 +440,11 @@ body.sporolog-page .wrapper{padding-top:0}
         <a href="https://line.me/ti/g2/BC97oaeY3d1cghpyq2Pts9umY-tWOtkdd0Nsvw" target="_blank" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1a1a2e">最新情報チャット</div><div style="font-size:11px;color:#888;margin-top:2px">LINEオープンチャット</div></div><div style="font-size:18px;color:#aaa">›</div></a>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-title-dot"></div>お問い合わせ</div>
+      <div style="font-size:12.5px;color:#666;line-height:1.7;margin-bottom:10px">ご質問・ご相談は、公式LINEからお気軽にどうぞ。</div>
+      <a href="https://lin.ee/RxoHw1Z9" target="_blank" rel="noopener" class="line-contact-btn"><svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true" style="flex-shrink:0"><rect width="40" height="40" rx="9" fill="#fff"/><path fill="#06C755" d="M20 9.5c-6.9 0-12.5 4.4-12.5 9.9 0 4.9 4.4 9 10.4 9.8.4.1 1 .3 1.1.7.1.3.1.8 0 1.1l-.2 1c-.1.3-.3 1.2 1 .7s7-4.1 9.5-7c1.8-1.9 2.6-3.8 2.6-5.8 0-5.5-5.6-9.9-12.4-9.9z"/></svg><div style="flex:1"><div style="font-size:15px;font-weight:800">代表にLINEで連絡する</div><div style="font-size:11.5px;opacity:0.9;margin-top:2px">カシワのBUKATSU 公式LINE</div></div><div style="font-size:20px">›</div></a>
 
     <div class="card">
       <div class="card-title"><div class="card-title-dot"></div>ご案内</div>
@@ -4766,15 +4770,20 @@ function priceEstUpdate(){
 
 // ---------- マイページ：スポログカードの「チケットを使う」ボタン（持っている時だけ表示）----------
 function updateSporologTicketButtons(){
-  const box=_$('sporolog-ticket-btns');if(!box)return;
+  const t=_$('sporolog-card-title'),sub=_$('sporolog-card-sub'),card=_$('sporolog-link-card');
+  if(!t||!sub)return;
   const f=typeof currentTicketCount==='number'?currentTicketCount:0;
   const h=typeof currentHalfPriceCount==='number'?currentHalfPriceCount:0;
-  const btn=function(fn,icon,label,n,bg){return '<button onclick="'+fn+'" data-no-lock style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px;background:'+bg+';color:#3a1400;border:none;border-radius:999px;padding:12px 18px;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 3px 0 rgba(150,70,10,.35)"><span style="font-size:18px">'+icon+'</span>'+label+'<span style="font-size:12px;opacity:.8">（'+n+'枚）</span></button>';};
-  let h2='';
-  if(f>0)h2+=btn('openTicketModal()','🎟','無料チケットを使う',f,'linear-gradient(135deg,#FFE08A,#F5B73B)');
-  if(h>0)h2+=btn('openHalfPriceModal()','💰','200円引きチケットを使う',h,'linear-gradient(135deg,#FFC988,#E8883A)');
-  box.innerHTML=h2;
-  box.style.display=h2?'block':'none';
+  const n=f+h;
+  if(n>0){
+    t.innerHTML='チケット所持 <span style="display:inline-block;background:#e0651f;color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:1px 9px;margin-left:4px">'+n+'枚</span>';
+    sub.textContent='使用するにはこちら';
+    sub.style.color='#c4741a';sub.style.fontWeight='700';
+  }else{
+    t.textContent='スポログ';
+    sub.textContent='参加記録・獲得チケットはこちら';
+    sub.style.color='#8a7030';sub.style.fontWeight='';
+  }
 }
 
 // ---------- つながる：オープンチャット一覧（シート「オープンチャット」から）----------
