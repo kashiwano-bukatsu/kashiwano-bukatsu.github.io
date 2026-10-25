@@ -1696,6 +1696,7 @@ async function loadMypageData(checkNotice,updateRankCache){
     const hpBox=document.getElementById('halfprice-stat-box');
     document.getElementById('mypage-halfprice-count').textContent=currentHalfPriceCount+'枚';
     try{updateSporologTicketButtons();}catch(e){}
+    try{if(!window._ocDone){window._ocDone=true;loadOpenChats();}}catch(e){}
     const tb=document.getElementById('ticket-stat-box');
     const rank=d.rank||getMemberRank(d.totalCount);
     if(updateRankCache){
@@ -4789,13 +4790,22 @@ function updateSporologTicketButtons(){
 // ---------- つながる：オープンチャット一覧（シート「オープンチャット」から）----------
 async function loadOpenChats(){
   const box=_$('openchat-list');if(!box)return;
+  const note=function(msg){
+    let n=_$('openchat-note');
+    if(!n){n=document.createElement('div');n.id='openchat-note';n.style.cssText='font-size:11px;color:#b0b7c3;margin-top:8px;cursor:pointer';n.onclick=function(){loadOpenChats();};box.parentNode.appendChild(n);}
+    n.textContent=msg;
+  };
   try{
     const list=await callGAS('getOpenChats');
-    if(!Array.isArray(list)||!list.length)return;   // 取れなければ最初から入っている「最新情報チャット」のまま
+    if(!Array.isArray(list)){note('オープンチャットの一覧を読み込めませんでした（タップで再読み込み）');return;}
+    if(!list.length){note('一覧がまだありません（シート「オープンチャット」にURLを入れてください）');return;}
+    const n0=_$('openchat-note');if(n0)n0.remove();
     box.innerHTML=list.map(function(o,i){
       return '<a href="'+_esc(o.url)+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;margin-top:10px;background:#f0f9ff;border:1px solid rgba(26,58,92,0.1);border-radius:14px;padding:14px 16px;text-decoration:none"><div style="font-size:26px">'+(o.icon||(i===0?'📢':'💬'))+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#1a1a2e">'+_esc(o.name)+'</div>'+(o.desc?'<div style="font-size:11px;color:#888;margin-top:2px">'+_esc(o.desc)+'</div>':'')+'</div><div style="font-size:18px;color:#aaa">›</div></a>';
     }).join('');
-  }catch(e){}
+  }catch(e){
+    note('オープンチャットの一覧を読み込めませんでした：'+((e&&e.message)||e)+'（タップで再読み込み）');
+  }
 }
 setTimeout(loadOpenChats,1200);
 
