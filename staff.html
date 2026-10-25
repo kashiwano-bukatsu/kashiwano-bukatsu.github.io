@@ -1476,19 +1476,26 @@ async function fillReportCore(r, existingReportRow) {
     const filtered = await callGAS('getAttendanceLogFor', date, sport);   // その日・その種目の分だけ取得
     let general = 0, minb = 0, family = 0, trial = 0, staff = 0, ouendan = 0, zeroPay = 0;
     let generalIncome = 0, minbIncome = 0, familyIncome = 0, trialIncome = 0, staffIncome = 0, ouendanIncome = 0;
+    // 同じ人の二重記録は1人として数える（金額は記録どおり合算）
+    const _seenP = new Set(), _seenSig = new Set(); let dupCount = 0;
     filtered.forEach(log => {
       const type = log[5];
+      const _isDup = _seenP.has(log[4]); _seenP.add(log[4]);
+      if (_isDup) dupCount++;
+      const _sig = log[4] + '|' + String(log[6]) + '|' + String(log[7]);
+      if (_isDup && _seenSig.has(_sig)) return;   // 人も金額も方法も同じ行＝二重記録なので丸ごと無視
+      _seenSig.add(_sig);
       // 金額は表示形式の文字（「¥500」「500円」「1,000」など）でも数字だけを取り出して数える
       const amt = parseInt(String(log[6] == null ? '' : log[6]).replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).replace(/[^0-9\-]/g, '')) || 0;
       const method = log[7] || '';
       const isZeroPay = method === '回数券' || method === '半額クーポン' || method === '200円引きクーポン' || method === '無料チケット' || method === '練習日' || (!method && amt === 0);
-      if (type === 'ビジター会員' || type === 'カシワのBUKATSU会員' || type === 'ビジター' || type === 'カシワビジター') { general++; generalIncome += amt; if (isZeroPay) zeroPay++; }
-      else if (type === 'みんB会員' || type === 'みんなのBUKATSU会員') { minb++; minbIncome += amt; if (isZeroPay) zeroPay++; }
-      else if (type === 'ファミリー会員') { family++; familyIncome += amt; }
-      else if (type === '体験') { trial++; trialIncome += amt; }
-      else if (['運営', '代表', '部長', '本部', '特別会員'].includes(type)) { staff++; staffIncome += amt; }
-      else if (type === '応援団' || type === '応援団会員') { ouendan++; ouendanIncome += amt; }
-      else { general++; generalIncome += amt; if (isZeroPay) zeroPay++; }   // 想定外の種別も人数・収入から漏らさない
+      if (type === 'ビジター会員' || type === 'カシワのBUKATSU会員' || type === 'ビジター' || type === 'カシワビジター') { if(!_isDup)general++; generalIncome += amt; if (isZeroPay && !_isDup) zeroPay++; }
+      else if (type === 'みんB会員' || type === 'みんなのBUKATSU会員') { if(!_isDup)minb++; minbIncome += amt; if (isZeroPay && !_isDup) zeroPay++; }
+      else if (type === 'ファミリー会員') { if(!_isDup)family++; familyIncome += amt; if (isZeroPay && !_isDup) zeroPay++; }
+      else if (type === '体験') { if(!_isDup)trial++; trialIncome += amt; if (isZeroPay && !_isDup) zeroPay++; }
+      else if (['運営', '代表', '部長', '本部', '特別会員'].includes(type)) { if(!_isDup)staff++; staffIncome += amt; }
+      else if (type === '応援団' || type === '応援団会員') { if(!_isDup)ouendan++; ouendanIncome += amt; if (isZeroPay && !_isDup) zeroPay++; }
+      else { if(!_isDup)general++; generalIncome += amt; if (isZeroPay && !_isDup) zeroPay++; }   // 想定外の種別も人数・収入から漏らさない
     });
     const totalPeople = general + minb + family + trial + staff + ouendan;
     const income = generalIncome + minbIncome + familyIncome + trialIncome + staffIncome + ouendanIncome;
@@ -1502,6 +1509,7 @@ async function fillReportCore(r, existingReportRow) {
     document.getElementById('r-total-count').textContent = totalPeople + '人'; document.getElementById('r-income-total').textContent = '¥' + income.toLocaleString();
     document.getElementById('r-income').value = income;
     document.getElementById('r-total-people').value = totalPeople;
+    if (dupCount) showToast('同じ人の二重記録が ' + dupCount + ' 件ありました（人数は1人として集計）');
     calcReportPL();
   } catch(e) { showToast('参加者の集計に失敗しました：' + e.message); }
 }
@@ -1538,13 +1546,18 @@ async function loadSummary() {
     const reports = d.reports || [], cashData = d.cashLedger || [], logs = d.attendanceLogs || [];
     const counts = {};
     (d.sessionCounts || []).forEach(r => { counts[r[0]] = Number(r[1]); });
-    reports.forEach(r => { counts[r[3]] = (counts[r[3]] || 0) + 1; });
+    // 同じ日・同じ種目のレポートが二重に入っていても1回として数える（後から入った行を採用）
+    const _rk = {}; reports.forEach(r => { _rk[dk(r[0]) + '|' + r[3]] = r; });
+    const reportsU = Object.values(_rk);
+    reportsU.forEach(r => { counts[r[3]] = (counts[r[3]] || 0) + 1; });
     let total = 0;
     document.getElementById('sum-sport-counts').innerHTML = Object.entries(counts).map(([sport, count]) => { total += count; return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #333"><div style="font-size:13px;font-weight:600">${sport}</div><div style="font-size:16px;font-weight:700">第${count}回</div></div>`; }).join('') || '<div class="empty">データなし</div>';
     document.getElementById('sum-count').textContent = total + '回';
     let totInc = 0, totExp = 0, balance = 0;
-    reports.forEach(r => { totInc += Number(r[5] || 0); });
-    cashData.forEach(r => { const amt = Number(r[2] || 0); if (r[1] === '収入') { totInc += amt; balance += amt; } else { totExp += amt; balance -= amt; } });
+    reportsU.forEach(r => { totInc += Number(r[5] || 0); });
+    // 活動レポートの保存時に現金出納へ「（自動計上）」の参加費が入る。収入はレポート側で数えているので、自動計上の参加費は収入に足さない（二重計上防止）
+    const _isAutoFee = r => String(r[4] || '').indexOf('自動計上') !== -1 && r[3] === '参加費';
+    cashData.forEach(r => { const amt = Number(r[2] || 0); if (r[1] === '収入') { if (!_isAutoFee(r)) totInc += amt; balance += amt; } else { if (!_isAutoFee(r)) totExp += amt; balance -= amt; } });
     const pl = totInc - totExp;
     document.getElementById('sum-income').textContent = '¥' + totInc.toLocaleString();
     document.getElementById('sum-expense').textContent = '¥' + totExp.toLocaleString();
