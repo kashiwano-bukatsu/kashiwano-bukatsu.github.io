@@ -1164,7 +1164,7 @@ const GAS_READ_FUNCS=new Set([
   'loginAttendee','getMemberDashboard','getReceptionHomeData','getUpcomingSchedules','getReserveTabData',
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
-  'getVideoList','getUrgentNotice','getVenueInfo','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
+  'getVideoList','getUrgentNotice','getVenueInfo','getReferralSlots','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
   'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
@@ -2674,6 +2674,7 @@ async function referralAddWithCheck(fullname,sport,scheduleDate,exp,asFamily){
   }
   if(r&&r.ok)return true;
   if(r&&r.reason==='already_member'){alert(r.message||'会員の方です。ご本人のログインから予約してもらってください。');return false;}
+  if(r&&r.reason==='slot_full'){alert(r.message||'この日の紹介枠が埋まっています。別の日をお選びください。');loadReferralSchedules();return false;}
   if(r&&r.reason==='kanji_required'){alert('漢字のフルネームが必要です');return false;}
   alert('登録できませんでした');return false;
 }
@@ -3439,7 +3440,12 @@ async function loadReferralSchedules(){
   try{
     const s=await callGAS('getUpcomingSchedules','全て');
     if(!s||!s.length){sel.innerHTML='<option value="">予定がありません</option>';return;}
-    sel.innerHTML='<option value="">選択してください</option>'+s.map(x=>'<option value="'+x[0]+'_'+x[4]+'">'+x[0]+'（'+getDow(x[0])+'） '+x[4]+' @ '+x[2]+'</option>').join('');
+    let slots={limits:{},counts:{}};
+    try{const r=await callGAS('getReferralSlots');if(r&&r.counts)slots=r;}catch(e){}   // 取れなくても紹介自体は進められる（サーバー側でも止める）
+    sel.innerHTML='<option value="">選択してください</option>'+s.map(x=>{
+      const lim=(slots.limits||{})[x[4]];const full=lim>0&&(slots.counts[dk(x[0])+'|'+x[4]]||0)>=lim;
+      return '<option value="'+x[0]+'_'+x[4]+'"'+(full?' disabled':'')+'>'+x[0]+'（'+getDow(x[0])+'） '+x[4]+' @ '+x[2]+(full?'　【紹介枠が埋まりました】':'')+'</option>';
+    }).join('');
     checkReferralForm();
   }catch(e){
     sel.innerHTML='<option value="">読み込み失敗</option>';if(retryBtn)retryBtn.style.display='inline-block';
