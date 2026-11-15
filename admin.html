@@ -510,6 +510,11 @@ tr:hover td{background:var(--card-soft);}
     <!-- ===== 体験者管理 ===== -->
     <div class="view" id="view-temp">
       <div class="card">
+        <div class="card-title"><div class="dot"></div>紹介（新規体験）の人数制限</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.7">同じ日・同じ種目で受け付ける、新規の体験の方の上限です。変更すると、すぐに会員アプリ・運営アプリへ反映されます。</div>
+        <div id="trial-limit-wrap"><div class="loading-text">読み込み中...</div></div>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>体験予定の方を検索</div>
         <input id="temp-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderTempList()">
         <div id="temp-table-wrap"><div class="loading-text">読み込み中...</div></div>
@@ -859,7 +864,7 @@ const GAS_READ_FUNCS = new Set([
   'getProfileChangeRequests','getProfileChangePreview','getFinanceSummary','getPlaces','getPriceMaster','getMemberNotices',
   'getNoticeTargets','getNotificationsFor','getTempAttendees','getOperationLog','getStaffMembers','getLotteryData',
   'getAllFreeTickets','getAllHalfPriceTickets','getCancelNoShowStats','getInactiveMembers','getEquipment','getShuttleStock',
-  'getUrgentNotice','getMonthlyReport','getCashLedger','getCashDenominationHistory','getStaffSummaryData','searchMemberProfile'
+  'getUrgentNotice','getMonthlyReport','getTrialLimits','getCashLedger','getCashDenominationHistory','getStaffSummaryData','searchMemberProfile'
 ]);
 const GAS_CACHE_TTL_MS = 30000;
 const _gasCache = {}, _gasRunning = {};
@@ -943,7 +948,7 @@ function switchView(view){
   closeMobileSidebar();
 
   if (view === 'approval') { renderApprovalList(); renderPaymentConfirmList(); renderUpgradeList(); renderFamilyRequestList(); renderFamilyList(); renderProfileChangeList(); }
-  if (view === 'temp') renderTempList();
+  if (view === 'temp') { renderTempList(); loadTrialLimits(); }
   if (view === 'member') { /* 検索待ち、何もしない */ }
   if (view === 'schedule') renderScheduleView();
   if (view === 'lottery') renderLotteryView();
@@ -2858,6 +2863,41 @@ function copyReport(){
   const kv=(o,f)=>Object.keys(o||{}).map(k=>'  '+k+'：'+f(o[k])).join('\n')||'  なし';
   const t='【'+r.month+' 月次レポート】\n開催 '+r.sessions+'回 ／ 延べ '+n(r.totalVisits)+'人（平均 '+(r.avgPerSession||0)+'人）／ 実人数 '+n(r.uniquePeople)+'人\n新規体験 '+n(r.newTrials)+'人 ／ 新規入会 '+n(r.newJoined)+'人 ／ 会員 '+n(r.membersNow)+'人\n\n■種目別\n'+kv(r.bySport,v=>n(v)+'人')+'\n■会員種別\n'+kv(r.byType,v=>n(v)+'人')+'\n■参加費 '+n(r.feeTotal)+'円\n'+kv(r.feeByMethod,_yenR)+'\n■収支\n  収入 '+n(r.income)+'円 ／ 支出 '+n(r.expense)+'円 ／ 差引 '+n(r.balance)+'円';
   (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>showToastAdmin('コピーしました')).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();showToastAdmin('コピーしました');});
+}
+
+// ===== 紹介（新規体験）の人数制限 =====
+async function loadTrialLimits(){
+  const w=document.getElementById('trial-limit-wrap');
+  try{
+    const list=await callGAS('getTrialLimits');
+    renderTrialLimits(list);
+  }catch(e){w.innerHTML='<div class="loading-text">読み込みに失敗しました：'+escapeHtmlR(e.message||e)+'</div>';}
+}
+function renderTrialLimits(list){
+  const w=document.getElementById('trial-limit-wrap');
+  const opts=function(cur){
+    let h='<option value="0"'+(cur===0?' selected':'')+'>制限なし</option>';
+    for(let i=1;i<=10;i++)h+='<option value="'+i+'"'+(cur===i?' selected':'')+'>'+i+'人まで</option>';
+    return h;
+  };
+  w.innerHTML=(list||[]).map(function(x){
+    const sp=escapeHtmlR(x.sport);
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)">'+
+      '<div style="min-width:130px;font-weight:700">'+sp+'</div>'+
+      '<select id="tl-'+sp+'" onchange="saveTrialLimit(\''+sp+'\')" style="padding:8px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;font-weight:700">'+opts(x.limit)+'</select>'+
+      '<span style="font-size:12px;'+(x.limit===0?'color:#188038;font-weight:700':'color:var(--ink-soft)')+'">'+(x.limit===0?'いま：制限なし':'いま：'+x.limit+'人まで')+(x.custom?'':'（標準）')+'</span>'+
+      (x.custom?'<button class="btn btn-sm" onclick="resetTrialLimit(\''+sp+'\')" style="margin-left:auto">標準に戻す</button>':'')+
+    '</div>';
+  }).join('');
+}
+async function saveTrialLimit(sport){
+  const v=document.getElementById('tl-'+sport).value;
+  try{const list=await callGAS('setTrialLimit',sport,Number(v));renderTrialLimits(list);showToastAdmin(sport+'：'+(Number(v)===0?'制限なしにしました':v+'人までにしました'));}
+  catch(e){alert('保存に失敗しました：'+(e.message||e));loadTrialLimits();}
+}
+async function resetTrialLimit(sport){
+  try{const list=await callGAS('setTrialLimit',sport,null);renderTrialLimits(list);showToastAdmin(sport+'：標準に戻しました');}
+  catch(e){alert('保存に失敗しました：'+(e.message||e));}
 }
 </script>
 </body>
