@@ -323,7 +323,7 @@ if ('serviceWorker' in navigator) {
   }).catch(err => console.log('SW登録失敗:', err));
 }
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwcsCNnt6C8XdI4dnd2Pb7nONZ66EiVFJuVlC4T4ZiEX7sxgwr3q48up5kFtUvNnG8C4w/exec';
 // 同じ呼び出しが実行中なら結果を共有（二重送信防止）。書き込みは通信失敗でも自動でやり直さない（二重登録防止）
 const _gasRunning = {};
 const _gasCache = {};
