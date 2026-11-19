@@ -420,6 +420,9 @@ tr:hover td{background:var(--card-soft);}
       <div class="nav-left"><span class="nav-icon">▦</span>チケット管理</div>
       <span class="nav-badge zero" id="badge-ticket">0</span>
     </div>
+    <div class="nav-item" data-view="ticketbook" onclick="switchView('ticketbook')">
+      <div class="nav-left"><span class="nav-icon">▤</span>回数券管理</div>
+    </div>
     <div class="nav-item" data-view="notice" onclick="switchView('notice')">
       <div class="nav-left"><span class="nav-icon">◎</span>お知らせ管理</div>
     </div>
@@ -589,6 +592,20 @@ tr:hover td{background:var(--card-soft);}
         <div class="card-title"><div class="dot"></div>回数券モード設定</div>
         <input id="mode-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderModeSearch()">
         <div id="mode-search-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
+      </div>
+    </div>
+
+    <!-- ===== 回数券管理 ===== -->
+    <div class="view" id="view-ticketbook">
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>回数券を持っている人</div>
+        <div id="tb-summary" style="font-size:13px;color:var(--ink-soft);margin-bottom:10px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;margin-bottom:12px;cursor:pointer"><input type="checkbox" id="tb-only-flagged" onchange="renderTicketBookTable()">ズレ・要確認の人だけ表示</label>
+        <div id="tb-wrap"><div class="loading-text">読み込み中...</div></div>
+        <div style="font-size:11.5px;color:var(--ink-faint);margin-top:12px;line-height:1.8">
+          ・「ログ上の使用」は、出席ログに方法「回数券」で記録された回数です。券の使用数と違うと「ズレ」になります。<br>
+          ・調整すると「使用 = 購入 − 残り」に自動で揃います（残りが購入を超えるときは購入も合わせます）。調整の履歴はシート「回数券調整ログ」に残ります。
+        </div>
       </div>
     </div>
 
@@ -922,6 +939,7 @@ const VIEW_TITLES = {
   temp: ['体験者管理', '体験予定の方を検索・確認します'],
   price: ['価格・キャンペーン管理', '価格マスタの内容を管理します'],
   ticket: ['チケット管理', '回数券・プラン変更の申請に対応します'],
+  ticketbook: ['回数券管理', '回数券を持っている人の残り枚数・モードを確認し、ズレを直します'],
   notice: ['お知らせ管理', '会員向けのお知らせを投稿・管理します'],
   log: ['操作ログ', '事務局の操作履歴を確認します'],
   finance: ['経理・分析', '月次収支・未払い・離脱気味の会員・キャンセル状況を確認します'],
@@ -955,6 +973,7 @@ function switchView(view){
   if (view === 'ops') renderOpsView();
   if (view === 'messages') renderMessagesView();
   if (view === 'ticket') renderTicketView();
+  if (view === 'ticketbook') renderTicketBookView();
   if (view === 'price') renderPriceView();
   if (view === 'notice') { renderNoticeView(); loadUrgentAdmin(); }
   if (view === 'report') initReportView();
@@ -1601,6 +1620,104 @@ async function toggleUsageMode(fullname, newMode){
   }catch(e){
     alert('切替に失敗しました：' + e.message);
   }
+}
+
+// 完了メッセージ（画面下に2秒ほど表示）。以前は未定義で、手動付与などが成功しても「失敗しました」と出ていた
+function showToastAdmin(msg){
+  let t = document.getElementById('admin-toast');
+  if (!t){
+    t = document.createElement('div'); t.id = 'admin-toast';
+    t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1d2b24;color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:700;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .25s;pointer-events:none';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = '0'; }, 2200);
+}
+
+// ===== 回数券管理（持っている人の一覧・ズレ確認・モード切替・残り調整） =====
+let _tbList = [];
+function _tbFlags(r){
+  const f = [];
+  if (r.notFound) f.push({t:'名前不一致', c:'badge-danger', tip:'人マスタに同じフルネームの会員がいません（名前変更の可能性）'});
+  if (r.drift !== 0) f.push({t:'ズレ ' + (r.drift > 0 ? '+' : '') + r.drift, c:'badge-danger',
+    tip: r.drift < 0 ? ('ログ上は ' + r.attendUses + ' 回使用ですが、券は ' + r.used + ' 回しか減っていません（' + (-r.drift) + '枚減っていない）') : ('券は ' + r.used + ' 回減っていますが、ログ上は ' + r.attendUses + ' 回しかありません（' + r.drift + '枚多く減っている）')});
+  if (!r.notFound && r.remain > 0 && r.mode !== '回数券') f.push({t:'モード要確認', c:'badge-warn', tip:'残りがあるのに「スポログ」モードのままです'});
+  if (!r.notFound && r.remain <= 0 && r.mode === '回数券') f.push({t:'使い切り', c:'badge-warn', tip:'残り0なのに「回数券」モードのままです'});
+  return f;
+}
+async function renderTicketBookView(){
+  const wrap = document.getElementById('tb-wrap');
+  wrap.innerHTML = '<div class="loading-text">読み込み中...</div>';
+  try{
+    _tbList = await callGAS('getTicketBookOverview') || [];
+    renderTicketBookTable();
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+function renderTicketBookTable(){
+  const wrap = document.getElementById('tb-wrap');
+  const onlyFlagged = document.getElementById('tb-only-flagged').checked;
+  const rows = _tbList.map((r, i) => ({ r, i, flags: _tbFlags(r) }));
+  const flaggedCount = rows.filter(x => x.flags.length).length;
+  document.getElementById('tb-summary').textContent = '回数券を持っている人：' + rows.length + '人／ズレ・要確認：' + flaggedCount + '人';
+  let list = onlyFlagged ? rows.filter(x => x.flags.length) : rows;
+  list = list.slice().sort((a, b) => (b.flags.length ? 1 : 0) - (a.flags.length ? 1 : 0) || b.r.remain - a.r.remain);
+  if (!list.length){
+    wrap.innerHTML = '<div class="empty-state">' + (onlyFlagged ? 'ズレ・要確認の人はいません' : '回数券を持っている人はいません') + '</div>';
+    return;
+  }
+  wrap.innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr><th>お名前</th><th>購入</th><th>使用</th><th>残り</th><th>ログ上の使用</th><th>モード</th><th>状態</th><th>操作</th></tr></thead>
+    <tbody>${list.map(({r, i, flags}) => `
+      <tr>
+        <td>${escapeHtml(r.nickname || r.fullname)}<div style="font-size:11px;color:var(--ink-faint)">${escapeHtml(r.type || '')}</div></td>
+        <td>${r.total}</td>
+        <td>${r.used}</td>
+        <td><b>${r.remain}</b></td>
+        <td>${r.attendUses}</td>
+        <td><span class="badge ${r.mode === '回数券' ? 'badge-accent' : ''}">${escapeHtml(r.mode)}</span></td>
+        <td>${flags.length ? flags.map(f => `<span class="badge ${f.c}" title="${escapeHtml(f.tip)}" style="margin-right:4px">${escapeHtml(f.t)}</span>`).join('') : '<span class="badge badge-accent">正常</span>'}
+          ${flags.filter(f => f.tip && f.t.indexOf('ズレ') === 0).map(f => `<div style="font-size:11px;color:var(--danger);margin-top:4px">${escapeHtml(f.tip)}</div>`).join('')}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" onclick="tbToggleMode(${i})">${r.mode === '回数券' ? 'スポログに切替' : '回数券に切替'}</button>
+          <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+            <input type="number" id="tb-remain-${i}" value="${r.remain}" min="0" style="width:60px;padding:5px 7px;border:1.5px solid var(--line);border-radius:7px">
+            <button class="btn btn-primary btn-sm" onclick="tbAdjust(${i})">残りを調整</button>
+          </div>
+          ${r.drift !== 0 ? `<button class="btn btn-sm" style="margin-top:6px" onclick="tbAdjust(${i}, ${Math.max(0, r.total - r.attendUses)})">ログに合わせる（残り${Math.max(0, r.total - r.attendUses)}枚）</button>` : ''}
+        </td>
+      </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+async function tbToggleMode(i){
+  const r = _tbList[i]; if (!r) return;
+  const next = r.mode === '回数券' ? 'スポログ' : '回数券';
+  if (!confirm((r.nickname || r.fullname) + ' さんの利用モードを「' + next + '」に切り替えます。よろしいですか？')) return;
+  try{
+    await callGAS('updateUsageMode', r.fullname, next);
+    logOp('利用モード切替', r.fullname + '／' + next);
+    await getPersonMaster(true);
+    showToastAdmin('切り替えました');
+    renderTicketBookView();
+  }catch(e){ alert('切替に失敗しました：' + e.message); }
+}
+async function tbAdjust(i, forced){
+  const r = _tbList[i]; if (!r) return;
+  const n = (forced !== undefined && forced !== null) ? forced : parseInt(document.getElementById('tb-remain-' + i).value, 10);
+  if (isNaN(n) || n < 0) return alert('残り枚数は0以上の数字で入力してください');
+  if (n === r.remain) return alert('残り枚数が今と同じです（' + r.remain + '枚）');
+  const reason = (forced !== undefined && forced !== null) ? 'ログに合わせて調整' : (prompt('調整の理由を入力してください（例：チェックイン漏れ・二重に減った）', '') || '').trim();
+  if (!reason) return alert('理由を入力してください');
+  if (!confirm((r.nickname || r.fullname) + ' さんの残り枚数を ' + r.remain + '枚 → ' + n + '枚 に調整します。\n理由：' + reason + '\n\nよろしいですか？')) return;
+  try{
+    const operator = currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明';
+    const res = await callGAS('updateTicketBookRemain', r.fullname, n, reason, operator);
+    if (res !== 'ok') return alert('調整できませんでした（' + res + '）');
+    logOp('回数券残数調整', r.fullname + '／' + r.remain + '→' + n + '枚／' + reason);
+    showToastAdmin('調整しました');
+    renderTicketBookView();
+  }catch(e){ alert('調整に失敗しました：' + e.message); }
 }
 
 // ===== 価格・キャンペーン管理 =====
