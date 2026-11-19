@@ -598,6 +598,12 @@ tr:hover td{background:var(--card-soft);}
     <!-- ===== 回数券管理 ===== -->
     <div class="view" id="view-ticketbook">
       <div class="card">
+        <div class="card-title"><div class="dot"></div>回数券を付与する（申請なしの購入・お礼）</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.7">「購入」は代金を受け取った分で、月次収支に入ります。「お礼」は無料の付与で、売上には入りません。どちらも付与と同時に回数券モードになり、会員に通知が届きます。</div>
+        <input id="tbg-search-input" type="text" placeholder="名前で検索（部分一致）" style="width:320px;max-width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:14px" oninput="renderTbGrantSearch()">
+        <div id="tbg-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>回数券を持っている人</div>
         <div id="tb-summary" style="font-size:13px;color:var(--ink-soft);margin-bottom:10px"></div>
         <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;margin-bottom:12px;cursor:pointer"><input type="checkbox" id="tb-only-flagged" onchange="renderTicketBookTable()">ズレ・要確認の人だけ表示</label>
@@ -1636,6 +1642,77 @@ function showToastAdmin(msg){
 
 // ===== 回数券管理（持っている人の一覧・ズレ確認・モード切替・残り調整） =====
 let _tbList = [];
+let _tbgList = [];
+// 会員アプリと同じ料金表（金額の初期値用。変更できます）
+function _tbCalcPrice(sets, type){
+  const isFamily = type === 'ファミリー会員';
+  const isMinnb = ['みんなのBUKATSU会員','みんB会員'].includes(type);
+  const isVisitor = ['ビジター会員','カシワビジター','ビジター'].includes(type);
+  if (isMinnb) return sets * 2000;
+  if (isFamily) return sets === 1 ? 4000 : (sets === 2 ? 6000 : 8000);
+  if (isVisitor) return sets * 5000;
+  return sets * 4000;
+}
+async function renderTbGrantSearch(){
+  const wrap = document.getElementById('tbg-wrap');
+  const keyword = (document.getElementById('tbg-search-input').value || '').trim();
+  if (!keyword){ wrap.innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>'; return; }
+  try{
+    const persons = await getPersonMaster();
+    _tbgList = persons.filter(p => (p.status === '会員' || p.status === '会員(申請中)') &&
+      ((p.fullname||'').includes(keyword) || (p.nickname||'').includes(keyword)));
+    if (!_tbgList.length){ wrap.innerHTML = '<div class="empty-state">該当する会員がいません</div>'; return; }
+    wrap.innerHTML = `<div style="overflow-x:auto"><table>
+      <thead><tr><th>お名前</th><th>種別</th><th>付与の種類</th><th>セット数</th><th>金額（購入のみ）</th><th>理由（お礼は必須）</th><th></th></tr></thead>
+      <tbody>${_tbgList.map((p, i) => `
+        <tr>
+          <td>${escapeHtml(p.nickname||p.fullname)}</td>
+          <td><span class="badge badge-gold">${escapeHtml(p.type||'')}</span></td>
+          <td><select id="tbg-kind-${i}" onchange="tbgKindChanged(${i})" style="padding:6px 8px;border:1.5px solid var(--line);border-radius:7px"><option value="購入">購入（代金あり）</option><option value="お礼">お礼（無料）</option></select></td>
+          <td><input type="number" id="tbg-sets-${i}" value="1" min="1" max="20" oninput="tbgKindChanged(${i})" style="width:60px;padding:6px 8px;border:1.5px solid var(--line);border-radius:7px"></td>
+          <td><input type="number" id="tbg-amount-${i}" value="${_tbCalcPrice(1, p.type)}" min="0" style="width:90px;padding:6px 8px;border:1.5px solid var(--line);border-radius:7px"></td>
+          <td><input type="text" id="tbg-reason-${i}" placeholder="例：イベント協力のお礼" style="width:170px;padding:6px 8px;border:1.5px solid var(--line);border-radius:7px"></td>
+          <td><button class="btn btn-primary btn-sm" onclick="tbGrant(${i})">付与する</button></td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+  }catch(e){
+    wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>';
+  }
+}
+function tbgKindChanged(i){
+  const p = _tbgList[i]; if (!p) return;
+  const kind = document.getElementById('tbg-kind-' + i).value;
+  const amt = document.getElementById('tbg-amount-' + i);
+  amt.disabled = (kind === 'お礼');
+  if (kind === 'お礼') amt.value = 0;
+  else amt.value = _tbCalcPrice(parseInt(document.getElementById('tbg-sets-' + i).value, 10) || 1, p.type);
+}
+async function tbGrant(i){
+  const p = _tbgList[i]; if (!p) return;
+  const kind = document.getElementById('tbg-kind-' + i).value;
+  const sets = parseInt(document.getElementById('tbg-sets-' + i).value, 10) || 0;
+  const amount = parseInt(document.getElementById('tbg-amount-' + i).value, 10) || 0;
+  const reason = (document.getElementById('tbg-reason-' + i).value || '').trim();
+  if (sets < 1 || sets > 20) return alert('セット数は1〜20で入力してください');
+  if (kind === '購入' && amount <= 0) return alert('購入の場合は金額を入力してください');
+  if (kind === 'お礼' && !reason) return alert('お礼の場合は理由を入力してください');
+  const name = p.nickname || p.fullname;
+  const text = kind === '購入'
+    ? name + ' さんに回数券を' + sets + 'セット（' + (sets * 11) + '枚）付与します。\n種類：購入　金額：¥' + amount.toLocaleString() + '\n（購入の記録を残し、月次収支に入ります）'
+    : name + ' さんに回数券を' + sets + 'セット（' + (sets * 11) + '枚）付与します。\n種類：お礼（無料）　理由：' + reason + '\n（売上には入りません）';
+  if (!confirm(text + '\n\nよろしいですか？')) return;
+  try{
+    const operator = currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明';
+    const res = await callGAS('grantTicketBookDirect', p.fullname, sets, kind, amount, reason, operator);
+    if (res !== 'ok') return alert('付与できませんでした（' + res + '）');
+    logOp('回数券付与（' + kind + '）', p.fullname + '／' + sets + 'セット' + (kind === '購入' ? '／¥' + amount : '／' + reason));
+    await getPersonMaster(true);
+    showToastAdmin('付与しました（回数券モードになりました）');
+    document.getElementById('tbg-search-input').value = '';
+    document.getElementById('tbg-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
+    renderTicketBookView();
+  }catch(e){ alert('付与に失敗しました：' + e.message); }
+}
 function _tbFlags(r){
   const f = [];
   if (r.notFound) f.push({t:'名前不一致', c:'badge-danger', tip:'人マスタに同じフルネームの会員がいません（名前変更の可能性）'});
