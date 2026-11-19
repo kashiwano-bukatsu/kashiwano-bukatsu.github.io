@@ -451,7 +451,8 @@ body.winter .imo-hot .imo-gift{filter:drop-shadow(0 0 6px rgba(255,225,150,0.85)
           <div id="sporolog-card-title" style="font-size:14px;font-weight:800;color:#1a1a2e">スポログ</div>
           <div id="sporolog-card-sub" style="font-size:12px;color:#8a7030;margin-top:2px">参加記録・獲得チケットはこちら</div>
         </div>
-        <div style="font-size:20px;color:#c8a415">›</div>
+        <div id="sporolog-card-chev" style="font-size:20px;color:#c8a415">›</div>
+        <button id="sporolog-use-btn" onclick="event.stopPropagation();useTicketQuick()" style="display:none;flex-shrink:0;background:linear-gradient(135deg,#f08a3c,#e0651f);color:#fff;border:none;border-radius:999px;padding:10px 18px;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 3px 0 #a8480f">🎟️ 使う</button>
       </div>
     </div>
     <!-- 活動記録 -->
@@ -4823,6 +4824,22 @@ function priceEstUpdate(){
 
 
 // ---------- マイページ：スポログカードの「チケットを使う」ボタン（持っている時だけ表示）----------
+// マイページの「🎟️ 使う」：持っているチケットの画面を直接開く（使用は従来どおり画面内の「使う」＋確認ダイアログ）
+function useTicketQuick(){
+  const f=typeof currentTicketCount==='number'?currentTicketCount:0;
+  const h=typeof currentHalfPriceCount==='number'?currentHalfPriceCount:0;
+  if(f>0&&h>0){
+    const old=document.getElementById('ticket-choose-overlay');if(old)old.remove();
+    const ov=document.createElement('div');ov.className='ticket-overlay';ov.id='ticket-choose-overlay';
+    ov.innerHTML='<div class="ticket-blur-bg" onclick="this.parentElement.remove()"></div>'
+      +'<div class="ticket-modal"><div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:18px">どのチケットを使いますか？</div>'
+      +'<button onclick="document.getElementById(\'ticket-choose-overlay\').remove();openTicketModal()" style="display:block;width:100%;padding:16px;margin-bottom:10px;background:#e0651f;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer">🎟️ 無料チケット（'+f+'枚）</button>'
+      +'<button onclick="document.getElementById(\'ticket-choose-overlay\').remove();openHalfPriceModal()" style="display:block;width:100%;padding:16px;margin-bottom:14px;background:#fff3e0;color:#c4741a;border:2px solid #f0b36a;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer">💰 200円引きチケット（'+h+'枚）</button>'
+      +'<button onclick="document.getElementById(\'ticket-choose-overlay\').remove()" style="background:none;border:none;color:#888;font-size:14px;cursor:pointer">閉じる</button></div>';
+    document.body.appendChild(ov);
+  }else if(f>0){openTicketModal();}
+  else if(h>0){openHalfPriceModal();}
+}
 function updateSporologTicketButtons(){
   const t=_$('sporolog-card-title'),sub=_$('sporolog-card-sub'),card=_$('sporolog-link-card');
   if(!t||!sub)return;
@@ -4831,9 +4848,13 @@ function updateSporologTicketButtons(){
   const n=f+h;
   if(n>0){
     t.innerHTML='チケット所持 <span style="display:inline-block;background:#e0651f;color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:1px 9px;margin-left:4px">'+n+'枚</span>';
-    sub.textContent='使用するにはこちら';
+    sub.textContent=[f>0?'無料 '+f+'枚':'',h>0?'200円引 '+h+'枚':''].filter(Boolean).join(' ／ ');
     sub.style.color='#c4741a';sub.style.fontWeight='700';
+    const ub=_$('sporolog-use-btn'),ch=_$('sporolog-card-chev');
+    if(ub)ub.style.display='block';if(ch)ch.style.display='none';
   }else{
+    const ub0=_$('sporolog-use-btn'),ch0=_$('sporolog-card-chev');
+    if(ub0)ub0.style.display='none';if(ch0)ch0.style.display='';
     t.textContent='スポログ';
     sub.textContent='参加記録・獲得チケットはこちら';
     sub.style.color='#8a7030';sub.style.fontWeight='';
