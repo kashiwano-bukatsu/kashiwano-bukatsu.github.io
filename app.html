@@ -221,6 +221,16 @@ body.sporolog-page .wrapper{padding-top:0}
 }
 .imo-hot .imo-emoji{ text-shadow:0 0 8px rgba(255,210,140,0.75); }
 @keyframes imoHaloPulse{0%,100%{transform:scale(0.94);opacity:.8}50%{transform:scale(1.05);opacity:1}}
+.imo-gift{width:38px;height:38px;display:block;overflow:visible}
+/* ===== 冬ver（12〜2月）：紺の夜空壁紙＋プレゼントスタンプ ===== */
+body.winter #dark-bg-overlay{background:radial-gradient(ellipse at 50% -10%,#1f3566,#070d1f 70%)}
+body.winter .sporolog-arena::before{display:none}
+body.winter .sporolog-arena::after{background:radial-gradient(ellipse at center,rgba(150,200,255,0.30),transparent 70%)}
+body.winter .sporolog-arenasub{color:#aebfe0}
+body.winter .imo-numonly{border-color:rgba(170,200,255,0.30)}
+body.winter .imo-numonly.imo-next{border-color:rgba(255,215,120,0.7);color:rgba(255,230,170,0.85)}
+body.winter .imo-hot .imo-halo{background:radial-gradient(circle,rgba(255,225,150,0.45) 0%,rgba(150,190,255,0.2) 45%,transparent 72%)}
+body.winter .imo-hot .imo-gift{filter:drop-shadow(0 0 6px rgba(255,225,150,0.85))}
 .imo-ms{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);white-space:nowrap;font-size:8.5px;font-weight:900;color:#FFB65C;letter-spacing:.01em;z-index:2}
 
 /* ===== ヘッダーのベル（運営からの通知）＆利用規約 ===== */
@@ -255,7 +265,11 @@ body.sporolog-page .wrapper{padding-top:0}
 <script>
 /* 月別画像：opening-MM.jpg があればそれを使い、無い月は opening.jpg に戻す */
 (function(){
-  var _d=new Date(),mm=('0'+(_d<new Date(2026,11,1)?12:_d.getMonth()+1)).slice(-2); /* 2026/12/1までは先行して12月版を表示 */
+  var _d=new Date();
+  window.BK_MONTH=(_d<new Date(2026,11,1)?12:_d.getMonth()+1); /* 2026/12/1までは先行して12月版を表示 */
+  window.BK_WINTER=(window.BK_MONTH===12||window.BK_MONTH<=2); /* 12〜2月は冬仕様（壁紙・スタンプ・文言） */
+  if(window.BK_WINTER)document.body.classList.add('winter');
+  var mm=('0'+window.BK_MONTH).slice(-2);
   var img=document.getElementById('splash-img');
   img.onerror=function(){img.onerror=null;img.src='opening.jpg';};
   img.src='opening-'+mm+'.jpg';
@@ -472,7 +486,7 @@ body.sporolog-page .wrapper{padding-top:0}
   <div class="sporolog-arena">
     <div class="sporolog-eyebrow">SPOROLOG</div>
     <div class="sporolog-arenatitle">参加ログ</div>
-    <div class="sporolog-arenasub">参加するたびに、焼き芋が出てくる</div>
+    <div class="sporolog-arenasub" id="sporolog-arenasub">参加するたびに、焼き芋が出てくる</div>
     <div style="position:relative;text-align:center;margin-bottom:6px"><button onclick="refreshNow('sporolog')" style="background:none;border:1px solid rgba(255,182,92,0.4);color:#FFB65C;border-radius:999px;padding:5px 14px;font-size:11.5px;font-weight:700;cursor:pointer">🔄 最新に更新</button></div>
 
     <div style="position:relative;margin-top:8px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,217,61,0.3);box-shadow:0 6px 18px rgba(0,0,0,0.4)">
@@ -480,8 +494,9 @@ body.sporolog-page .wrapper{padding-top:0}
       <script>
       /* 月別画像：sporolog-MM.jpg があればそれを使い、無い月は従来の sporolog-banner.jpg(4:3) に戻す */
       (function(){
-        var _d=new Date(),mm=('0'+(_d<new Date(2026,11,1)?12:_d.getMonth()+1)).slice(-2); /* 2026/12/1までは先行して12月版を表示 */
+        var mm=('0'+window.BK_MONTH).slice(-2);
         var img=document.getElementById('sporolog-banner-img');
+        if(window.BK_WINTER){var sub=document.getElementById('sporolog-arenasub');if(sub)sub.textContent='参加するたびに、プレゼントが届く';}
         img.onerror=function(){img.onerror=null;img.style.aspectRatio='4/3';img.src='sporolog-banner.jpg';};
         img.src='sporolog-'+mm+'.jpg';
       })();
@@ -1570,7 +1585,21 @@ function showMypageMain(){
   prefetchUserData(mypageCurrentUser); // ★第3段：予約タブのデータも裏で先読み
 }
 
-// スタンプカード風に進捗を表示（焼き芋が1本ずつ焼きあがっていくイメージ）
+// スタンプの絵：秋(11月など)は🍠、冬(12〜2月)は手描き風プレゼントボックス（赤と緑を交互に）
+function stampIcon(n){
+  if(!window.BK_WINTER) return '🍠';
+  const c = (n%2===1) ? ['#D8433B','#EA5A50'] : ['#2F8F5B','#44A872'];
+  return '<svg class="imo-gift" viewBox="0 0 32 32" aria-hidden="true">'
+    + '<path d="M6 14 L6 27 Q6 28.3 7.3 28.3 L24.7 28.3 Q26 28.3 26 27 L26 14 Z" fill="'+c[0]+'" stroke="#2b1410" stroke-width="1.4" stroke-linejoin="round"/>'
+    + '<path d="M4.2 10.8 Q4.2 9.6 5.4 9.6 L26.6 9.6 Q27.8 9.6 27.8 10.8 L27.8 14 L4.2 14 Z" fill="'+c[1]+'" stroke="#2b1410" stroke-width="1.4" stroke-linejoin="round"/>'
+    + '<rect x="14" y="9.6" width="4" height="18.7" fill="#F2C14E" stroke="#2b1410" stroke-width="1.1"/>'
+    + '<path d="M16 9.6 C11.5 3 6 5.2 9.3 8.4 C11 10 14 9.8 16 9.6 Z" fill="#F2C14E" stroke="#2b1410" stroke-width="1.2" stroke-linejoin="round"/>'
+    + '<path d="M16 9.6 C20.5 3 26 5.2 22.7 8.4 C21 10 18 9.8 16 9.6 Z" fill="#F2C14E" stroke="#2b1410" stroke-width="1.2" stroke-linejoin="round"/>'
+    + '<circle cx="16" cy="9.4" r="1.8" fill="#E0A82E" stroke="#2b1410" stroke-width="1.1"/>'
+    + '<path d="M8.6 17.2 L8.6 25" stroke="rgba(255,255,255,0.38)" stroke-width="1.5" stroke-linecap="round"/>'
+    + '</svg>';
+}
+// スタンプカード風に進捗を表示（焼き芋が1本ずつ焼きあがっていくイメージ／冬はプレゼントが届くイメージ）
 // ★秋ver「焼き芋スタンプ」：未達成は数字だけ、達成すると🍠が出現する（進捗ロジックは既存踏襲）
 function buildSporlogBoard(progress, lap){
   const squares = [1,2,3,4,5,6,7,8,9,10];
@@ -1587,7 +1616,7 @@ function buildSporlogBoard(progress, lap){
       if (isHalf) {
         // 練習日参加（0.5pt）で半分だけ焼けた状態：リングを半分だけ着色し、焼き芋を薄く覗かせる
         return '<div class="imo-cell">'
-          + '<div class="imo-emoji" style="opacity:.35;font-size:22px">🍠</div>'
+          + '<div class="imo-emoji" style="opacity:.5;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.85)">' + stampIcon(n) + '</div>'
           + '<div class="imo-numonly imo-next" style="position:relative;background:linear-gradient(90deg,rgba(255,180,90,0.25) 50%,transparent 50%)">' + n + '</div>'
           + msHtml
           + '</div>';
@@ -1596,7 +1625,7 @@ function buildSporlogBoard(progress, lap){
     }
     return '<div class="imo-cell' + (isHot ? ' imo-hot' : '') + '">'
       + '<div class="imo-halo"></div>'
-      + '<div class="imo-emoji">🍠</div>'
+      + '<div class="imo-emoji">' + stampIcon(n) + '</div>'
       + '<div class="imo-num">' + n + '</div>'
       + msHtml
       + '</div>';
@@ -1614,14 +1643,15 @@ function buildSporlogBoard(progress, lap){
   // ★獲得済みの無料チケットがあればグリッド下にワンタップで見られるボタンを出す（3D立体風ピルボタン）
   const ticketQuickBtn = (currentTicketCount>0) ? '<button onclick="openTicketModal()" style="display:flex;align-items:center;justify-content:center;gap:6px;margin:16px auto 0;background:linear-gradient(135deg,#FFC988,#E0651F);color:#3a1400;border:none;border-radius:999px;padding:11px 22px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 0 #9c4415">🎟️ 獲得チケットを見る（'+currentTicketCount+'枚）</button>' : '';
   // ★FINISH MOVE風の特典案内ボックス（焼き芋アリーナに合わせて暖色トーン）
-  const finishBox = '<div style="margin-top:22px;border:2px solid #E0651F;border-radius:10px;padding:14px 16px;position:relative;background:rgba(224,101,31,0.10)">'
-    + '<div style="font:900 10px/1 sans-serif;letter-spacing:.22em;color:#FFAE6B">NEXT REWARD</div>'
-    + '<div style="font-size:17px;font-weight:900;margin-top:6px;color:#FFC988">'+nextMilestone+'回参加で '+nextRewardLabel+'</div>'
-    + '<div style="font-size:11.5px;color:#e0b389;margin-top:4px">あと'+remainingLabel+'回で焼きあがる！</div>'
+  const WN = !!window.BK_WINTER; // 冬ver：金色ベースの配色＆プレゼント文言
+  const finishBox = '<div style="margin-top:22px;border:2px solid '+(WN?'#D8B25A':'#E0651F')+';border-radius:10px;padding:14px 16px;position:relative;background:'+(WN?'rgba(216,178,90,0.10)':'rgba(224,101,31,0.10)')+'">'
+    + '<div style="font:900 10px/1 sans-serif;letter-spacing:.22em;color:'+(WN?'#E8CB85':'#FFAE6B')+'">NEXT REWARD</div>'
+    + '<div style="font-size:17px;font-weight:900;margin-top:6px;color:'+(WN?'#FFE9B8':'#FFC988')+'">'+nextMilestone+'回参加で '+nextRewardLabel+'</div>'
+    + '<div style="font-size:11.5px;color:'+(WN?'#aebfe0':'#e0b389')+';margin-top:4px">あと'+remainingLabel+(WN?'回でプレゼントが届く！':'回で焼きあがる！')+'</div>'
     + '</div>';
   return ''+
     '<div style="text-align:center">'+lapLabel+'</div>'+
-    '<div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-bottom:14px;text-align:center;letter-spacing:.05em">焼き芋スタンプ（'+floorProgress+'/10）</div>'+
+    '<div style="font-size:12.5px;color:rgba(255,255,255,0.55);margin-bottom:14px;text-align:center;letter-spacing:.05em">'+(WN?'プレゼントスタンプ':'焼き芋スタンプ')+'（'+floorProgress+'/10）</div>'+
     '<div class="imoWrap" style="position:relative;overflow:visible;padding:0 4px">'+
       '<div style="display:grid;grid-template-columns:repeat(5,1fr);row-gap:22px;column-gap:6px;width:100%;max-width:300px;margin:0 auto">'+tilesHtml+'</div>'+
     '</div>'+
