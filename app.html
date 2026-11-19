@@ -255,7 +255,7 @@ body.sporolog-page .wrapper{padding-top:0}
 <script>
 /* 月別画像：opening-MM.jpg があればそれを使い、無い月は opening.jpg に戻す */
 (function(){
-  var mm=('0'+(new Date().getMonth()+1)).slice(-2);
+  var _d=new Date(),mm=('0'+(_d<new Date(2026,11,1)?12:_d.getMonth()+1)).slice(-2); /* 2026/12/1までは先行して12月版を表示 */
   var img=document.getElementById('splash-img');
   img.onerror=function(){img.onerror=null;img.src='opening.jpg';};
   img.src='opening-'+mm+'.jpg';
@@ -480,7 +480,7 @@ body.sporolog-page .wrapper{padding-top:0}
       <script>
       /* 月別画像：sporolog-MM.jpg があればそれを使い、無い月は従来の sporolog-banner.jpg(4:3) に戻す */
       (function(){
-        var mm=('0'+(new Date().getMonth()+1)).slice(-2);
+        var _d=new Date(),mm=('0'+(_d<new Date(2026,11,1)?12:_d.getMonth()+1)).slice(-2); /* 2026/12/1までは先行して12月版を表示 */
         var img=document.getElementById('sporolog-banner-img');
         img.onerror=function(){img.onerror=null;img.style.aspectRatio='4/3';img.src='sporolog-banner.jpg';};
         img.src='sporolog-'+mm+'.jpg';
