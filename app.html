@@ -250,8 +250,17 @@ body.sporolog-page .wrapper{padding-top:0}
 <div id="dark-bg-overlay"></div>
 
 <div id="splash" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;transition:opacity 1.1s ease;overflow:hidden">
-  <img src="opening.jpg" style="width:100%;height:100%;object-fit:cover;display:block;animation:splashFadeIn 1.6s ease forwards;opacity:0" alt="カシワのBUKATSU">
+  <img id="splash-img" style="width:100%;height:100%;object-fit:cover;display:block;animation:splashFadeIn 1.6s ease forwards;opacity:0" alt="カシワのBUKATSU">
 </div>
+<script>
+/* 月別画像：opening-MM.jpg があればそれを使い、無い月は opening.jpg に戻す */
+(function(){
+  var mm=('0'+(new Date().getMonth()+1)).slice(-2);
+  var img=document.getElementById('splash-img');
+  img.onerror=function(){img.onerror=null;img.src='opening.jpg';};
+  img.src='opening-'+mm+'.jpg';
+})();
+</script>
 
 <div class="wrapper">
 <div class="header">
@@ -467,7 +476,16 @@ body.sporolog-page .wrapper{padding-top:0}
     <div style="position:relative;text-align:center;margin-bottom:6px"><button onclick="refreshNow('sporolog')" style="background:none;border:1px solid rgba(255,182,92,0.4);color:#FFB65C;border-radius:999px;padding:5px 14px;font-size:11.5px;font-weight:700;cursor:pointer">🔄 最新に更新</button></div>
 
     <div style="position:relative;margin-top:8px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,217,61,0.3);box-shadow:0 6px 18px rgba(0,0,0,0.4)">
-      <img src="sporolog-banner.jpg" alt="" style="width:100%;display:block;aspect-ratio:4/3;object-fit:cover">
+      <img id="sporolog-banner-img" alt="" style="width:100%;display:block;aspect-ratio:1600/845;object-fit:cover">
+      <script>
+      /* 月別画像：sporolog-MM.jpg があればそれを使い、無い月は従来の sporolog-banner.jpg(4:3) に戻す */
+      (function(){
+        var mm=('0'+(new Date().getMonth()+1)).slice(-2);
+        var img=document.getElementById('sporolog-banner-img');
+        img.onerror=function(){img.onerror=null;img.style.aspectRatio='4/3';img.src='sporolog-banner.jpg';};
+        img.src='sporolog-'+mm+'.jpg';
+      })();
+      </script>
     </div>
 
     <div id="sporolog-visitor-note" style="display:none;text-align:center;padding:30px 16px">
