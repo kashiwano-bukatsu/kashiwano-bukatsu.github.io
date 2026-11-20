@@ -1171,7 +1171,7 @@ function openArenaGuide(){
     m.id='arena-guide-modal';
     m.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
     m.innerHTML='<div style="width:100%;max-width:640px"><div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:6px">⚠️ アリーナ入り口の道順（C・Dコート）</div>'+
-      '<div style="color:#ddd;font-size:12px;margin-bottom:10px;line-height:1.6">C・Dコートは、Bコートの外側（左側）を回って入ります。</div>'+
+      '<div style="color:#ddd;font-size:12px;margin-bottom:10px;line-height:1.6">C・Dコートは、アリーナA・Bの入り口方面（右側の通路）を回って入ります。</div>'+
       '<video id="arena-guide-video" src="arena-entrance.mp4" poster="arena-entrance-poster.jpg" controls playsinline preload="none" style="width:100%;border-radius:12px;background:#000"></video>'+
       '<button onclick="closeArenaGuide()" style="width:100%;margin-top:14px;padding:14px;background:#fff;color:#1a3a5c;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer">閉じる</button></div>';
     m.addEventListener('click',function(e){if(e.target===m)closeArenaGuide();});
