@@ -1152,6 +1152,43 @@ function courtLabel(courtLetters){
   return String(courtLetters).toUpperCase().split('').join('・')+'コート';
 }
 
+// ===== アリーナ入り口注意（C・Dコートは入り口が別ルート）＋道中動画 =====
+function courtNeedsEntranceNotice(letters){
+  return /[CD]/.test(String(letters||'').toUpperCase());
+}
+function arenaEntranceNoticeHTML(letters,compact){
+  if(!courtNeedsEntranceNotice(letters))return'';
+  return '<div style="margin-top:'+(compact?6:8)+'px;background:#fff0f0;border:1.5px solid #e57373;border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:8px">'+
+    '<div style="font-size:18px">⚠️</div>'+
+    '<div style="flex:1;min-width:0;font-size:13px;font-weight:800;color:#c62828">アリーナ入り口注意</div>'+
+    '<button onclick="openArenaGuide()" style="padding:7px 10px;background:#c62828;color:#fff;border:none;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">▶ 道順を見る</button>'+
+  '</div>';
+}
+function openArenaGuide(){
+  let m=document.getElementById('arena-guide-modal');
+  if(!m){
+    m=document.createElement('div');
+    m.id='arena-guide-modal';
+    m.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
+    m.innerHTML='<div style="width:100%;max-width:640px"><div style="color:#fff;font-size:15px;font-weight:800;margin-bottom:6px">⚠️ アリーナ入り口の道順（C・Dコート）</div>'+
+      '<div style="color:#ddd;font-size:12px;margin-bottom:10px;line-height:1.6">C・Dコートは、Bコートの外側（左側）を回って入ります。</div>'+
+      '<video id="arena-guide-video" src="arena-entrance.mp4" poster="arena-entrance-poster.jpg" controls playsinline preload="none" style="width:100%;border-radius:12px;background:#000"></video>'+
+      '<button onclick="closeArenaGuide()" style="width:100%;margin-top:14px;padding:14px;background:#fff;color:#1a3a5c;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer">閉じる</button></div>';
+    m.addEventListener('click',function(e){if(e.target===m)closeArenaGuide();});
+    document.body.appendChild(m);
+  }
+  m.style.display='flex';
+  const v=document.getElementById('arena-guide-video');
+  try{v.currentTime=0;const pr=v.play();if(pr&&pr.catch)pr.catch(function(){});}catch(e){}
+}
+function closeArenaGuide(){
+  const m=document.getElementById('arena-guide-modal');
+  if(!m)return;
+  const v=document.getElementById('arena-guide-video');
+  try{v.pause();}catch(e){}
+  m.style.display='none';
+}
+
 // ===== ログイン情報の保存を一箇所に集約（重複バグ防止用） =====
 function saveCurrentUser(){
   if(mypageCurrentUser){
@@ -1454,7 +1491,7 @@ async function loadHomeData(){
     const today=formatDate(new Date());
     if(d.todaySchedule){
       const s=d.todaySchedule;
-      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div style="flex:1"><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div>'+(s[8]?'<div style="font-size:14px;color:#1a3a5c;margin-top:2px;font-weight:700">📍 '+courtLabel(s[8])+'</div>':'')+'</div>'+(s[8]?courtDiagramHTML(s[8],76):'')+'</div>';
+      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div style="flex:1"><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div>'+(s[8]?'<div style="font-size:14px;color:#1a3a5c;margin-top:2px;font-weight:700">📍 '+courtLabel(s[8])+'</div>':'')+'</div>'+(s[8]?courtDiagramHTML(s[8],76):'')+'</div>'+arenaEntranceNoticeHTML(s[8]);
       document.getElementById('home-today-card').style.display='block';
       document.getElementById('home-countdown-card').style.display='none';
     }else{
@@ -4525,11 +4562,15 @@ function renderReserveReminder(data){
     const s=(data.allSchedules||[]).find(function(x){return dk(x[0])===dk(date)&&x[4]===sport;});
     return s?s[1]:'';
   };
+  const courtOf=function(date,sport){
+    const s=(data.allSchedules||[]).find(function(x){return dk(x[0])===dk(date)&&x[4]===sport;});
+    return s&&s[8]?String(s[8]):'';
+  };
   const add=function(rows,name,nick,isSelf){
     (rows||[]).forEach(function(r){
       const k=dk(r[1]),st=r[7]||'⭕';
       if(st==='❌'||k!==tK)return;
-      lines.push({k:k,date:r[1],sport:r[2],place:r[3],st:st,name:name,nick:nick,isSelf:isSelf,time:timeOf(r[1],r[2])});
+      lines.push({k:k,date:r[1],sport:r[2],place:r[3],st:st,name:name,nick:nick,isSelf:isSelf,time:timeOf(r[1],r[2]),court:courtOf(r[1],r[2])});
     });
   };
   add(data.reservations,mypageCurrentUser.fullname,String(mypageCurrentUser.nickname||'あなた').split(/[\s　]/)[0],true);
@@ -4548,7 +4589,7 @@ function renderReserveReminder(data){
         return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(i?'border-top:1px dashed #f0d6a6;':'')+'">'+
           '<div style="font-size:26px">'+(SPORT_ICON[l.sport]||'🏟')+'</div>'+
           '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+_esc(l.sport)+'</div>'+
-          '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+' ／ '+_esc(l.st)+' '+stLabel+'</div></div>'+
+          '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+(l.court?' ／ 📍'+_esc(courtLabel(l.court)):'')+' ／ '+_esc(l.st)+' '+stLabel+'</div>'+arenaEntranceNoticeHTML(l.court,true)+'</div>'+
           '<button onclick="reminderManage(\''+_esc(l.date)+'\',\''+_esc(l.sport)+'\',\''+_esc(l.name)+'\','+(l.isSelf?'true':'false')+')" style="padding:8px 10px;background:#fff;border:1.5px solid #e0a548;color:#b25f00;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">変更・取消</button></div>';
       }).join('')+
       '<div style="font-size:11px;color:#a8803a;margin-top:6px">予定が変わったら、早めにステータスを更新してください。</div></div>';
