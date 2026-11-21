@@ -101,7 +101,7 @@ input.t:focus{outline:none;border-color:var(--sage)}
 
     <div id="buy-card" class="card"></div>
 
-    <div class="foot">この専用ページのURLは、あなた専用です。<br>他の人に教えないでください。<br><a href="https://kashiwano-bukatsu.github.io/" target="_blank" rel="noopener">カシワのBUKATSUについて</a></div>
+    <div class="foot"><span id="foot-private" style="display:none">いま開いているURLは、あなた専用です。<br>他の人に教えないでください。<br></span><a href="https://kashiwano-bukatsu.github.io/" target="_blank" rel="noopener">カシワのBUKATSUについて</a></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -149,7 +149,7 @@ async function load(silent){
   }
 }
 
-function render(){renderMe();renderSessions();renderBuy();}
+function render(){renderMe();renderSessions();renderBuy();$('foot-private').style.display=DATA.me?'inline':'none';}
 
 function renderMe(){
   const el=$('me-card'),me=DATA.me;
