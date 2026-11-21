@@ -1073,7 +1073,7 @@ function showMaintenancePopup(){
   ov.innerHTML='<div class="popup-card" style="text-align:center"><div style="font-size:40px;margin-bottom:12px">🛠️</div><div style="font-size:17px;font-weight:700;color:#1a1a2e;margin-bottom:8px">ただいまメンテナンス中です</div><div style="font-size:14px;color:#888;line-height:1.8;margin-bottom:20px">'+MAINTENANCE_UNTIL_TEXT+'はログイン・予約・紹介などの機能を一時停止しています。<br>ご不便をおかけし申し訳ございません。</div><button onclick="this.closest(\'.popup-overlay\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">OK</button></div>';
   document.body.appendChild(ov);
 }
-const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+const SPORT_ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐','オンラインヨガ':'🧘','ヨガ':'🧘','未定':'💭'};
 // ===== 練習日（半面開放など、事務局アプリの新規開催登録で「練習日」チェックを付けた枠）=====
 const PRACTICE_DAY_TAG='練習日';
 function isPracticeDay(memo){ return (memo||'').indexOf(PRACTICE_DAY_TAG)!==-1; }
@@ -1508,7 +1508,7 @@ async function loadHomeData(){
     }
     const sorted=Object.entries(d.nextEvents||{}).filter(([,ev])=>ev&&ev.date).sort((a,b)=>dk(a[1].date)-dk(b[1].date));
     // カレンダーカード内の次回開催予定をcountつきで更新
-    const ICONS={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+    const ICONS={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐','オンラインヨガ':'🧘','ヨガ':'🧘','未定':'💭'};
     const nevEl=document.getElementById('home-next-events');
     if(nevEl)nevEl.innerHTML=sorted.length?sorted.map(([sport,ev])=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8">
@@ -3420,7 +3420,7 @@ async function loadMonthCalendar(){
 }
 function renderMonthCalendar(date){
   const el=document.getElementById('home-month-calendar');if(!el)return;
-  const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+  const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐','オンラインヨガ':'🧘','ヨガ':'🧘','未定':'💭'};
   const year=date.getFullYear(),month=date.getMonth();
   const today=new Date();
   const ym=`${year}/${String(month+1).padStart(2,'0')}`;
@@ -3449,7 +3449,7 @@ function renderMonthCalendar(date){
   for(let d=1;d<=lastDate;d++){
     const isToday=year===today.getFullYear()&&month===today.getMonth()&&d===today.getDate();
     const dayEvents=evMap[d]||[];
-    const icons=dayEvents.map(s=>isPracticeDay(s[7])?'⛹️‍♀️':(ICON[s[4]]||'🏀')).join('');
+    const icons=dayEvents.map(s=>isPracticeDay(s[7])?'⛹️‍♀️':(ICON[s[4]]||'🏟')).join('');
     const dow=(firstDay+d-1)%7;
     const dc=dow===0?'#e53935':dow===6?'#1976d2':'#1a1a2e';
     const tapAttr=dayEvents.length?` onclick="showCalendarDayDetail(${d})" style="cursor:pointer"`:'';
@@ -3489,7 +3489,7 @@ function showCalendarDayDetail(day){
 }
 function renderNextEventsInCalendar(){
   const el=document.getElementById('home-next-events');if(!el)return;
-  const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐'};
+  const ICON={'バドミントン':'🏸','バスケットボール':'🏀','バレーボール':'🏐','オンラインヨガ':'🧘','ヨガ':'🧘','未定':'💭'};
   const todayKey=dk(new Date().toISOString().slice(0,10).replace(/-/g,'/'));
   const sportMap={};
   calendarSchedules.forEach(s=>{
