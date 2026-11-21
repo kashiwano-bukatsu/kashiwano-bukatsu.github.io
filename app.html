@@ -561,6 +561,11 @@ body.winter .imo-hot .imo-gift{filter:drop-shadow(0 0 6px rgba(255,225,150,0.85)
         <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
       </div>
     </div>
+    <a href="yoga.html" style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:13px 16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(26,58,92,.06);text-decoration:none;color:#1a3a5c">
+      <span style="font-size:22px">🧘</span>
+      <span style="flex:1;min-width:0"><span style="font-size:14px;font-weight:800">オンラインヨガ部</span><span style="display:block;font-size:11.5px;color:#888;margin-top:1px">隔週水曜 22:00〜 ／ 1回500円〜 ／ 会員以外もOK</span></span>
+      <span style="font-size:18px;color:#aaa">›</span>
+    </a>
     <div class="card" id="invited-trials-card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>あなたが招待した体験予定者</div>
       <div id="invited-trials-list" style="margin-top:8px"></div>
@@ -1159,11 +1164,7 @@ function courtNeedsEntranceNotice(letters){
 }
 function arenaEntranceNoticeHTML(letters,compact){
   if(!courtNeedsEntranceNotice(letters))return'';
-  return '<div style="margin-top:'+(compact?6:8)+'px;background:#fff0f0;border:1.5px solid #e57373;border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:8px">'+
-    '<div style="font-size:18px">⚠️</div>'+
-    '<div style="flex:1;min-width:0;font-size:13px;font-weight:800;color:#c62828">アリーナ入り口注意</div>'+
-    '<button onclick="openArenaGuide()" style="padding:7px 10px;background:#c62828;color:#fff;border:none;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">▶ 道順を見る</button>'+
-  '</div>';
+  return '<div style="margin-top:'+(compact?3:6)+'px;font-size:12px;font-weight:800;color:#c62828;line-height:1.5">⚠️ アリーナ入り口注意 <span onclick="openArenaGuide()" style="margin-left:6px;text-decoration:underline;cursor:pointer;white-space:nowrap">▶道順を見る</span></div>';
 }
 function openArenaGuide(){
   let m=document.getElementById('arena-guide-modal');
@@ -4300,23 +4301,6 @@ async function cancelInvitedTrial(internalId,fullname){
   }catch(e){alert('エラー：'+gasErrorText(e));loadInvitedTrials();}
 }
 
-// ===== オンラインヨガ部（HOMEの入口カード）=====
-// HOMEに追加
-window.addEventListener('load', function(){
-  setTimeout(function(){
-    const homeSection = document.getElementById('section-home');
-    if(!homeSection || document.getElementById('yoga-card')) return;
-    const yogaCard = document.createElement('div');
-    yogaCard.id = 'yoga-card';
-    yogaCard.className = 'card';
-    yogaCard.innerHTML = `
-      <div class="card-title"><div class="card-title-dot"></div>オンラインヨガ部</div>
-      <a href="yoga.html" style="display:block;background:#e6f2ee;border-radius:12px;padding:16px;text-decoration:none;color:#2f6256;text-align:center;font-size:15px;font-weight:700">🧘 隔週水曜 22:00〜 Zoom で開催 →</a>
-      <div style="font-size:11.5px;color:#888;margin-top:8px;line-height:1.7">チケット制（1回500円〜）。3人以上で開催します。会員でなくても参加できるので、お友達にも教えてあげてください。</div>
-    `;
-    homeSection.appendChild(yogaCard);
-  }, 500);
-});
 </script>
 <script>
 // ===== Service Worker 登録（ネットワーク優先・サイレント自動更新）=====
@@ -4581,17 +4565,17 @@ function renderReserveReminder(data){
   let h='';
   people.forEach(function(nm){
     const ls=lines.filter(function(l){return l.name===nm;});
-    h+='<div style="background:linear-gradient(135deg,#fff8ec,#fff2dc);border:1.5px solid #f5c36b;border-radius:16px;padding:14px 16px;margin-bottom:12px">'+
-      '<div style="font-size:13px;font-weight:800;color:#b25f00;margin-bottom:8px">⏰ '+_esc(ls[0].nick)+'さんの次回参加予約（本日 '+_keyToLabel(tK)+'）</div>'+
+    h+='<div style="background:linear-gradient(135deg,#fff8ec,#fff2dc);border:1.5px solid #f5c36b;border-radius:14px;padding:10px 12px;margin-bottom:10px">'+
+      '<div style="font-size:12.5px;font-weight:800;color:#b25f00;margin-bottom:4px">⏰ '+_esc(ls[0].nick)+'さんの次回参加予約（本日 '+_keyToLabel(tK)+'）</div>'+
       ls.map(function(l,i){
         const stLabel={'⭕':'参加','△':'未定'}[l.st]||l.st;
-        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(i?'border-top:1px dashed #f0d6a6;':'')+'">'+
-          '<div style="font-size:26px">'+(SPORT_ICON[l.sport]||'🏟')+'</div>'+
+        return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;'+(i?'border-top:1px dashed #f0d6a6;':'')+'">'+
+          '<div style="font-size:22px">'+(SPORT_ICON[l.sport]||'🏟')+'</div>'+
           '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+_esc(l.sport)+'</div>'+
           '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+(l.court?' ／ 📍'+_esc(courtLabel(l.court)):'')+' ／ '+_esc(l.st)+' '+stLabel+'</div>'+arenaEntranceNoticeHTML(l.court,true)+'</div>'+
           '<button onclick="reminderManage(\''+_esc(l.date)+'\',\''+_esc(l.sport)+'\',\''+_esc(l.name)+'\','+(l.isSelf?'true':'false')+')" style="padding:8px 10px;background:#fff;border:1.5px solid #e0a548;color:#b25f00;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">変更・取消</button></div>';
       }).join('')+
-      '<div style="font-size:11px;color:#a8803a;margin-top:6px">予定が変わったら、早めにステータスを更新してください。</div></div>';
+      '</div>';
   });
   box.innerHTML=h;box.style.display='block';
 }
