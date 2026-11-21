@@ -9,7 +9,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#1a3a5c;--sage:#3f7d6e;--sage-d:#2f6256;--sage-l:#e6f2ee;--line:#dfe7e3;--ink:#1a1a2e;--mute:#7a8794;--warn:#c62828}
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f3f6f4;color:var(--ink);padding-bottom:48px;min-height:100vh;-webkit-text-size-adjust:100%}
-.hero{background:linear-gradient(160deg,#2f6256,#1a3a5c);color:#fff;padding:28px 20px 30px;text-align:center}
+.hero{background:linear-gradient(160deg,#2f6256,#1a3a5c);color:#fff;padding:58px 20px 30px;text-align:center;position:relative}
+.hero .back{position:absolute;z-index:2;left:12px;top:14px;color:#fff;text-decoration:none;font-size:13.5px;font-weight:700;background:rgba(255,255,255,.16);padding:7px 13px;border-radius:999px}
 .hero .eyebrow{font-size:12px;letter-spacing:.12em;opacity:.8}
 .hero h1{font-size:25px;font-weight:800;margin-top:6px;letter-spacing:.02em}
 .hero .sub{font-size:13.5px;margin-top:10px;opacity:.92;line-height:1.7}
@@ -72,6 +73,7 @@ input.t:focus{outline:none;border-color:var(--sage)}
 </head>
 <body>
 <div class="hero">
+  <a class="back" href="app.html" onclick="return goBack()">‹ アプリに戻る</a>
   <div class="eyebrow">カシワのBUKATSU</div>
   <h1>🧘 オンラインヨガ部</h1>
   <div class="sub">隔週水曜 22:00〜23:00 ／ Zoom<br>おうちから、1回500円〜。会員でなくても参加できます</div>
@@ -111,6 +113,12 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbwcsCNnt6C8XdI4dnd2Pb7nON
 const TOKEN_KEY='yoga_token';
 let TOKEN=null, DATA=null, SEL_QTY=5, BUSY=false, JUST_BOUGHT=null, SHOW_BUY=false;
 
+function goBack(){
+  try{
+    if(document.referrer&&new URL(document.referrer).origin===location.origin&&history.length>1){history.back();return false;}
+  }catch(e){}
+  return true;
+}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function $(id){return document.getElementById(id);}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),3200);}
