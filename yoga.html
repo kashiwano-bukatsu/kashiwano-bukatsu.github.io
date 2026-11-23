@@ -87,7 +87,7 @@ input.t:focus{outline:none;border-color:var(--sage)}
       <div class="card-title">参加のしくみ</div>
       <ul class="how">
         <li><span class="n">1</span><span>ヨガチケットを購入します（会員登録は不要です）。</span></li>
-        <li><span class="n">2</span><span>PayPayでお支払い。事務局が確認すると、チケットが使えるようになります。</span></li>
+        <li><span class="n">2</span><span>PayPayでお支払いして、<b>公式LINE</b>で「支払いました」と連絡します。事務局が確認すると、チケットが使えるようになります。</span></li>
         <li><span class="n">3</span><span>参加したい日を選んで申込みます。<b>3人以上で開催</b>です。</span></li>
         <li><span class="n">4</span><span><b>前日の21:00</b>に開催が決まります。決まった日だけチケットを1枚使い、ZoomのURLがこのページに表示されます。</span></li>
       </ul>
@@ -139,6 +139,15 @@ function saveToken(t){
   try{localStorage.setItem(TOKEN_KEY,t);}catch(e){}
   try{history.replaceState(null,'',location.pathname+'?t='+t);}catch(e){}
 }
+function lineMsgUrl(text){
+  const l=(DATA&&DATA.line)||{};
+  if(l.id)return 'https://line.me/R/oaMessage/'+l.id+'/?'+encodeURIComponent(text);
+  return l.url||'#';
+}
+function lineAddUrl(){return (DATA&&DATA.line&&DATA.line.url)||'#';}
+function payMsg(name,qty,amount,id){
+  return '【オンラインヨガ】支払い完了\n呼び名：'+name+'\n内容：'+qty+'回券 '+Number(amount).toLocaleString()+'円\n申込ID：'+id;
+}
 function myUrl(){return location.origin+location.pathname+'?t='+TOKEN;}
 
 async function load(silent){
@@ -167,14 +176,17 @@ function renderMe(){
   let h='<div class="card-title">'+esc(me.name)+'さんのチケット</div>'+
     '<div class="ticket-box"><div><span class="big">'+me.remaining+'</span><span class="unit">枚</span></div>'+
     '<div class="meta">使えるチケット'+(me.held?'<br>予約中 '+me.held+'枚（開催が決まると使われます）':'')+(me.nextExpiry&&me.remaining>0?'<br>有効期限 '+esc(me.nextExpiry)+' まで':'')+'</div></div>';
-  if(pend.length){
+  if(pend.length&&JUST_BOUGHT){
+    /* 購入直後は、下の購入欄に案内を出すので、ここでは出さない */
+  }else if(pend.length){
+    const p0=pend[0];
     h+='<div class="pay"><b>お支払いの確認待ち</b>'+pend.map(p=>'<div class="pending-row"><span>'+p.qty+'回券</span><span style="margin-left:auto;font-weight:800">'+p.price.toLocaleString()+'円</span></div>').join('')+
       (me.payInfo?'<div class="pi">'+esc(me.payInfo)+'</div>':'')+
-      '<div class="hint">PayPayの送金メッセージに「'+esc(me.name)+'」と書いてください。事務局が確認すると、チケットが使えるようになります。</div>'+
-      '<button class="btn btn-ghost" style="margin-top:10px" onclick="load()">🔄 確認状況を更新</button></div>';
-  }
-  if(me.openchatUrl){
-    h+='<a class="btn btn-line" style="margin-top:12px" href="'+esc(me.openchatUrl)+'" target="_blank" rel="noopener">💬 ヨガ部のオープンチャットに参加</a>';
+      '<div class="hint">① PayPayで送金（メッセージに「'+esc(me.name)+'」と書いてください）<br>② 下のボタンから、公式LINEで「支払いました」と連絡してください。</div>'+
+      '<a class="btn btn-line" style="margin-top:10px" href="'+esc(lineMsgUrl(payMsg(me.name,p0.qty,p0.price,p0.id)))+'" target="_blank" rel="noopener">💬 公式LINEで支払いを連絡する</a>'+
+      '<button class="btn btn-ghost" style="margin-top:8px" onclick="load()">🔄 確認状況を更新</button></div>';
+  }else{
+    h+='<a class="btn btn-ghost" style="margin-top:12px" href="'+esc(lineAddUrl())+'" target="_blank" rel="noopener">💬 公式LINE（お知らせ・お問い合わせ）</a>';
   }
   h+='<div style="margin-top:12px"><div class="hint">あなた専用のURL（ブックマークしておくと便利です）</div><div class="urlbox" id="myurl">'+esc(myUrl())+'</div>'+
     '<button class="btn btn-ghost btn-sm" onclick="copyUrl()">URLをコピー</button></div>';
@@ -229,11 +241,13 @@ function renderBuy(){
   const base=plans.find(p=>p.qty===1);
   let h='<div class="card-title">'+(me?'チケットを追加で購入':'チケットを購入')+'</div>';
   if(JUST_BOUGHT){
-    const j=JUST_BOUGHT;
+    const j=JUST_BOUGHT,nm=(DATA.me&&DATA.me.name)||j.name||'';
     h+='<div class="pay"><b>お申込みありがとうございます！</b>'+
       '<div class="pi">'+j.qty+'回券　'+j.amount.toLocaleString()+'円</div>'+
-      (j.payInfo?'<div class="pi">'+esc(j.payInfo)+'</div>':'<div class="hint">お支払い方法は、事務局からご案内します。</div>')+
-      '<div class="hint">PayPayの送金メッセージに、ご登録の呼び名を書いてください。事務局が入金を確認すると、このページでチケットが使えるようになります。</div></div>'+
+      (j.payInfo?'<div class="pi">'+esc(j.payInfo)+'</div>':'<div class="hint">お支払い方法は、公式LINEでご案内します。</div>')+
+      '<div class="hint"><b>次の2つをお願いします</b><br>① PayPayで送金（メッセージに「'+esc(nm)+'」と書いてください）<br>② 下のボタンから、公式LINEで「支払いました」と連絡してください。<br>事務局が確認すると、このページでチケットが使えるようになります。</div>'+
+      '<a class="btn btn-line" style="margin-top:12px" href="'+esc(lineMsgUrl(payMsg(nm,j.qty,j.amount,j.purchaseId)))+'" target="_blank" rel="noopener">💬 公式LINEで支払いを連絡する</a>'+
+      '<div class="hint" style="margin-top:8px">友だち追加がまだの方は、トーク画面を開いたときに追加してください。<a href="'+esc(lineAddUrl())+'" target="_blank" rel="noopener" style="color:#2f6256">友だち追加だけ先にする</a></div></div>'+
       '<div class="hint" style="margin-top:12px">このページのURLは、あなた専用です。ブックマークするか、コピーして保管してください。</div>'+
       '<button class="btn btn-ghost" style="margin-top:8px" onclick="JUST_BOUGHT=null;SHOW_BUY=false;render()">閉じる</button>';
     el.innerHTML=h;return;
@@ -246,8 +260,7 @@ function renderBuy(){
   }).join('');
   if(!me){
     h+='<label class="f">呼び名（ニックネームでOK）</label><input class="t" id="f-name" maxlength="20" placeholder="例：たろう" autocomplete="off">'+
-      '<label class="f">連絡先（LINE名・メールなど）</label><input class="t" id="f-contact" maxlength="80" placeholder="例：LINEの表示名 / メールアドレス" autocomplete="off">'+
-      '<div class="hint">支払いの確認や、開催のご連絡に使います。他の参加者には見えません。</div>';
+      '<div class="hint">支払いの確認に使います。他の参加者には見えません。</div>';
   }
   h+='<button class="btn btn-primary" id="buy-btn" style="margin-top:14px" onclick="doBuy()">申込んで支払い方法を見る</button>'+
     '<div class="hint" style="margin-top:8px">有効期限は、受け取りの確認日から6か月です。</div>';
@@ -262,16 +275,15 @@ async function doBuy(){
   if(BUSY)return;
   let name='',contact='';
   if(!DATA.me){
-    name=($('f-name').value||'').trim();contact=($('f-contact').value||'').trim();
+    name=($('f-name').value||'').trim();
     if(!name)return toast('呼び名を入力してください');
-    if(!contact)return toast('連絡先を入力してください');
   }
   BUSY=true;const b=$('buy-btn');b.disabled=true;b.textContent='送信中…';
   try{
     const r=await callGAS('registerYogaPurchase',name,contact,SEL_QTY,TOKEN||null);
     if(r&&r.token&&!TOKEN)saveToken(r.token);
     if(!r||r.error){
-      const m={invalid_name:'呼び名を確認してください',invalid_contact:'連絡先を確認してください',invalid_plan:'チケットの種類を選んでください',too_many_pending:'お支払い確認待ちの申込みが多すぎます。先に確認をお待ちください'}[r&&r.error]||'申込みできませんでした';
+      const m={invalid_name:'呼び名を確認してください',invalid_plan:'チケットの種類を選んでください',too_many_pending:'お支払い確認待ちの申込みが多すぎます。先に確認をお待ちください'}[r&&r.error]||'申込みできませんでした';
       toast(m);BUSY=false;b.disabled=false;b.textContent='申込んで支払い方法を見る';
       if(r&&r.token)await load(true);
       return;

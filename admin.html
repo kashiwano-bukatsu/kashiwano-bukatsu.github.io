@@ -649,14 +649,15 @@ tr:hover td{background:var(--card-soft);}
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>参加者（専用URL・チケット）</div>
-        <input id="yg-member-search" type="text" placeholder="呼び名・連絡先で検索" style="width:320px;max-width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:12px" oninput="ygRenderMembers()">
+        <input id="yg-member-search" type="text" placeholder="呼び名で検索" style="width:320px;max-width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:12px" oninput="ygRenderMembers()">
         <div id="yg-members"></div>
         <div style="font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.8">専用URLを失くした人には、ここで「URLをコピー」して送ってください。現金で受け取った分は「購入として付与」、お礼は「お礼として付与」を使います。</div>
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>設定</div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px">オープンチャットのリンクは、チケットを購入した人のページにだけ表示されます。</div>
-        <input type="text" id="yg-conf-oc" placeholder="オープンチャットの招待URL（https://〜）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;display:block">
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px">オンラインヨガ専用の公式LINEです。参加者が「支払いを連絡する」を押すと、このアカウントのトークが、メッセージ入りで開きます。</div>
+        <input type="text" id="yg-conf-lineurl" placeholder="友だち追加URL（https://lin.ee/〜）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:8px;display:block">
+        <input type="text" id="yg-conf-lineid" placeholder="ベーシックID（@から始まる）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;display:block">
         <textarea id="yg-conf-pay" rows="3" placeholder="支払い案内（例：PayPay ID：xxxx　※送金メッセージに呼び名を書いてください）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;display:block;font-family:inherit"></textarea>
         <button class="btn btn-primary btn-sm" onclick="ygSaveConf()">保存する</button>
       </div>
@@ -1789,9 +1790,9 @@ function ygRender(){
   if (badge){ badge.textContent = d.pending.length; badge.classList.toggle('zero', !d.pending.length); }
   // 支払い確認待ち
   document.getElementById('yg-pending').innerHTML = d.pending.length ? `<div style="overflow-x:auto"><table>
-    <thead><tr><th>申込日時</th><th>呼び名</th><th>連絡先</th><th>内容</th><th>金額</th><th>操作</th></tr></thead>
+    <thead><tr><th>申込日時</th><th>呼び名</th><th>申込ID</th><th>内容</th><th>金額</th><th>操作</th></tr></thead>
     <tbody>${d.pending.map(p => `<tr>
-      <td>${escapeHtml(p.at)}</td><td><b>${escapeHtml(p.name)}</b></td><td>${escapeHtml(p.contact)}</td>
+      <td>${escapeHtml(p.at)}</td><td><b>${escapeHtml(p.name)}</b></td><td style="font-size:11px;color:var(--ink-soft)">${escapeHtml(p.id)}</td>
       <td>${p.qty}回券</td><td>¥${p.price.toLocaleString()}</td>
       <td><button class="btn btn-primary btn-sm" onclick="ygApprove('${p.id}')">受領済みにする</button> <button class="btn btn-sm" onclick="ygReject('${p.id}')">却下</button></td>
     </tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">確認待ちはありません</div>';
@@ -1814,8 +1815,9 @@ function ygRender(){
     </div>`;
   }).join('') : '<div class="empty-state">開催日がまだありません。下のフォームから追加してください</div>';
   // 設定
-  const oc = document.getElementById('yg-conf-oc'), pay = document.getElementById('yg-conf-pay');
-  if (oc && document.activeElement !== oc) oc.value = d.conf.openchatUrl || '';
+  const lu = document.getElementById('yg-conf-lineurl'), li = document.getElementById('yg-conf-lineid'), pay = document.getElementById('yg-conf-pay');
+  if (lu && document.activeElement !== lu) lu.value = d.conf.lineUrl || '';
+  if (li && document.activeElement !== li) li.value = d.conf.lineId || '';
   if (pay && document.activeElement !== pay) pay.value = d.conf.payInfo || '';
   ygRenderMembers();
 }
@@ -1824,9 +1826,9 @@ function ygRenderMembers(){
   const q = (document.getElementById('yg-member-search').value || '').trim().toLowerCase();
   const list = d.members.map((m, i) => ({ m, i })).filter(x => !q || (x.m.name + ' ' + x.m.contact).toLowerCase().includes(q)).slice(0, 60);
   document.getElementById('yg-members').innerHTML = list.length ? `<div style="overflow-x:auto"><table>
-    <thead><tr><th>呼び名</th><th>連絡先</th><th>残り</th><th>予約中</th><th>使用</th><th>操作</th></tr></thead>
+    <thead><tr><th>呼び名</th><th>登録日</th><th>残り</th><th>予約中</th><th>使用</th><th>操作</th></tr></thead>
     <tbody>${list.map(({ m, i }) => `<tr>
-      <td><b>${escapeHtml(m.name)}</b></td><td>${escapeHtml(m.contact)}</td><td><b>${m.remaining}</b></td><td>${m.held}</td><td>${m.used}</td>
+      <td><b>${escapeHtml(m.name)}</b></td><td style="font-size:11.5px">${escapeHtml((m.createdAt||'').slice(0,10))}</td><td><b>${m.remaining}</b></td><td>${m.held}</td><td>${m.used}</td>
       <td style="white-space:nowrap"><button class="btn btn-sm" onclick="ygCopyUrl(${i})">URLをコピー</button> <button class="btn btn-sm" onclick="ygGrant(${i},'購入')">購入として付与</button> <button class="btn btn-sm" onclick="ygGrant(${i},'お礼')">お礼として付与</button></td>
     </tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">該当する参加者はいません</div>';
 }
@@ -1929,11 +1931,13 @@ async function ygGrant(i, kind){
   }catch(e){ alert('エラー：' + e.message); }
 }
 async function ygSaveConf(){
-  const oc = document.getElementById('yg-conf-oc').value.trim();
+  const lu = document.getElementById('yg-conf-lineurl').value.trim();
+  const li = document.getElementById('yg-conf-lineid').value.trim();
   const pay = document.getElementById('yg-conf-pay').value;
-  if (oc && !/^https:\/\//.test(oc)) return alert('オープンチャットのURLは https:// から始まる形式で入力してください');
+  if (lu && !/^https:\/\/(lin\.ee|line\.me)\//.test(lu)) return alert('友だち追加URLは https://lin.ee/〜 の形式で入力してください');
+  if (li && !/^@[A-Za-z0-9._-]{3,30}$/.test(li)) return alert('ベーシックIDは @ から始まる形式で入力してください');
   try{
-    const r = await callGAS('saveYogaSettings', oc, pay);
+    const r = await callGAS('saveYogaSettings', '', pay, lu, li);
     if (r !== 'ok') return alert('保存できませんでした（' + r + '）');
     showToastAdmin('設定を保存しました');
     renderYogaView();
