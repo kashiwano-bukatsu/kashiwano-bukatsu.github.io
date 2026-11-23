@@ -1254,7 +1254,7 @@ const GAS_READ_FUNCS=new Set([
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
   'getVideoList','getOpenChats','getUrgentNotice','getVenueInfo','getReferralSlots','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
-  'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getYogaForApp','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
+  'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getYogaForApp','getTodayDuties','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
 // ★第3段：先読み＆3分キャッシュ
@@ -1496,7 +1496,8 @@ async function loadHomeData(){
     const today=formatDate(new Date());
     if(d.todaySchedule){
       const s=d.todaySchedule;
-      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div style="flex:1"><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div>'+(s[8]?'<div style="font-size:14px;color:#1a3a5c;margin-top:2px;font-weight:700">📍 '+courtLabel(s[8])+'</div>':'')+'</div>'+(s[8]?courtDiagramHTML(s[8],76):'')+'</div>'+arenaEntranceNoticeHTML(s[8]);
+      document.getElementById('home-today-info').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px">'+(SPORT_ICON[s[4]]||'🏟')+'</div><div style="flex:1"><div style="font-size:18px;font-weight:700">'+s[4]+'</div><div style="font-size:14px;color:#888;margin-top:2px">'+s[1]+' ／ '+s[2]+'</div>'+(s[8]?'<div style="font-size:14px;color:#1a3a5c;margin-top:2px;font-weight:700">📍 '+courtLabel(s[8])+'</div>':'')+'</div>'+(s[8]?courtDiagramHTML(s[8],76):'')+'</div>'+arenaEntranceNoticeHTML(s[8])+'<div class="duty-line" data-sport="'+_esc(s[4])+'" style="margin-top:6px"></div>';
+      applyDutyBadges();
       document.getElementById('home-today-card').style.display='block';
       document.getElementById('home-countdown-card').style.display='none';
     }else{
@@ -1961,6 +1962,21 @@ async function loadReserveData(){
     document.getElementById('next-member-loading').style.display='block';
     document.getElementById('mypage-schedule-list').innerHTML=reloadBoxHTML(e,'loadReserveData()',false);
   }
+}
+
+// ===== 本日の運営担当（運営アプリの「担当になる」で登録された人） =====
+let _todayDuty=null,_todayDutyAt=0;
+async function applyDutyBadges(){
+  try{
+    if(!_todayDuty||Date.now()-_todayDutyAt>60000){
+      const r=await callGAS('getTodayDuties');
+      _todayDuty=(r&&r.duties)||{};_todayDutyAt=Date.now();
+    }
+  }catch(e){return;}
+  document.querySelectorAll('.duty-line').forEach(function(el){
+    const names=_todayDuty[el.getAttribute('data-sport')]||[];
+    el.innerHTML=names.length?'<span style="display:inline-block;font-size:12px;font-weight:700;color:#2f6b4a;background:#eaf4ee;border-radius:999px;padding:3px 10px">🙋 担当：'+names.map(function(n){return _esc(n);}).join('・')+'さん</span>':'';
+  });
 }
 
 // ===== オンラインヨガ部（予約タブの1行。開くとチケット残りと開催日が出る） =====
@@ -4688,12 +4704,13 @@ function renderReserveReminder(data){
         return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;'+(i?'border-top:1px dashed #f0d6a6;':'')+'">'+
           '<div style="font-size:22px">'+(SPORT_ICON[l.sport]||'🏟')+'</div>'+
           '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">'+_esc(l.sport)+'</div>'+
-          '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+(l.court?' ／ 📍'+_esc(courtLabel(l.court)):'')+' ／ '+_esc(l.st)+' '+stLabel+'</div>'+arenaEntranceNoticeHTML(l.court,true)+'</div>'+
+          '<div style="font-size:12px;color:#8a6a30;margin-top:2px">'+(l.time?_esc(l.time)+' ／ ':'')+_esc(l.place||'')+(l.court?' ／ 📍'+_esc(courtLabel(l.court)):'')+' ／ '+_esc(l.st)+' '+stLabel+'</div>'+arenaEntranceNoticeHTML(l.court,true)+'<div class="duty-line" data-sport="'+_esc(l.sport)+'"></div></div>'+
           '<button onclick="reminderManage(\''+_esc(l.date)+'\',\''+_esc(l.sport)+'\',\''+_esc(l.name)+'\','+(l.isSelf?'true':'false')+')" style="padding:8px 10px;background:#fff;border:1.5px solid #e0a548;color:#b25f00;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">変更・取消</button></div>';
       }).join('')+
       '</div>';
   });
   box.innerHTML=h;box.style.display='block';
+  applyDutyBadges();
 }
 function reminderManage(date,sport,name,isSelf){
   const body=_$('reserve-form-body');

@@ -57,6 +57,10 @@ header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1p
 .chip{flex-shrink:0;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:transparent;font-size:13px;font-weight:700;color:var(--ink-3);cursor:pointer}
 .chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 .practice-flag{display:inline-block;margin-top:8px;font-size:11px;font-weight:800;color:var(--gold);border:1.5px solid var(--gold);border-radius:6px;padding:3px 8px}
+.duty{margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:800;color:var(--ink-3)}
+.duty .who{border:1.5px solid var(--line);border-radius:6px;padding:3px 8px}
+.duty button{font:inherit;font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;border:1.5px solid var(--green);background:var(--green);color:#fff;cursor:pointer}
+.duty button.off{background:#fff;color:var(--ink-3);border-color:var(--line)}
 .leader-tag{display:inline-block;margin-top:8px;margin-left:6px;font-size:11px;font-weight:800;color:var(--ink-3);border:1.5px solid var(--line);border-radius:6px;padding:3px 8px}
 
 .section-label{font-size:11px;font-weight:800;letter-spacing:.18em;color:var(--ink-3);padding:22px 18px 8px}
@@ -169,7 +173,7 @@ footer{
         <div class="hdr-sport" id="h-sport">—</div>
         <div class="hdr-place" id="h-place"></div>
         <div id="h-practice"></div>
-        <span class="leader-tag" id="h-leader"></span>
+        <div class="duty" id="h-leader"></div>
       </div>
       <div class="tally">
         <b class="num" id="h-done">0</b><span class="num" id="h-total">/0</span>
@@ -232,6 +236,8 @@ footer{
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyf4LiPkCQRTm4wqW8W7hO2WBJzUWc16GrovTM3Yr-SPJVq5wUpdcxco9e8U526uBb2Vw/exec';
+/* 担当の登録だけは、会員アプリ・事務局アプリと同じGAS（担当表示をそろえるため） */
+const DUTY_URL = 'https://script.google.com/macros/s/AKfycbwcsCNnt6C8XdI4dnd2Pb7nONZ66EiVFJuVlC4T4ZiEX7sxgwr3q48up5kFtUvNnG8C4w/exec';
 
 /* ▼▼▼ 新規さん用オープンチャットのURLをここに入れてください ▼▼▼ */
 const OPENCHAT_URL = 'https://line.me/ti/g2/XXXXXXXXXXXXXXXX';
@@ -266,6 +272,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 function block(on){ document.getElementById('blocker').classList.toggle('on',!!on); }
 
 let leader = null;
+let state = { duty:[], date:'', sport:'', place:'', isBad:false, isPractice:false, sports:[], items:[], done:new Set(), doneInfo:{} };
 
 (function boot(){
   const saved = localStorage.getItem('bukatsu_leader');
@@ -301,7 +308,6 @@ function showApp(){
   load();
 }
 
-let state = { date:'', sport:'', place:'', isBad:false, isPractice:false, sports:[], items:[], done:new Set(), doneInfo:{} };
 
 async function load(){
   document.getElementById('list-wrap').innerHTML='<div class="loading">読み込み中…</div>';
@@ -314,6 +320,7 @@ async function load(){
       callGAS('getAllHalfPriceTickets')
     ]);
     applyData(d, tickets, frees, halves);
+    loadDuty();
   }catch(e){
     document.getElementById('list-wrap').innerHTML='<div class="empty">読み込めませんでした。<br>↻ をタップしてもう一度お試しください。</div>';
   }
@@ -384,7 +391,7 @@ function render(){
     ? [state.place, courtLabel(state.court), state.reserver ? '予約者：'+state.reserver : ''].filter(Boolean).join('　')
     : '';
   document.getElementById('h-practice').innerHTML = state.isPractice ? '<span class="practice-flag">⛹️‍♀️ 練習日</span>' : '';
-  document.getElementById('h-leader').textContent = leader ? '本日の担当：'+leader.name : '';
+  renderDuty();
 
   const chips=document.getElementById('h-chips');
   if(state.sports.length>1){
@@ -439,6 +446,38 @@ function rowHtml(i){
     </div>
     <div class="chev">›</div>
   </button>`;
+}
+
+/* ===== 担当（その日の受付を担当する人） ===== */
+async function callDuty(func, ...args){
+  const res = await fetch(DUTY_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ func, args }) });
+  const j = JSON.parse(await res.text());
+  if(j.status === 'error') throw new Error(j.message);
+  return j.data;
+}
+async function loadDuty(){
+  if(!state.sport || !state.date){ state.duty = []; renderDuty(); return; }
+  try{ state.duty = (await callDuty('getDuty', state.date, state.sport)) || []; }
+  catch(e){ state.duty = null; }
+  renderDuty();
+}
+function renderDuty(){
+  const el = document.getElementById('h-leader');
+  if(!el) return;
+  if(!state.sport || state.duty === null){ el.innerHTML = ''; return; }
+  const me = leader && state.duty.includes(leader.name);
+  el.innerHTML = (state.duty.length ? '<span class="who">担当：' + state.duty.map(esc).join('・') + '</span>' : '<span>担当はまだいません</span>')
+    + (me ? '<button class="off" onclick="toggleDuty(false)">担当をやめる</button>' : '<button onclick="toggleDuty(true)">🙋 担当になる</button>');
+}
+async function toggleDuty(on){
+  if(!leader) return;
+  try{
+    const r = await callDuty(on ? 'claimDuty' : 'releaseDuty', state.date, state.sport, leader.name);
+    if(r && r.error){ toast(r.error === 'not_leader' ? 'この名前では登録できません' : '登録できませんでした'); return; }
+    state.duty = (r && r.names) || [];
+    renderDuty();
+    toast(on ? '担当になりました' : '担当をやめました');
+  }catch(e){ toast('つながりませんでした。もう一度お試しください'); }
 }
 
 function switchSport(s){ state.sport=s; load(); }

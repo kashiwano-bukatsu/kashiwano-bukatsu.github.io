@@ -706,6 +706,12 @@ tr:hover td{background:var(--card-soft);}
         <div id="schedule-list-wrap"><div class="loading-text">読み込み中...</div></div>
       </div>
       <div class="card">
+        <div class="card-title"><div class="dot"></div>運営担当（その日の受付を担当する人）</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.7">運営アプリで「担当になる」を押した人が、ここに出ます。会員アプリの「本日の予約」に「担当：◯◯さん」と表示されます。ここからも追加・取り消しができます。</div>
+        <div id="duty-wrap"><div class="loading-text">読み込み中...</div></div>
+        <datalist id="duty-leaders"></datalist>
+      </div>
+      <div class="card">
         <div class="card-title"><div class="dot"></div>新規開催登録（抽選以外・確定枠の直接登録）</div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;max-width:680px">
           <div id="sch-date-selects" style="display:flex;gap:6px;flex-wrap:wrap"></div>
@@ -1022,7 +1028,7 @@ function switchView(view){
   if (view === 'approval') { renderApprovalList(); renderPaymentConfirmList(); renderUpgradeList(); renderFamilyRequestList(); renderFamilyList(); renderProfileChangeList(); }
   if (view === 'temp') { renderTempList(); loadTrialLimits(); }
   if (view === 'member') { /* 検索待ち、何もしない */ }
-  if (view === 'schedule') renderScheduleView();
+  if (view === 'schedule') { renderScheduleView(); renderDutyAdmin(); }
   if (view === 'lottery') renderLotteryView();
   if (view === 'ops') renderOpsView();
   if (view === 'messages') renderMessagesView();
@@ -1771,6 +1777,49 @@ function _tbFlags(r){
   if (!r.notFound && r.remain <= 0 && r.mode === '回数券') f.push({t:'使い切り', c:'badge-warn', tip:'残り0なのに「回数券」モードのままです'});
   return f;
 }
+// ===== 運営担当 =====
+let _dutyAdmin = null;
+async function renderDutyAdmin(){
+  const wrap = document.getElementById('duty-wrap'); if (!wrap) return;
+  try{
+    _dutyAdmin = await callGAS('getDutyAdminOverview');
+    dutyRender();
+  }catch(e){ wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>'; }
+}
+function dutyRender(){
+  const d = _dutyAdmin; if (!d) return;
+  document.getElementById('duty-leaders').innerHTML = d.leaders.map(n => '<option value="' + escapeHtml(n) + '">').join('');
+  document.getElementById('duty-wrap').innerHTML = d.schedules.length ? `<div style="overflow-x:auto"><table>
+    <thead><tr><th>日付</th><th>種目</th><th>時間</th><th>担当</th><th>追加</th></tr></thead>
+    <tbody>${d.schedules.map((r, i) => `<tr>
+      <td style="white-space:nowrap"><b>${escapeHtml(r.date.slice(5))}</b>（${r.dow}）</td>
+      <td>${escapeHtml(r.sport)}</td><td style="font-size:12px">${escapeHtml(r.time)}</td>
+      <td>${r.names.length ? r.names.map((n, j) => `<span style="display:inline-block;background:#f0f4f8;border-radius:999px;padding:2px 4px 2px 10px;margin:0 4px 4px 0;font-size:12.5px">${escapeHtml(n)} <a href="#" onclick="dutyRemove(${i},${j});return false" style="color:var(--danger);text-decoration:none;padding:0 6px">×</a></span>`).join('') : '<span style="color:var(--ink-faint);font-size:12px">未定</span>'}</td>
+      <td style="white-space:nowrap"><input list="duty-leaders" id="duty-in-${i}" placeholder="名前" style="width:110px;padding:6px 9px;border:1.5px solid var(--line);border-radius:8px;font-size:13px"> <button class="btn btn-sm" onclick="dutyAdd(${i})">追加</button></td>
+    </tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">今後1か月の開催予定がありません</div>';
+}
+async function dutyAdd(i){
+  const r = _dutyAdmin.schedules[i]; if (!r) return;
+  const name = (document.getElementById('duty-in-' + i).value || '').trim();
+  if (!name) return alert('名前を入力してください');
+  try{
+    const res = await callGAS('addDutyAdmin', r.date, r.sport, name);
+    if (res !== 'ok') return alert('追加できませんでした（' + res + '）');
+    logOp('運営担当を追加', r.date + '／' + r.sport + '／' + name);
+    renderDutyAdmin();
+  }catch(e){ alert('エラー：' + e.message); }
+}
+async function dutyRemove(i, j){
+  const r = _dutyAdmin.schedules[i]; if (!r) return;
+  const name = r.names[j];
+  if (!confirm(r.date + ' ' + r.sport + ' の担当から「' + name + '」を外しますか？')) return;
+  try{
+    await callGAS('releaseDuty', r.date, r.sport, name);
+    logOp('運営担当を取り消し', r.date + '／' + r.sport + '／' + name);
+    renderDutyAdmin();
+  }catch(e){ alert('エラー：' + e.message); }
+}
+
 // ===== オンラインヨガ =====
 let _ygData = null, _ygGrantList = [];
 function _ygOperator(){ return currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明'; }
