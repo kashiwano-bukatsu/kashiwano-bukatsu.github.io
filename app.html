@@ -561,11 +561,14 @@ body.winter .imo-hot .imo-gift{filter:drop-shadow(0 0 6px rgba(255,225,150,0.85)
         <button id="schedule-submit-btn" onclick="submitScheduleReservations()" style="width:100%;padding:16px;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:12px;">選択した日程を予約する</button>
       </div>
     </div>
-    <a href="yoga.html" style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:13px 16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(26,58,92,.06);text-decoration:none;color:#1a3a5c">
-      <span style="font-size:22px">🧘</span>
-      <span style="flex:1;min-width:0"><span style="font-size:14px;font-weight:800">オンラインヨガ部</span><span style="display:block;font-size:11.5px;color:#888;margin-top:1px">隔週水曜 22:00〜 ／ 1回500円〜 ／ 会員以外もOK</span></span>
-      <span style="font-size:18px;color:#aaa">›</span>
-    </a>
+    <div class="card" id="yoga-card" style="padding:0;overflow:hidden">
+      <div onclick="toggleYogaCard()" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;color:#1a3a5c">
+        <span style="font-size:22px">🧘</span>
+        <span style="flex:1;min-width:0"><span style="font-size:14px;font-weight:800">オンラインヨガ部</span><span id="yoga-sub" style="display:block;font-size:11.5px;color:#888;margin-top:1px">隔週水曜 22:00〜 ／ 1回500円〜 ／ 会員以外もOK</span></span>
+        <span id="yoga-arrow" style="font-size:18px;color:#aaa">›</span>
+      </div>
+      <div id="yoga-body" style="display:none;padding:0 16px 14px"></div>
+    </div>
     <div class="card" id="invited-trials-card" style="display:none">
       <div class="card-title"><div class="card-title-dot"></div>あなたが招待した体験予定者</div>
       <div id="invited-trials-list" style="margin-top:8px"></div>
@@ -1251,7 +1254,7 @@ const GAS_READ_FUNCS=new Set([
   'getTrialSports','getMyReservations','getReservations','searchTempAttendee','getUnreadMessageCount',
   'getConversation','getMyMessages','getMyUpgradeRequests','getMyTicketRequests','getMemberNotices',
   'getVideoList','getOpenChats','getUrgentNotice','getVenueInfo','getReferralSlots','getPriceMaster','getPrice','getPersonMasterAll','getHalfPriceTickets','getAppVersion',
-  'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
+  'getMyNotifications','getNotificationUnreadCount','getMyInvitedTrials','getYogaLineUrl','getYogaForApp','getNotice','getMyFamily','getMyFamilyRequests','checkDuplicatePerson','getMyProfileChangeRequests','resolveFullname'
 ]);
 const GAS_READ_TIMEOUT_MS=30000;
 // ★第3段：先読み＆3分キャッシュ
@@ -1942,6 +1945,7 @@ async function loadReserveData(){
     window._reserveMembersMap=data.membersBySchedule||null;
     loadTrialData(Array.isArray(data.trialSports)?data.trialSports:undefined);
     loadInvitedTrials(Array.isArray(data.invitedTrials)?data.invitedTrials:undefined);
+    loadYogaCard();
     // ★追加：種目ごとの直近予定＋参加予定メンバーをまとめて保持し、ワンタップ切替できるようにする
     _nextBySportData=data.nextBySport||{};
     const hasAnySchedule=NEXT_MEMBER_SPORTS.some(sp=>_nextBySportData[sp]&&_nextBySportData[sp].schedule);
@@ -1959,27 +1963,138 @@ async function loadReserveData(){
   }
 }
 
+// ===== オンラインヨガ部（予約タブの1行。開くとチケット残りと開催日が出る） =====
+let _yogaData=null,_yogaLoading=false,_yogaOpen=false;
+async function loadYogaCard(){
+  if(!mypageCurrentUser||_yogaLoading)return;
+  _yogaLoading=true;
+  try{
+    _yogaData=await callGAS('getYogaForApp',mypageCurrentUser.fullname);
+  }catch(e){
+    _yogaData=null;
+    const b=document.getElementById('yoga-body');
+    if(b&&_yogaOpen)b.innerHTML='<div style="font-size:13px;color:#c62828;padding:6px 0">読み込めませんでした。<span style="text-decoration:underline;cursor:pointer" onclick="loadYogaCard()">再読み込み</span></div>';
+  }finally{_yogaLoading=false;}
+  renderYogaCard();
+}
+function toggleYogaCard(){
+  _yogaOpen=!_yogaOpen;
+  const b=document.getElementById('yoga-body'),a=document.getElementById('yoga-arrow');
+  if(!b)return;
+  b.style.display=_yogaOpen?'block':'none';a.textContent=_yogaOpen?'∨':'›';
+  if(_yogaOpen){
+    if(_yogaData)renderYogaCard();
+    else{b.innerHTML='<div style="font-size:13px;color:#aaa;padding:6px 0">読み込み中…</div>';loadYogaCard();}
+  }
+}
+function _yogaLineMsgUrl(text){
+  const l=(_yogaData&&_yogaData.line)||{};
+  if(l.id)return 'https://line.me/R/oaMessage/'+l.id+'/?'+encodeURIComponent(text);
+  return l.url||'#';
+}
+function _yogaBuyUrl(){
+  const nm=(mypageCurrentUser&&mypageCurrentUser.fullname)||'';
+  return _yogaLineMsgUrl('【オンラインヨガ】チケットを購入したいです\nお名前：'+nm+'\n希望：（1回券 / 5回券 / 10回券）');
+}
+function renderYogaCard(){
+  const sub=document.getElementById('yoga-sub'),b=document.getElementById('yoga-body');
+  const d=_yogaData;
+  if(sub){
+    if(d&&d.me){
+      const nx=(d.sessions||[]).find(x=>x.status==='募集中'||x.status==='確定');
+      sub.textContent='チケット残り'+d.me.remaining+'枚'+(nx?' ／ 次回 '+nx.date.slice(5)+'（'+nx.dow+'）':'');
+    }else sub.textContent='隔週水曜 22:00〜 ／ 1回500円〜 ／ 会員以外もOK';
+  }
+  if(!b||!_yogaOpen||!d)return;
+  const me=d.me||{remaining:0,held:0,used:0,total:0};
+  const plans=(d.plans||[]).map(p=>p.qty+'回 '+p.price.toLocaleString()+'円').join(' ／ ');
+  let h='<div style="background:#f0f6ff;border-radius:12px;padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">'+
+    '<div><div style="font-size:11px;color:#888;font-weight:700">ヨガチケット</div><div style="font-size:22px;font-weight:800;color:#1a3a5c;line-height:1.2">残り '+me.remaining+'<span style="font-size:12px;font-weight:700"> 枚</span></div>'+
+    '<div style="font-size:11px;color:#888;margin-top:2px">'+(me.held?'予約中 '+me.held+'枚 ／ ':'')+(me.nextExpiry?'期限 '+_famEsc(me.nextExpiry):'')+'</div></div>'+
+    '<a href="'+_famEsc(_yogaBuyUrl())+'" target="_blank" rel="noopener" style="flex:none;background:'+(me.remaining>0?'#fff':'#06c755')+';color:'+(me.remaining>0?'#06a047':'#fff')+';border:1.5px solid #06c755;border-radius:999px;padding:9px 14px;font-size:12.5px;font-weight:800;text-decoration:none">💬 '+(me.remaining>0?'買い足す':'チケットを買う')+'</a>'+
+  '</div>';
+  h+='<div style="font-size:11.5px;color:#888;margin-bottom:8px;line-height:1.7">'+_famEsc(plans)+'。購入は専用の公式LINEで受け付けています。<br>'+d.minPeople+'人以上の予約で開催。開催が決まったら、公式LINEでZoomのURLをお送りします。</div>';
+  const ss=d.sessions||[];
+  if(!ss.length){
+    h+='<div style="font-size:13px;color:#aaa;padding:8px 0">開催日が決まったらここに出ます</div>';
+  }else{
+    h+=ss.map(x=>{
+      const when=x.date.slice(5)+'（'+x.dow+'） '+_famEsc(x.start)+'〜'+_famEsc(x.end);
+      let st='',btn='';
+      if(x.mine==='参加'){
+        st='<div style="font-size:12px;color:#188038;font-weight:700;margin-top:3px">✅ 開催決定！ZoomのURLは公式LINEでお送りします</div>';
+      }else if(x.mine==='申込'){
+        st='<div style="font-size:12px;color:#188038;font-weight:700;margin-top:3px">✅ 予約済み（現在 '+x.count+'人／'+x.need+'人で開催）</div>';
+        if(x.open)btn='<button onclick="yogaCancel(\''+x.date+'\',this)" style="flex:none;background:#fff;color:#c62828;border:1.5px solid #e8b4b4;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">キャンセル</button>';
+      }else if(x.status==='確定'){
+        st='<div style="font-size:12px;color:#888;margin-top:3px">開催が決まっています（受付終了）</div>';
+      }else if(x.open){
+        st='<div style="font-size:12px;color:#888;margin-top:3px">現在 '+x.count+'人／'+x.need+'人で開催</div>';
+        btn=me.remaining>0
+          ?'<button onclick="yogaReserve(\''+x.date+'\',this)" style="flex:none;background:linear-gradient(135deg,#1a3a5c,#0f2744);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer">予約する</button>'
+          :'<span style="flex:none;font-size:11.5px;color:#b26a00;font-weight:700">チケットが必要です</span>';
+      }else{
+        st='<div style="font-size:12px;color:#888;margin-top:3px">受付終了</div>';
+      }
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f0f4f8"><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#1a1a2e">🧘 '+when+'</div>'+st+(x.memo?'<div style="font-size:11px;color:#888;margin-top:2px">'+_famEsc(x.memo)+'</div>':'')+'</div>'+btn+'</div>';
+    }).join('');
+  }
+  h+='<div style="text-align:right;margin-top:8px"><a href="yoga.html" style="font-size:12px;color:#4a90d9;text-decoration:underline">オンラインヨガ部について（料金・しくみ）</a></div>';
+  b.innerHTML=h;
+}
+const YOGA_ERR={no_ticket:'ヨガチケットが足りません。公式LINEでチケットを購入してください。',closed:'この日は受付が終了しています。',already:'すでに予約済みです。',no_member:'会員情報が見つかりません。ログインし直してください。',no_session:'開催日が見つかりません。',not_applied:'予約が見つかりません。'};
+async function yogaReserve(date,btn){
+  if(!mypageCurrentUser||(btn&&btn.disabled))return;
+  if(!confirm(date.slice(5)+' のオンラインヨガを予約しますか？\n（開催が決まった時に、チケットが1枚使われます）'))return;
+  if(btn){btn.disabled=true;btn.textContent='予約中…';}
+  try{
+    const r=await callGAS('reserveYoga',mypageCurrentUser.fullname,date);
+    if(r&&r.error)alert(YOGA_ERR[r.error]||('予約できませんでした（'+r.error+'）'));
+  }catch(e){alert('エラー：'+gasErrorText(e));}
+  await loadYogaCard();
+}
+async function yogaCancel(date,btn){
+  if(!mypageCurrentUser||(btn&&btn.disabled))return;
+  if(!confirm(date.slice(5)+' の予約をキャンセルしますか？'))return;
+  if(btn){btn.disabled=true;btn.textContent='処理中…';}
+  try{
+    const r=await callGAS('cancelYogaReservation',mypageCurrentUser.fullname,date);
+    if(r&&r.error)alert(YOGA_ERR[r.error]||('キャンセルできませんでした（'+r.error+'）'));
+  }catch(e){alert('エラー：'+gasErrorText(e));}
+  await loadYogaCard();
+}
+
+
 // ★追加：最初に開くタブを決める（自分の登録種目を優先→無ければ開催予定がある種目→それも無ければ先頭）
+let _nextShowAllSports=false;
+// 自分の参加種目だけを出す（「他の種目も見る」を押すと全部出す）
+function _nextVisibleSports(){
+  if(_nextShowAllSports||!mypageCurrentUser)return NEXT_MEMBER_SPORTS;
+  const me={type:mypageCurrentUser.type,sport:mypageCurrentUser.memberSport||'全て'};
+  const v=NEXT_MEMBER_SPORTS.filter(sp=>_famPlays(me,sp));
+  return v.length?v:NEXT_MEMBER_SPORTS;
+}
+function showAllNextSports(){_nextShowAllSports=true;renderNextMemberSportTabs();}
 function _pickInitialNextSport(){
-  const mySport=(mypageCurrentUser&&mypageCurrentUser.memberSport)||'';
-  const tokens=mySport.split('＋').filter(Boolean);
-  const mine=NEXT_MEMBER_SPORTS.find(sp=>tokens.some(t=>sp.includes(t))&&_nextBySportData[sp]&&_nextBySportData[sp].schedule);
-  if(mine)return mine;
+  const vis=_nextVisibleSports();
+  const withSch=vis.find(sp=>_nextBySportData[sp]&&_nextBySportData[sp].schedule);
+  if(withSch)return withSch;
   const anyScheduled=NEXT_MEMBER_SPORTS.find(sp=>_nextBySportData[sp]&&_nextBySportData[sp].schedule);
-  if(anyScheduled)return anyScheduled;
-  return NEXT_MEMBER_SPORTS[0];
+  if(anyScheduled&&vis.length===NEXT_MEMBER_SPORTS.length)return anyScheduled;
+  return vis[0];
 }
 
 // ★追加：種目タブのボタン列を描画（アクティブなタブをハイライト）
 function renderNextMemberSportTabs(){
   const wrap=document.getElementById('next-member-sport-tabs');
   if(!wrap)return;
-  wrap.innerHTML=NEXT_MEMBER_SPORTS.map(sport=>{
+  const vis=_nextVisibleSports();
+  wrap.innerHTML=vis.map(sport=>{
     const active=sport===_currentNextSport;
     const icon=SPORT_ICON[sport]||'';
     const label=sport.replace('ボール','').replace('ミントン','');
     return '<button type="button" onclick="selectNextMemberSport(\''+sport+'\')" style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid '+(active?'#1a3a5c':'#e0e8f0')+';background:'+(active?'#1a3a5c':'#f8fafc')+';color:'+(active?'#fff':'#555')+';font-size:12px;font-weight:700;cursor:pointer">'+icon+' '+label+'</button>';
-  }).join('');
+  }).join('')+(vis.length<NEXT_MEMBER_SPORTS.length?'<button type="button" onclick="showAllNextSports()" style="flex:none;padding:8px 10px;border-radius:10px;border:1.5px dashed #cfd8e3;background:#fff;color:#888;font-size:11px;font-weight:700;cursor:pointer">他の種目も見る</button>':'');
 }
 
 // ★追加：タップされた種目に切り替えて次回メンバーカードを再描画
@@ -2185,7 +2300,7 @@ function renderScheduleList_legacy(schedules,reservations){
   const resMap={};
   reservations.forEach(r=>{resMap[r[1]+'_'+r[2]]=r;});
   // スケジュール（未来分）と、スケジュールに載っていない自分の予約（体験参加など）をマージ
-  const items=(schedules||[]).map(s=>({date:s[0],time:s[1],place:s[2],sport:s[4],memo:s[7],fee:s[5],res:resMap[s[0]+'_'+s[4]]||null}));
+  const items=(schedules||[]).filter(s=>String(s[4]).indexOf('ヨガ')<0).map(s=>({date:s[0],time:s[1],place:s[2],sport:s[4],memo:s[7],fee:s[5],res:resMap[s[0]+'_'+s[4]]||null}));
   const schedKeys=new Set(items.map(it=>it.date+'_'+it.sport));
   reservations.forEach(r=>{if(!schedKeys.has(r[1]+'_'+r[2]))items.push({date:r[1],time:'',place:r[3],sport:r[2],res:r});});
   const sorted=items.sort((a,b)=>dk(a.date)-dk(b.date));
@@ -2464,6 +2579,7 @@ function renderScheduleListFam(schedules,reservations){
   };
   base.forEach(function(s){
     const date=s[0],sport=s[4],memo=s[7];
+    if(String(sport).indexOf('ヨガ')>=0)return;   // ヨガの予約は専用の行（チケット制）で行う
     const practice=isPracticeDay(memo);
     const players=people.filter(function(p){return _famPlays(p,sport);});
     const eligible=players.filter(function(p){return !(practice&&_famIsVisitor(p));});

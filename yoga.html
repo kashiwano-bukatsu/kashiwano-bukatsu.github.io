@@ -80,243 +80,69 @@ input.t:focus{outline:none;border-color:var(--sage)}
 </div>
 
 <div class="wrap">
-  <div id="loading"><div class="spin"></div></div>
-  <div id="main" style="display:none">
-
-    <div class="card">
-      <div class="card-title">参加のしくみ</div>
-      <ul class="how">
-        <li><span class="n">1</span><span>ヨガチケットを購入します（会員登録は不要です）。</span></li>
-        <li><span class="n">2</span><span>PayPayでお支払いして、<b>公式LINE</b>で「支払いました」と連絡します。事務局が確認すると、チケットが使えるようになります。</span></li>
-        <li><span class="n">3</span><span>参加したい日を選んで申込みます。<b>3人以上で開催</b>です。</span></li>
-        <li><span class="n">4</span><span><b>前日の21:00</b>に開催が決まります。決まった日だけチケットを1枚使い、ZoomのURLがこのページに表示されます。</span></li>
-      </ul>
-      <div class="hint" style="margin-top:8px">人数が足りず中止になった日は、チケットは減りません。締切までなら、いつでもキャンセルできます。</div>
-    </div>
-
-    <div id="me-card" class="card" style="display:none"></div>
-
-    <div class="card">
-      <div class="card-title">開催日</div>
-      <div id="sessions"></div>
-    </div>
-
-    <div id="buy-card" class="card"></div>
-
-    <div class="foot"><span id="foot-private" style="display:none">いま開いているURLは、あなた専用です。<br>他の人に教えないでください。<br></span><a href="https://kashiwano-bukatsu.github.io/" target="_blank" rel="noopener">カシワのBUKATSUについて</a></div>
+  <div class="card">
+    <div class="card-title">参加のしくみ</div>
+    <ul class="how">
+      <li><span class="n">1</span><span><b>ヨガチケットを購入</b>します。専用の公式LINEでご連絡いただき、PayPayでお支払いください。入金を確認すると、事務局がチケットを付与します。</span></li>
+      <li><span class="n">2</span><span><b>アプリの「予約」タブ</b>の「オンラインヨガ部」から、参加したい日を予約します。チケットが残っている人だけ予約できます。会員でない人は、先にアプリでビジター会員（登録費無料）として登録してください。</span></li>
+      <li><span class="n">3</span><span><b>3人以上の予約で開催</b>です。開催が決まった日だけ、チケットを1枚使います。</span></li>
+      <li><span class="n">4</span><span>開催が決まったら、<b>公式LINEでZoomのURL</b>をお送りします。当日はそのURLから入ってください。</span></li>
+    </ul>
+    <div class="hint" style="margin-top:8px">人数が足りず中止になった日は、チケットは減りません。開始前なら、アプリからいつでもキャンセルできます。</div>
   </div>
+
+  <div class="card">
+    <div class="card-title">料金（チケット）</div>
+    <div id="plans"></div>
+    <div class="hint">有効期限は、チケットを受け取ってから6か月です。</div>
+    <a id="btn-buy" class="btn btn-line" style="margin-top:12px" href="#" target="_blank" rel="noopener">💬 公式LINEでチケットを買う</a>
+    <a id="btn-add" class="btn btn-ghost" style="margin-top:8px" href="#" target="_blank" rel="noopener">公式LINEを友だち追加する</a>
+  </div>
+
+  <div class="card">
+    <div class="card-title">開催日</div>
+    <div id="sessions"><div class="spin"></div></div>
+    <a class="btn btn-primary" style="margin-top:6px" href="app.html" onclick="return goApp()">アプリの予約タブで予約する</a>
+  </div>
+
+  <div class="foot"><a href="https://kashiwano-bukatsu.github.io/" target="_blank" rel="noopener">カシワのBUKATSU</a></div>
 </div>
-<div class="toast" id="toast"></div>
 
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbwcsCNnt6C8XdI4dnd2Pb7nONZ66EiVFJuVlC4T4ZiEX7sxgwr3q48up5kFtUvNnG8C4w/exec';
-const TOKEN_KEY='yoga_token';
-let TOKEN=null, DATA=null, SEL_QTY=5, BUSY=false, JUST_BOUGHT=null, SHOW_BUY=false;
-
+const FALLBACK={plans:[{qty:1,price:500,label:'1回券'},{qty:5,price:2250,label:'5回券'},{qty:10,price:4000,label:'10回券'}],minPeople:3,sessions:[],line:{url:'https://lin.ee/sgGLU7R',id:'@253httau'}};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function $(id){return document.getElementById(id);}
 function goBack(){
   try{
     if(document.referrer&&new URL(document.referrer).origin===location.origin&&history.length>1){history.back();return false;}
   }catch(e){}
   return true;
 }
-function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function $(id){return document.getElementById(id);}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),3200);}
+function goApp(){return goBack();}
 async function callGAS(func,...args){
   const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({func,args})});
   const j=JSON.parse(await res.text());
   if(j.status==='error')throw new Error(j.message);
   return j.data;
 }
-function loadToken(){
-  let t=null;
-  try{t=new URLSearchParams(location.search).get('t');}catch(e){}
-  if(!t){try{t=localStorage.getItem(TOKEN_KEY);}catch(e){}}
-  if(t&&/^[0-9a-f]{16,64}$/i.test(t))TOKEN=t;
-}
-function saveToken(t){
-  TOKEN=t;
-  try{localStorage.setItem(TOKEN_KEY,t);}catch(e){}
-  try{history.replaceState(null,'',location.pathname+'?t='+t);}catch(e){}
-}
-function lineMsgUrl(text){
-  const l=(DATA&&DATA.line)||{};
-  if(l.id)return 'https://line.me/R/oaMessage/'+l.id+'/?'+encodeURIComponent(text);
-  return l.url||'#';
-}
-function lineAddUrl(){return (DATA&&DATA.line&&DATA.line.url)||'#';}
-function payMsg(name,qty,amount,id){
-  return '【オンラインヨガ】支払い完了\n呼び名：'+name+'\n内容：'+qty+'回券 '+Number(amount).toLocaleString()+'円\n申込ID：'+id;
-}
-function myUrl(){return location.origin+location.pathname+'?t='+TOKEN;}
-
-async function load(silent){
-  try{
-    DATA=await callGAS('getYogaPage',TOKEN||null);
-    if(TOKEN&&!DATA.me){  // 無効なキー
-      try{localStorage.removeItem(TOKEN_KEY);}catch(e){}
-      TOKEN=null;
-      try{history.replaceState(null,'',location.pathname);}catch(e){}
-    }
-    $('loading').style.display='none';$('main').style.display='block';
-    render();
-  }catch(e){
-    if(!silent){$('loading').innerHTML='<div class="empty">読み込めませんでした。<br>電波の良いところで、もう一度開いてください。</div>';}
-    else toast('更新に失敗しました。もう一度お試しください');
-  }
-}
-
-function render(){renderMe();renderSessions();renderBuy();$('foot-private').style.display=DATA.me?'inline':'none';}
-
-function renderMe(){
-  const el=$('me-card'),me=DATA.me;
-  if(!me){el.style.display='none';return;}
-  el.style.display='block';
-  const pend=(me.purchases||[]).filter(p=>p.status==='未受領');
-  let h='<div class="card-title">'+esc(me.name)+'さんのチケット</div>'+
-    '<div class="ticket-box"><div><span class="big">'+me.remaining+'</span><span class="unit">枚</span></div>'+
-    '<div class="meta">使えるチケット'+(me.held?'<br>予約中 '+me.held+'枚（開催が決まると使われます）':'')+(me.nextExpiry&&me.remaining>0?'<br>有効期限 '+esc(me.nextExpiry)+' まで':'')+'</div></div>';
-  if(pend.length&&JUST_BOUGHT){
-    /* 購入直後は、下の購入欄に案内を出すので、ここでは出さない */
-  }else if(pend.length){
-    const p0=pend[0];
-    h+='<div class="pay"><b>お支払いの確認待ち</b>'+pend.map(p=>'<div class="pending-row"><span>'+p.qty+'回券</span><span style="margin-left:auto;font-weight:800">'+p.price.toLocaleString()+'円</span></div>').join('')+
-      (me.payInfo?'<div class="pi">'+esc(me.payInfo)+'</div>':'')+
-      '<div class="hint">① PayPayで送金（メッセージに「'+esc(me.name)+'」と書いてください）<br>② 下のボタンから、公式LINEで「支払いました」と連絡してください。</div>'+
-      '<a class="btn btn-line" style="margin-top:10px" href="'+esc(lineMsgUrl(payMsg(me.name,p0.qty,p0.price,p0.id)))+'" target="_blank" rel="noopener">💬 公式LINEで支払いを連絡する</a>'+
-      '<button class="btn btn-ghost" style="margin-top:8px" onclick="load()">🔄 確認状況を更新</button></div>';
-  }else{
-    h+='<a class="btn btn-ghost" style="margin-top:12px" href="'+esc(lineAddUrl())+'" target="_blank" rel="noopener">💬 公式LINE（お知らせ・お問い合わせ）</a>';
-  }
-  h+='<div style="margin-top:12px"><div class="hint">あなた専用のURL（ブックマークしておくと便利です）</div><div class="urlbox" id="myurl">'+esc(myUrl())+'</div>'+
-    '<button class="btn btn-ghost btn-sm" onclick="copyUrl()">URLをコピー</button></div>';
-  el.innerHTML=h;
-}
-function copyUrl(){
-  const u=myUrl();
-  const done=()=>toast('コピーしました');
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(done,()=>fallbackCopy(u));}else fallbackCopy(u);
-}
-function fallbackCopy(u){
-  const r=document.createRange();r.selectNode($('myurl'));const s=getSelection();s.removeAllRanges();s.addRange(r);
-  try{document.execCommand('copy');toast('コピーしました');}catch(e){toast('URLを長押ししてコピーしてください');}
-}
-
-function renderSessions(){
-  const el=$('sessions'),list=DATA.sessions||[],me=DATA.me;
-  if(!list.length){el.innerHTML='<div class="empty">次回の開催日は、決まり次第ここに表示されます。</div>';return;}
-  el.innerHTML=list.map(s=>{
-    const d=s.date.split('/'),label=parseInt(d[1],10)+'/'+parseInt(d[2],10)+'（'+s.dow+'）';
-    const cancelled=s.status==='中止',confirmed=s.status==='確定';
-    const need=Math.max(0,s.need-s.count);
-    let chip,note='',act='';
-    if(cancelled){chip='<span class="chip ng">中止</span>';note='この日は開催しません。チケットは減っていません。';}
-    else if(confirmed){chip='<span class="chip ok">✅ 開催決定</span>';note='参加 '+s.count+'人';}
-    else if(s.count>=s.need){chip='<span class="chip ok">あと少しで決定</span>';note='3人集まっています。'+esc(s.deadline)+'に開催が決まります。';}
-    else{chip='<span class="chip open">あと'+need+'人で開催</span>';note=esc(s.deadline)+'までに'+s.need+'人以上で開催が決まります。';}
-    if(s.mine==='参加'&&confirmed){
-      act=s.zoom?'<a class="btn btn-primary" href="'+esc(s.zoom)+'" target="_blank" rel="noopener">▶ Zoomに参加する</a>':'<div class="s-note">ZoomのURLは準備中です。しばらくお待ちください。</div>';
-    }else if(s.mine==='申込'&&s.open){
-      act='<button class="btn btn-ghost" onclick="doCancel(\''+esc(s.date)+'\')">申込みをキャンセルする</button>';
-    }else if(s.open){
-      if(me&&me.remaining>0)act='<button class="btn btn-primary" onclick="doApply(\''+esc(s.date)+'\')">この日に申込む（チケット1枚）</button>';
-      else if(me)act='<div class="s-note" style="margin-bottom:8px">申込むにはチケットが必要です。</div><button class="btn btn-ghost" onclick="goBuy()">チケットを購入する</button>';
-      else act='<button class="btn btn-ghost" onclick="goBuy()">チケットを購入して申込む</button>';
-    }
-    const pct=Math.min(100,Math.round(s.count/s.need*100));
-    return '<div class="session'+(s.mine?' mine':'')+(cancelled?' cancel':'')+'">'+
-      '<div class="s-top"><div><div class="s-date">'+label+'</div><div class="s-time">'+esc(s.start)+'〜'+esc(s.end)+'</div></div>'+chip+'</div>'+
-      (cancelled?'':'<div class="bar"><i style="width:'+pct+'%"></i></div>')+
-      '<div class="s-note">'+note+(s.mine==='申込'&&s.open?'<br><b style="color:#2f6256">✔ 申込み済み</b>':'')+'</div>'+
-      (act?'<div class="s-act">'+act+'</div>':'')+'</div>';
+function render(d){
+  const line=d.line||FALLBACK.line;
+  $('plans').innerHTML=d.plans.map(p=>{
+    const per=Math.round(p.price/p.qty);
+    return '<div class="plan" style="cursor:default"><span class="pl">'+esc(p.label)+'</span><span class="pp">'+p.price.toLocaleString()+'円'+(p.qty>1?'<small>1回あたり '+per+'円</small>':'')+'</span></div>';
   }).join('');
+  const msg='【オンラインヨガ】チケットを購入したいです\n希望：（1回券 / 5回券 / 10回券）';
+  $('btn-buy').href=line.id?('https://line.me/R/oaMessage/'+line.id+'/?'+encodeURIComponent(msg)):(line.url||'#');
+  $('btn-add').href=line.url||'#';
+  const ss=(d.sessions||[]).filter(x=>x.status!=='中止');
+  $('sessions').innerHTML=ss.length?ss.map(x=>{
+    const chip=x.status==='確定'?'<span class="chip ok">開催決定</span>':'<span class="chip open">予約受付中</span>';
+    return '<div class="session"><div class="s-top"><div><div class="s-date">'+esc(x.date.slice(5).replace('/','/'))+'（'+esc(x.dow)+'）</div><div class="s-time">'+esc(x.start)+'〜'+esc(x.end)+'　Zoom</div></div>'+chip+'</div></div>';
+  }).join(''):'<div class="empty">開催日が決まったら、ここに出ます</div>';
 }
-
-function renderBuy(){
-  const el=$('buy-card'),me=DATA.me,plans=DATA.plans||[];
-  if(me&&!SHOW_BUY&&!JUST_BOUGHT){
-    el.innerHTML='<div class="card-title">チケットを追加で購入</div><button class="btn btn-ghost" onclick="SHOW_BUY=true;renderBuy()">購入フォームを開く</button>';
-    return;
-  }
-  const base=plans.find(p=>p.qty===1);
-  let h='<div class="card-title">'+(me?'チケットを追加で購入':'チケットを購入')+'</div>';
-  if(JUST_BOUGHT){
-    const j=JUST_BOUGHT,nm=(DATA.me&&DATA.me.name)||j.name||'';
-    h+='<div class="pay"><b>お申込みありがとうございます！</b>'+
-      '<div class="pi">'+j.qty+'回券　'+j.amount.toLocaleString()+'円</div>'+
-      (j.payInfo?'<div class="pi">'+esc(j.payInfo)+'</div>':'<div class="hint">お支払い方法は、公式LINEでご案内します。</div>')+
-      '<div class="hint"><b>次の2つをお願いします</b><br>① PayPayで送金（メッセージに「'+esc(nm)+'」と書いてください）<br>② 下のボタンから、公式LINEで「支払いました」と連絡してください。<br>事務局が確認すると、このページでチケットが使えるようになります。</div>'+
-      '<a class="btn btn-line" style="margin-top:12px" href="'+esc(lineMsgUrl(payMsg(nm,j.qty,j.amount,j.purchaseId)))+'" target="_blank" rel="noopener">💬 公式LINEで支払いを連絡する</a>'+
-      '<div class="hint" style="margin-top:8px">友だち追加がまだの方は、トーク画面を開いたときに追加してください。<a href="'+esc(lineAddUrl())+'" target="_blank" rel="noopener" style="color:#2f6256">友だち追加だけ先にする</a></div></div>'+
-      '<div class="hint" style="margin-top:12px">このページのURLは、あなた専用です。ブックマークするか、コピーして保管してください。</div>'+
-      '<button class="btn btn-ghost" style="margin-top:8px" onclick="JUST_BOUGHT=null;SHOW_BUY=false;render()">閉じる</button>';
-    el.innerHTML=h;return;
-  }
-  h+=plans.map(p=>{
-    const per=Math.round(p.price/p.qty),save=base&&p.qty>1&&per<base.price;
-    return '<label class="plan'+(SEL_QTY===p.qty?' sel':'')+'"><input type="radio" name="plan" value="'+p.qty+'"'+(SEL_QTY===p.qty?' checked':'')+' onchange="SEL_QTY='+p.qty+';renderBuy()">'+
-      '<span class="pl">'+esc(p.label)+(save?'<span class="badge-save">'+Math.round((1-per/base.price)*100)+'%おトク</span>':'')+'</span>'+
-      '<span class="pp">'+p.price.toLocaleString()+'円<small>1回 '+per.toLocaleString()+'円</small></span></label>';
-  }).join('');
-  if(!me){
-    h+='<label class="f">呼び名（ニックネームでOK）</label><input class="t" id="f-name" maxlength="20" placeholder="例：たろう" autocomplete="off">'+
-      '<div class="hint">支払いの確認に使います。他の参加者には見えません。</div>';
-  }
-  h+='<button class="btn btn-primary" id="buy-btn" style="margin-top:14px" onclick="doBuy()">申込んで支払い方法を見る</button>'+
-    '<div class="hint" style="margin-top:8px">有効期限は、受け取りの確認日から6か月です。</div>';
-  el.innerHTML=h;
-}
-function goBuy(){
-  if(DATA&&DATA.me){SHOW_BUY=true;renderBuy();}
-  $('buy-card').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-async function doBuy(){
-  if(BUSY)return;
-  let name='',contact='';
-  if(!DATA.me){
-    name=($('f-name').value||'').trim();
-    if(!name)return toast('呼び名を入力してください');
-  }
-  BUSY=true;const b=$('buy-btn');b.disabled=true;b.textContent='送信中…';
-  try{
-    const r=await callGAS('registerYogaPurchase',name,contact,SEL_QTY,TOKEN||null);
-    if(r&&r.token&&!TOKEN)saveToken(r.token);
-    if(!r||r.error){
-      const m={invalid_name:'呼び名を確認してください',invalid_plan:'チケットの種類を選んでください',too_many_pending:'お支払い確認待ちの申込みが多すぎます。先に確認をお待ちください'}[r&&r.error]||'申込みできませんでした';
-      toast(m);BUSY=false;b.disabled=false;b.textContent='申込んで支払い方法を見る';
-      if(r&&r.token)await load(true);
-      return;
-    }
-    JUST_BOUGHT=r;
-    await load(true);
-    $('buy-card').scrollIntoView({behavior:'smooth',block:'start'});
-  }catch(e){toast('通信に失敗しました。もう一度お試しください');b.disabled=false;b.textContent='申込んで支払い方法を見る';}
-  BUSY=false;
-}
-async function doApply(date){
-  if(BUSY)return;BUSY=true;
-  try{
-    const r=await callGAS('applyYogaSession',TOKEN,date);
-    if(r&&r.ok)toast('申込みました！前日21:00に開催が決まります');
-    else toast({no_ticket:'チケットが足りません',closed:'この日の受付は終了しました',already:'すでに申込み済みです',no_member:'専用URLを確認してください',no_session:'開催日が見つかりません'}[r&&r.error]||'申込みできませんでした');
-  }catch(e){toast('通信に失敗しました。もう一度お試しください');}
-  BUSY=false;await load(true);
-}
-async function doCancel(date){
-  if(BUSY)return;
-  if(!confirm('この日の申込みをキャンセルしますか？（チケットは減りません）'))return;
-  BUSY=true;
-  try{
-    const r=await callGAS('cancelYogaSession',TOKEN,date);
-    toast(r&&r.ok?'キャンセルしました':({closed:'締切を過ぎたため、キャンセルできません'}[r&&r.error]||'キャンセルできませんでした'));
-  }catch(e){toast('通信に失敗しました。もう一度お試しください');}
-  BUSY=false;await load(true);
-}
-
-loadToken();
-load();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&DATA&&!BUSY)load(true);});
+render(FALLBACK);
+callGAS('getYogaForApp','').then(render).catch(()=>{});
 </script>
 </body>
 </html>

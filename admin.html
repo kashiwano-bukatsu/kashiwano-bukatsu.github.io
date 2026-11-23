@@ -622,13 +622,8 @@ tr:hover td{background:var(--card-soft);}
     <!-- ===== オンラインヨガ ===== -->
     <div class="view" id="view-yoga">
       <div class="card" style="border:1.5px solid var(--accent)">
-        <div class="card-title"><div class="dot"></div>お支払いの確認待ち</div>
-        <div id="yg-pending"><div class="loading-text">読み込み中...</div></div>
-        <div style="font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.8">PayPayの入金を確認したら「受領済みにする」を押してください。押した瞬間から、その人のチケットが使えるようになります（有効期限は受領日から6か月）。</div>
-      </div>
-      <div class="card">
-        <div class="card-title"><div class="dot"></div>開催日</div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.7">「予定・予約」のスケジュールに、種目「オンラインヨガ」で入れた日は、ここに自動で入ります。ここでは、各日のZoomのURLを入れてください。</div>
+        <div class="card-title"><div class="dot"></div>開催日と予約</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.8">予約が3人以上になったら「開催する」を押してください。押した瞬間に、予約した人のチケットが1枚ずつ使われます。人数が足りないときは「中止」（チケットは減りません）。<br>開催が決まったら、公式LINEで予約した人に個別にZoomのURLを送ります（下の「送る文面をコピー」が使えます）。<br>「予定・予約」のスケジュールに種目「オンラインヨガ」で入れた日は、ここに自動で入ります。</div>
         <div id="yg-sessions"><div class="loading-text">読み込み中...</div></div>
         <div style="border-top:1px dashed var(--line);margin-top:14px;padding-top:14px">
           <div style="font-size:13px;font-weight:700;margin-bottom:8px">開催日を追加（隔週でまとめて）</div>
@@ -637,28 +632,32 @@ tr:hover td{background:var(--card-soft);}
             <span style="font-size:13px">から</span>
             <input type="number" id="yg-add-count" value="2" min="1" max="12" style="width:64px;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
             <span style="font-size:13px">回（隔週）</span>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
             <input type="text" id="yg-add-start" value="22:00" style="width:80px;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
             <span>〜</span>
             <input type="text" id="yg-add-end" value="23:00" style="width:80px;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px">
           </div>
-          <input type="text" id="yg-add-zoom" placeholder="ZoomのURL（https://〜／あとから日ごとに変更できます）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;display:block">
+          <input type="text" id="yg-add-zoom" placeholder="ZoomのURL（https://〜／あとから日ごとに変更できます）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:8px;box-sizing:border-box;display:block">
           <button class="btn btn-primary btn-sm" onclick="ygAddSessions()">追加する</button>
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><div class="dot"></div>参加者（専用URL・チケット）</div>
-        <input id="yg-member-search" type="text" placeholder="呼び名で検索" style="width:320px;max-width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:12px" oninput="ygRenderMembers()">
+        <div class="card-title"><div class="dot"></div>チケットを付与する</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.8">公式LINEでPayPayの入金を確認したら、ここで付与してください（有効期限は付与から6か月）。付与すると、本人にアプリのメッセージで通知されます。会員でない人は、先にアプリでビジター会員（登録費無料）として登録してもらってください。</div>
+        <input id="yg-grant-search" type="text" placeholder="名前を入力すると会員が出ます" oninput="ygGrantSearch()" style="width:320px;max-width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:12px">
+        <div id="yg-grant-wrap"><div class="empty-state">名前を入力すると会員が表示されます</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot"></div>チケット残高</div>
+        <input id="yg-member-search" type="text" placeholder="名前で絞り込み" style="width:320px;max-width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:12px" oninput="ygRenderMembers()">
         <div id="yg-members"></div>
-        <div style="font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.8">専用URLを失くした人には、ここで「URLをコピー」して送ってください。現金で受け取った分は「購入として付与」、お礼は「お礼として付与」を使います。</div>
+        <div style="font-size:12px;font-weight:700;margin:16px 0 6px">付与の履歴（新しい順）</div>
+        <div id="yg-recent"></div>
       </div>
       <div class="card">
         <div class="card-title"><div class="dot"></div>設定</div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px">オンラインヨガ専用の公式LINEです。参加者が「支払いを連絡する」を押すと、このアカウントのトークが、メッセージ入りで開きます。</div>
-        <input type="text" id="yg-conf-lineurl" placeholder="友だち追加URL（https://lin.ee/〜）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:8px;display:block">
-        <input type="text" id="yg-conf-lineid" placeholder="ベーシックID（@から始まる）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;display:block">
-        <textarea id="yg-conf-pay" rows="3" placeholder="支払い案内（例：PayPay ID：xxxx　※送金メッセージに呼び名を書いてください）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:10px;display:block;font-family:inherit"></textarea>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:8px">オンラインヨガ専用の公式LINEです。アプリの「チケットを買う」ボタンが、このアカウントへのメッセージを開きます。</div>
+        <input type="text" id="yg-conf-lineurl" placeholder="友だち追加URL（https://lin.ee/〜）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:8px;box-sizing:border-box;display:block">
+        <input type="text" id="yg-conf-lineid" placeholder="ベーシックID（@から始まる）" style="width:100%;max-width:480px;padding:10px 14px;border:1.5px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:8px;box-sizing:border-box;display:block">
         <button class="btn btn-primary btn-sm" onclick="ygSaveConf()">保存する</button>
       </div>
     </div>
@@ -1773,85 +1772,156 @@ function _tbFlags(r){
   return f;
 }
 // ===== オンラインヨガ =====
-let _ygData = null;
+let _ygData = null, _ygGrantList = [];
 function _ygOperator(){ return currentAdminUser ? (currentAdminUser.nickname || currentAdminUser.fullname) : '不明'; }
-function _ygUrl(token){ return location.origin + location.pathname.replace(/[^\/]*$/, '') + 'yoga.html?t=' + token; }
 async function renderYogaView(){
   try{
     _ygData = await callGAS('getYogaAdminOverview');
     ygRender();
   }catch(e){
-    ['yg-pending','yg-sessions','yg-members'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>'; });
+    ['yg-sessions','yg-members','yg-recent'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>'; });
   }
 }
 function ygRender(){
   const d = _ygData; if (!d) return;
+  const ses = d.sessions.filter(s => !s.past || s.status === '確定' || s.people.length);
+  const ready = d.sessions.filter(s => !s.past && s.status === '募集中' && s.people.length >= d.minPeople).length;
   const badge = document.getElementById('badge-yoga');
-  if (badge){ badge.textContent = d.pending.length; badge.classList.toggle('zero', !d.pending.length); }
-  // 支払い確認待ち
-  document.getElementById('yg-pending').innerHTML = d.pending.length ? `<div style="overflow-x:auto"><table>
-    <thead><tr><th>申込日時</th><th>呼び名</th><th>申込ID</th><th>内容</th><th>金額</th><th>操作</th></tr></thead>
-    <tbody>${d.pending.map(p => `<tr>
-      <td>${escapeHtml(p.at)}</td><td><b>${escapeHtml(p.name)}</b></td><td style="font-size:11px;color:var(--ink-soft)">${escapeHtml(p.id)}</td>
-      <td>${p.qty}回券</td><td>¥${p.price.toLocaleString()}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="ygApprove('${p.id}')">受領済みにする</button> <button class="btn btn-sm" onclick="ygReject('${p.id}')">却下</button></td>
-    </tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">確認待ちはありません</div>';
-  // 開催日
-  const ses = d.sessions;
-  document.getElementById('yg-sessions').innerHTML = ses.length ? ses.map((s, i) => {
+  if (badge){ badge.textContent = ready; badge.classList.toggle('zero', !ready); }
+  document.getElementById('yg-sessions').innerHTML = d.sessions.length ? d.sessions.map((s, i) => {
     const stColor = s.status === '確定' ? 'var(--accent)' : s.status === '中止' ? '#999' : '#b25f00';
-    return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px${s.status === '中止' ? ';opacity:.65' : ''}">
+    const enough = s.people.length >= d.minPeople;
+    let actions = '';
+    if (s.status === '募集中'){
+      actions = `<button class="btn btn-primary btn-sm" ${enough ? '' : 'disabled style="opacity:.45"'} onclick="ygConfirm(${i})">開催する</button>
+        <button class="btn btn-danger btn-sm" onclick="ygClose(${i})">中止</button>`;
+    } else if (s.status === '確定'){
+      actions = `<button class="btn btn-primary btn-sm" onclick="ygCopyMsg(${i})">📋 送る文面をコピー</button>
+        <button class="btn btn-sm" onclick="ygReopen(${i})">開催を取り消す</button>
+        <button class="btn btn-danger btn-sm" onclick="ygClose(${i})">中止</button>`;
+    }
+    return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px${s.status === '中止' ? ';opacity:.6' : ''}">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <div style="font-size:16px;font-weight:800">${escapeHtml(s.date)}（${s.dow}）${escapeHtml(s.start)}〜${escapeHtml(s.end)}</div>
-        <span style="font-size:12px;font-weight:800;color:${stColor}">${escapeHtml(s.status)}</span>
-        <span style="font-size:12.5px;color:var(--ink-soft)">${s.people.length}人／最低${s.need}人（締切 ${escapeHtml(s.deadline)}）</span>
+        <span style="font-size:12px;font-weight:800;color:${stColor}">${s.status === '募集中' ? '予約受付中' : escapeHtml(s.status)}</span>
+        <span style="font-size:12.5px;color:${enough ? 'var(--accent)' : 'var(--ink-soft)'};font-weight:${enough ? 800 : 400}">予約 ${s.people.length}人／最低${s.need}人${enough && s.status === '募集中' ? '　→ 開催できます' : ''}</span>
       </div>
-      <div style="font-size:12.5px;margin:6px 0">${s.people.length ? s.people.map(p => escapeHtml(p.name)).join('、') : '<span style="color:var(--ink-faint)">まだ申込みはありません</span>'}</div>
-      ${s.status === '中止' ? '' : `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:12.5px;margin:6px 0;line-height:1.9">${s.people.length ? s.people.map(p => `<span style="display:inline-block;background:#f0f4f8;border-radius:999px;padding:2px 10px;margin:0 6px 4px 0">${escapeHtml(p.name)}${p.status === '参加' ? ' ✅' : ''}</span>`).join('') : '<span style="color:var(--ink-faint)">まだ予約はありません</span>'}</div>
+      ${s.status === '中止' ? '' : `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
         <input type="text" id="yg-zoom-${i}" value="${escapeHtml(s.zoom)}" placeholder="ZoomのURL（https://〜）" style="flex:1;min-width:200px;padding:8px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:13px">
         <button class="btn btn-sm" onclick="ygSaveSession(${i})">URLを保存</button>
-        <button class="btn btn-danger btn-sm" onclick="ygCancelSession(${i})">開催を中止する</button>
-      </div>`}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${actions}</div>`}
     </div>`;
   }).join('') : '<div class="empty-state">開催日がまだありません。下のフォームから追加してください</div>';
-  // 設定
-  const lu = document.getElementById('yg-conf-lineurl'), li = document.getElementById('yg-conf-lineid'), pay = document.getElementById('yg-conf-pay');
+  const lu = document.getElementById('yg-conf-lineurl'), li = document.getElementById('yg-conf-lineid');
   if (lu && document.activeElement !== lu) lu.value = d.conf.lineUrl || '';
   if (li && document.activeElement !== li) li.value = d.conf.lineId || '';
-  if (pay && document.activeElement !== pay) pay.value = d.conf.payInfo || '';
   ygRenderMembers();
+  document.getElementById('yg-recent').innerHTML = d.recent.length ? `<div style="overflow-x:auto"><table>
+    <thead><tr><th>日時</th><th>名前</th><th>枚数</th><th>区分</th><th>金額</th><th>期限</th><th>メモ</th></tr></thead>
+    <tbody>${d.recent.map(r => `<tr><td style="font-size:11.5px">${escapeHtml(r.at.slice(0,16))}</td><td>${escapeHtml(r.name)}</td><td>${r.qty}</td><td>${escapeHtml(r.kind)}</td><td>${r.price ? '¥' + r.price.toLocaleString() : '-'}</td><td style="font-size:11.5px">${escapeHtml(r.expiry)}</td><td style="font-size:11.5px">${escapeHtml(r.note)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">まだ付与はありません</div>';
 }
 function ygRenderMembers(){
   const d = _ygData; if (!d) return;
   const q = (document.getElementById('yg-member-search').value || '').trim().toLowerCase();
-  const list = d.members.map((m, i) => ({ m, i })).filter(x => !q || (x.m.name + ' ' + x.m.contact).toLowerCase().includes(q)).slice(0, 60);
+  const list = d.members.filter(m => !q || (m.name + ' ' + m.fullname).toLowerCase().includes(q));
   document.getElementById('yg-members').innerHTML = list.length ? `<div style="overflow-x:auto"><table>
-    <thead><tr><th>呼び名</th><th>登録日</th><th>残り</th><th>予約中</th><th>使用</th><th>操作</th></tr></thead>
-    <tbody>${list.map(({ m, i }) => `<tr>
-      <td><b>${escapeHtml(m.name)}</b></td><td style="font-size:11.5px">${escapeHtml((m.createdAt||'').slice(0,10))}</td><td><b>${m.remaining}</b></td><td>${m.held}</td><td>${m.used}</td>
-      <td style="white-space:nowrap"><button class="btn btn-sm" onclick="ygCopyUrl(${i})">URLをコピー</button> <button class="btn btn-sm" onclick="ygGrant(${i},'購入')">購入として付与</button> <button class="btn btn-sm" onclick="ygGrant(${i},'お礼')">お礼として付与</button></td>
-    </tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">該当する参加者はいません</div>';
+    <thead><tr><th>名前</th><th>残り</th><th>予約中</th><th>使用</th><th>購入・付与の合計</th><th>次の期限</th></tr></thead>
+    <tbody>${list.map(m => `<tr><td><b>${escapeHtml(m.name)}</b></td><td><b>${m.remaining}</b></td><td>${m.held}</td><td>${m.used}</td><td>${m.total}</td><td style="font-size:11.5px">${escapeHtml(m.nextExpiry || '-')}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">該当する人はいません</div>';
 }
-async function ygApprove(id){
-  const p = _ygData.pending.find(x => x.id === id); if (!p) return;
-  if (!confirm(p.name + ' さん　' + p.qty + '回券（¥' + p.price.toLocaleString() + '）\nPayPayの入金を確認しましたか？\n受領済みにすると、すぐにチケットが使えるようになります。')) return;
+async function ygGrantSearch(){
+  const wrap = document.getElementById('yg-grant-wrap');
+  const kw = (document.getElementById('yg-grant-search').value || '').trim();
+  if (!kw){ wrap.innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>'; return; }
   try{
-    const r = await callGAS('approveYogaPurchase', id, _ygOperator());
-    if (r !== 'ok') return alert('処理できませんでした（' + r + '）');
-    logOp('ヨガ購入を受領済みに', p.name + '／' + p.qty + '回券／¥' + p.price);
-    showToastAdmin('受領済みにしました');
+    const persons = await getPersonMaster();
+    _ygGrantList = persons.filter(p => (p.status === '会員' || p.status === '会員(申請中)') && ((p.fullname || '').includes(kw) || (p.nickname || '').includes(kw))).slice(0, 10);
+    if (!_ygGrantList.length){ wrap.innerHTML = '<div class="empty-state">該当する会員がいません</div>'; return; }
+    const sel = 'padding:6px 8px;border:1.5px solid var(--line);border-radius:7px';
+    wrap.innerHTML = `<div style="overflow-x:auto"><table>
+      <thead><tr><th>お名前</th><th>種別</th><th>区分</th><th>枚数</th><th>金額（購入のみ）</th><th>メモ</th><th></th></tr></thead>
+      <tbody>${_ygGrantList.map((p, i) => `<tr>
+        <td>${escapeHtml(p.nickname || p.fullname)}</td>
+        <td><span class="badge badge-gold">${escapeHtml(p.type || '')}</span></td>
+        <td><select id="yg-g-kind-${i}" onchange="ygGrantCalc(${i})" style="${sel}"><option value="購入">購入（代金あり）</option><option value="お礼">お礼（無料）</option></select></td>
+        <td><select id="yg-g-qty-${i}" onchange="ygGrantCalc(${i})" style="${sel}"><option>1</option><option selected>5</option><option>10</option></select></td>
+        <td><input type="number" id="yg-g-amt-${i}" value="2250" min="0" style="width:90px;${sel}"></td>
+        <td><input type="text" id="yg-g-note-${i}" placeholder="例：PayPay確認済み" style="width:150px;${sel}"></td>
+        <td><button class="btn btn-primary btn-sm" onclick="ygGrant(${i})">付与する</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }catch(e){ wrap.innerHTML = '<div class="empty-state">読み込みエラー：' + escapeHtml(e.message) + '</div>'; }
+}
+function ygGrantCalc(i){
+  const kind = document.getElementById('yg-g-kind-' + i).value;
+  const qty = parseInt(document.getElementById('yg-g-qty-' + i).value, 10);
+  const amt = document.getElementById('yg-g-amt-' + i);
+  amt.disabled = kind === 'お礼';
+  amt.value = kind === 'お礼' ? 0 : ((_ygData && _ygData.plans.find(p => p.qty === qty) || {}).price || qty * 450);
+}
+async function ygGrant(i){
+  const p = _ygGrantList[i]; if (!p) return;
+  const kind = document.getElementById('yg-g-kind-' + i).value;
+  const qty = parseInt(document.getElementById('yg-g-qty-' + i).value, 10);
+  const amount = parseInt(document.getElementById('yg-g-amt-' + i).value, 10) || 0;
+  const note = (document.getElementById('yg-g-note-' + i).value || '').trim();
+  if (kind === '購入' && amount <= 0) return alert('購入の場合は金額を入力してください');
+  if (kind === 'お礼' && !note) return alert('お礼の場合はメモ（理由）を入力してください');
+  const name = p.nickname || p.fullname;
+  if (!confirm(name + ' さんにヨガチケットを' + qty + '枚付与します。\n' + (kind === '購入' ? '購入　金額：¥' + amount.toLocaleString() : 'お礼（無料）　' + note) + '\n\nよろしいですか？')) return;
+  try{
+    const r = await callGAS('grantYogaTickets', p.fullname, qty, kind, amount, note, _ygOperator());
+    if (r !== 'ok') return alert('付与できませんでした（' + r + '）');
+    logOp('ヨガチケット付与（' + kind + '）', p.fullname + '／' + qty + '枚' + (kind === '購入' ? '／¥' + amount : '／' + note));
+    showToastAdmin('付与しました');
+    document.getElementById('yg-grant-search').value = '';
+    document.getElementById('yg-grant-wrap').innerHTML = '<div class="empty-state">名前を入力すると会員が表示されます</div>';
     renderYogaView();
   }catch(e){ alert('エラー：' + e.message); }
 }
-async function ygReject(id){
-  const p = _ygData.pending.find(x => x.id === id); if (!p) return;
-  if (!confirm(p.name + ' さんの申込み（' + p.qty + '回券）を却下します。よろしいですか？')) return;
+async function ygConfirm(i){
+  const s = _ygData.sessions[i]; if (!s) return;
+  if (!confirm(s.date + '（' + s.dow + '）を開催します。\n予約した ' + s.people.length + ' 人（' + s.people.map(p => p.name).join('、') + '）のチケットが1枚ずつ使われます。\n\nよろしいですか？')) return;
   try{
-    const r = await callGAS('rejectYogaPurchase', id, _ygOperator());
+    const r = await callGAS('confirmYogaSession', s.date, _ygOperator());
+    if (r && r.error === 'not_enough') return alert('予約が' + r.count + '人です。' + r.need + '人以上で開催できます。');
+    if (!r || !r.ok) return alert('処理できませんでした（' + ((r && r.error) || '不明') + '）');
+    logOp('ヨガ開催を確定', s.date + '／' + r.count + '人');
+    showToastAdmin('開催にしました。公式LINEでZoomのURLを送ってください');
+    await renderYogaView();
+  }catch(e){ alert('エラー：' + e.message); }
+}
+async function ygClose(i){
+  const s = _ygData.sessions[i]; if (!s) return;
+  if (!confirm(s.date + '（' + s.dow + '）の開催を中止します。\n予約している ' + s.people.length + ' 人のチケットは減りません（そのまま残ります）。\nよろしいですか？')) return;
+  try{
+    const r = await callGAS('closeYogaSession', s.date, _ygOperator());
     if (r !== 'ok') return alert('処理できませんでした（' + r + '）');
-    showToastAdmin('却下しました');
+    logOp('ヨガ開催を中止', s.date);
+    showToastAdmin('中止にしました。予約していた人には公式LINEなどでお知らせください');
     renderYogaView();
   }catch(e){ alert('エラー：' + e.message); }
+}
+async function ygReopen(i){
+  const s = _ygData.sessions[i]; if (!s) return;
+  if (!confirm(s.date + ' の「開催」を取り消して、予約受付中に戻します。\n使ったチケットも戻ります。よろしいですか？')) return;
+  try{
+    const r = await callGAS('reopenYogaSession', s.date, _ygOperator());
+    if (r !== 'ok') return alert('処理できませんでした（' + r + '）');
+    showToastAdmin('予約受付中に戻しました');
+    renderYogaView();
+  }catch(e){ alert('エラー：' + e.message); }
+}
+function ygCopyMsg(i){
+  const s = _ygData.sessions[i]; if (!s) return;
+  const el = document.getElementById('yg-zoom-' + i);
+  const zoom = ((el && el.value) || s.zoom || '').trim();
+  if (!zoom) return alert('先にZoomのURLを入力してください');
+  const m = s.date.split('/');
+  const text = '【オンラインヨガ】開催が決まりました🧘\n日時：' + parseInt(m[1], 10) + '/' + parseInt(m[2], 10) + '（' + s.dow + '）' + s.start + '〜' + s.end + '\nZoom：' + zoom + '\n\nお待ちしています！';
+  const done = () => showToastAdmin('文面をコピーしました。送り先：' + s.people.map(p => p.name).join('、'));
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => prompt('この文面をコピーしてください', text));
+  else prompt('この文面をコピーしてください', text);
 }
 async function ygAddSessions(){
   const d0 = document.getElementById('yg-add-date').value;
@@ -1884,60 +1954,19 @@ async function ygSaveSession(i){
   const zoom = document.getElementById('yg-zoom-' + i).value.trim();
   if (zoom && !/^https:\/\//.test(zoom)) return alert('ZoomのURLは https:// から始まる形式で入力してください');
   try{
-    const r = await callGAS('updateYogaSession', s.date, zoom, s.memo || '', '');
+    const r = await callGAS('updateYogaSession', s.date, zoom, s.memo || '');
     if (r !== 'ok') return alert('保存できませんでした（' + r + '）');
     showToastAdmin('保存しました');
-    renderYogaView();
-  }catch(e){ alert('エラー：' + e.message); }
-}
-async function ygCancelSession(i){
-  const s = _ygData.sessions[i]; if (!s) return;
-  if (!confirm(s.date + ' の開催を中止します。\n申込み・参加の ' + s.people.length + ' 人のチケットは減りません（自動で戻ります）。\nよろしいですか？')) return;
-  try{
-    const r = await callGAS('updateYogaSession', s.date, s.zoom || '', s.memo || '', '中止');
-    if (r !== 'ok') return alert('処理できませんでした（' + r + '）');
-    logOp('ヨガ開催を中止', s.date);
-    showToastAdmin('中止にしました');
-    renderYogaView();
-  }catch(e){ alert('エラー：' + e.message); }
-}
-function ygCopyUrl(i){
-  const m = _ygData.members[i]; if (!m) return;
-  const u = _ygUrl(m.token);
-  const done = () => showToastAdmin(m.name + ' さんの専用URLをコピーしました');
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done, () => prompt('このURLをコピーしてください', u));
-  else prompt('このURLをコピーしてください', u);
-}
-async function ygGrant(i, kind){
-  const m = _ygData.members[i]; if (!m) return;
-  const qtyS = prompt(m.name + ' さんに付与する回数（1〜50）', kind === '購入' ? '5' : '1'); if (qtyS === null) return;
-  const qty = parseInt(qtyS, 10);
-  if (!(qty >= 1 && qty <= 50)) return alert('回数は1〜50で入力してください');
-  let amount = 0, note = '';
-  if (kind === '購入'){
-    const aS = prompt('受け取った金額（円）', String(qty === 1 ? 500 : qty === 5 ? 2250 : qty === 10 ? 4000 : qty * 450)); if (aS === null) return;
-    amount = parseInt(aS, 10) || 0;
-    if (amount <= 0) return alert('金額を入力してください');
-  } else {
-    note = prompt('お礼の理由（メモ）', '') || '';
-  }
-  if (!confirm(m.name + ' さんに ' + qty + '回分を付与します（' + (kind === '購入' ? '購入 ¥' + amount.toLocaleString() : 'お礼・無料') + '）。よろしいですか？')) return;
-  try{
-    const r = await callGAS('grantYogaTickets', m.token, qty, kind, amount, note, _ygOperator());
-    if (r !== 'ok') return alert('付与できませんでした（' + r + '）');
-    logOp('ヨガチケット付与（' + kind + '）', m.name + '／' + qty + '回' + (kind === '購入' ? '／¥' + amount : '／' + note));
-    showToastAdmin('付与しました');
     renderYogaView();
   }catch(e){ alert('エラー：' + e.message); }
 }
 async function ygSaveConf(){
   const lu = document.getElementById('yg-conf-lineurl').value.trim();
   const li = document.getElementById('yg-conf-lineid').value.trim();
-  const pay = document.getElementById('yg-conf-pay').value;
   if (lu && !/^https:\/\/(lin\.ee|line\.me)\//.test(lu)) return alert('友だち追加URLは https://lin.ee/〜 の形式で入力してください');
   if (li && !/^@[A-Za-z0-9._-]{3,30}$/.test(li)) return alert('ベーシックIDは @ から始まる形式で入力してください');
   try{
-    const r = await callGAS('saveYogaSettings', '', pay, lu, li);
+    const r = await callGAS('saveYogaSettings', lu, li);
     if (r !== 'ok') return alert('保存できませんでした（' + r + '）');
     showToastAdmin('設定を保存しました');
     renderYogaView();
